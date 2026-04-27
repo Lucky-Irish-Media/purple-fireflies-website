@@ -1,4 +1,4 @@
 interface CloudflareEnv {
-  DB: D1Database;
+  purple_fireflies_db: D1Database;
   CACHE: KVNamespace;
 }

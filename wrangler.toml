@@ -8,11 +8,11 @@ directory = ".open-next/assets"
 binding = "ASSETS"
 
 [[d1_databases]]
-binding = "DB"
+binding = "purple_fireflies_db"
 database_name = "purple-fireflies-db"
-database_id = ""
+database_id = "295c9661-624c-4964-8d1f-69f6c991a4f0"
 
-# [[kv_namespaces]]
-# binding = "CACHE"
-# id = ""
-# preview_id = ""
+[[kv_namespaces]]
+binding = "CACHE"
+id = "c7014b56c6d343e8a223d8a41d034731"
+preview_id = "daaa882613904099a98253c927a86f08"
