@@ -1,7 +1,7 @@
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center min-h-screen bg-background font-sans">
-      <main className="flex flex-col items-center gap-8 px-4 py-32 text-center max-w-2xl">
+    <div className="flex flex-col flex-1 bg-background font-sans">
+      <main className="flex flex-col items-center gap-8 px-4 py-16 text-center max-w-2xl mx-auto">
         <h1 className="text-5xl font-bold tracking-tight text-foreground">
           Mission Statement
         </h1>
