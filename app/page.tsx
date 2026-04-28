@@ -6,7 +6,7 @@ export default function Home() {
           Purple Fireflies
         </h1>
         <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          Our mission is to foster an inclusive community where everyone feels safe, respected, and empowered to thrive. We embrace the diversity that strengthens us and work collaboratively with grassroots leaders to inspire action, inform our neighbors, and create meaningful, lasting change.
         </p>
       </main>
     </div>
