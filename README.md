@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Purple Fireflies
+
+A simple one-page website built with Next.js and deployed on Cloudflare Workers.
 
 ## Getting Started
 
@@ -6,31 +8,46 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses Cloudflare Workers Builds for deployment. Simply push to the `main` branch and Cloudflare will automatically build and deploy.
 
-## Learn More
+- Build command: `npm run cf:build`
+- Deploys automatically from the `main` branch
 
-To learn more about Next.js, take a look at the following resources:
+## Design Choices
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Color Palette
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role | Color | Hex Code | Usage |
+|------|-------|----------|-------|
+| Background | Cream | `#faf8f0` | Page background |
+| Foreground | Near Black | `#111827` | Primary text color |
+| Card | White | `#FFFFFF` | Card backgrounds |
+| Primary | Purple | `#7C3AED` | Primary actions, branding (matches "Purple Fireflies" theme) |
+| Accent | Amber | `#F59E0B` | Accent elements, secondary actions |
+| Text Secondary | Gray | `#6B7280` | Secondary text, descriptions |
+| Complementary | Green | `#43ab00` | Complementary to primary purple |
+| Analogous 1 | Blue | `#1300ab` | Analogous to primary purple |
+| Analogous 2 | Magenta | `#ab0098` | Analogous to primary purple |
+| Triad 1 | Orange | `#ab6800` | Triadic with primary purple |
+| Triad 2 | Teal | `#00ab68` | Triadic with primary purple |
 
-## Deploy on Vercel
+### Typography
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Type | Font Family | Source |
+|------|-------------|--------|
+| Sans-serif | Geist Sans | `next/font/google` |
+| Monospace | Geist Mono | `next/font/google` |
+| Fallback | Arial, Helvetica, sans-serif | System fallback |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Design System
+
+- **Framework**: Tailwind CSS with CSS custom properties
+- **Component Structure**: Next.js App Router with shared layout
+- **Navigation**: Navbar component shared across all pages
+- **Pages**: Home, Programs (with meal delivery sub-page), Donate
