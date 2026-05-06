@@ -7,14 +7,14 @@ export default function Navbar() {
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
 
   return (
-    <nav className="relative flex items-center justify-between px-6 py-4">
-      <div className="text-lg font-semibold text-primary">
+    <nav className="relative flex items-center justify-between bg-[#7800C2] px-6 py-4">
+      <div className="text-lg font-semibold text-white">
         Purple Fireflies
       </div>
       <div className="flex items-center gap-6">
         <Link
           href="/"
-          className="text-sm text-text-secondary hover:text-foreground"
+          className="text-sm text-white/80 hover:text-white"
         >
           Home
         </Link>
@@ -23,7 +23,7 @@ export default function Navbar() {
           onMouseEnter={() => setIsProgramsOpen(true)}
           onMouseLeave={() => setIsProgramsOpen(false)}
         >
-          <button className="text-sm text-text-secondary hover:text-foreground">
+          <button className="text-sm text-white/80 hover:text-white">
             Programs
           </button>
           {isProgramsOpen && (
@@ -41,7 +41,7 @@ export default function Navbar() {
         </div>
         <Link
           href="/donate"
-          className="text-sm text-text-secondary hover:text-foreground"
+          className="text-sm text-white/80 hover:text-white"
         >
           Donate
         </Link>
