@@ -7,16 +7,16 @@ export default function Navbar() {
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
 
   return (
-    <nav className="bg-[#7800C2] shadow-sm border-b">
+    <nav className="bg-[#6800AB] shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <Link href="/" className="text-xl font-bold text-white">
+          <Link href="/" className="text-2xl font-bold text-white">
             Purple Fireflies
           </Link>
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-sm text-white/80 hover:text-white"
+              className="text-base font-semibold text-white/80 hover:text-white"
             >
               Home
             </Link>
@@ -25,7 +25,7 @@ export default function Navbar() {
               onMouseEnter={() => setIsProgramsOpen(true)}
               onMouseLeave={() => setIsProgramsOpen(false)}
             >
-              <button className="text-sm text-white/80 hover:text-white">
+              <button className="text-base font-semibold text-white/80 hover:text-white">
                 Programs
               </button>
               {isProgramsOpen && (
@@ -43,7 +43,7 @@ export default function Navbar() {
             </div>
             <Link
               href="/donate"
-              className="text-sm text-white/80 hover:text-white"
+              className="text-base font-semibold text-white/80 hover:text-white"
             >
               Donate
             </Link>
