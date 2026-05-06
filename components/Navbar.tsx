@@ -47,6 +47,12 @@ export default function Navbar() {
             >
               Donate
             </Link>
+            <Link
+              href="/contact"
+              className="text-base font-semibold text-white/80 hover:text-white"
+            >
+              Contact
+            </Link>
           </div>
         </div>
       </div>
