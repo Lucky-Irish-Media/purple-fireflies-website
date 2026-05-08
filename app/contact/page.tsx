@@ -13,7 +13,7 @@ export default function Contact() {
             <h2 className="text-xl font-semibold text-foreground">Email Us</h2>
             <a
               href="mailto:aca_ohio@proton.me"
-              className="text-lg text-[#6800AB] hover:underline"
+              className="text-lg text-primary hover:underline"
             >
               aca_ohio@proton.me
             </a>
@@ -27,7 +27,7 @@ export default function Contact() {
               href="https://cloud.disroot.org/apps/forms/s/BrnnRYnrxZJyd6it9HE4M399"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-lg text-[#6800AB] hover:underline"
+              className="text-lg text-primary hover:underline"
             >
               Request to Get Involved
             </a>

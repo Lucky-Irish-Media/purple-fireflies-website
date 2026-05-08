@@ -5,7 +5,7 @@ export default function MealDeliveryPage() {
 
       <div className="space-y-6 text-lg text-text-secondary">
         <p>
-          In our county, there's a stark divide: a wealthy university town surrounded by
+          In our county, there&apos;s a stark divide: a wealthy university town surrounded by
           communities facing deep poverty. While the town has multiple organizations offering
           free meals, these resources primarily serve students and those with transportation
           to get there.
@@ -13,7 +13,7 @@ export default function MealDeliveryPage() {
 
         <p>
           For many residents throughout the county, lack of transportation creates an
-          insurmountable barrier. They can't access the free meals available just miles away,
+          insurmountable barrier. They can&apos;t access the free meals available just miles away,
           leaving them without options for nutritious food.
         </p>
 
@@ -33,7 +33,7 @@ export default function MealDeliveryPage() {
 
         <p>
           This program relies entirely on community solidarity. Whether you need meals
-          delivered or you can volunteer to make deliveries, we're building a network
+          delivered or you can volunteer to make deliveries, we&apos;re building a network
           of mutual aid to ensure no one goes hungry.
         </p>
 
@@ -55,7 +55,7 @@ export default function MealDeliveryPage() {
               Volunteer
             </h3>
             <p className="mb-4 text-sm">
-              Help deliver meals to those who can't get to town.
+              Help deliver meals to those who can&apos;t get to town.
             </p>
             <button className="text-sm font-medium text-primary hover:underline">
               Become a Volunteer →
