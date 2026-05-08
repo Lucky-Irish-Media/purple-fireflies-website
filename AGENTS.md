@@ -13,3 +13,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Build command for Cloudflare Workers Builds: `npm run cf:build`
 - Deploy command for Cloudflare Workers Builds: (none - use build output directly)
 <!-- END:deployment-rules -->
+
+<!-- BEGIN:skills -->
+# Local Skills
+
+- At the START of every session, run `ls ~/.opencode/skills/` to check for skill files
+- READ every skill file found there and be ready to execute its workflow
+- The `skill` tool may report "no skills available" even when files exist — ALWAYS verify by listing the directory directly
+- When a user says a task is done (or similar phrasing), re-check this directory for any post-feature workflow
+<!-- END:skills -->
