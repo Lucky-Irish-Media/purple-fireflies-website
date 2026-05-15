@@ -40,26 +40,36 @@ export default function MealDeliveryPage() {
         <div className="mt-8 flex gap-4">
           <div className="rounded-lg border bg-background p-6">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
-              I Need Meals
+              Receive a Meal
             </h3>
             <p className="mb-4 text-sm">
               Sign up to receive meal deliveries in your area.
             </p>
-            <button className="text-sm font-medium text-primary hover:underline">
+            <a
+              href="https://grasshoppersignup.com/s/1twc2g"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-primary hover:underline"
+            >
               Request Meals →
-            </button>
+            </a>
           </div>
 
           <div className="rounded-lg border bg-background p-6">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
-              Volunteer
+              Deliver Meals
             </h3>
             <p className="mb-4 text-sm">
               Help deliver meals to those who can&apos;t get to town.
             </p>
-            <button className="text-sm font-medium text-primary hover:underline">
+            <a
+              href="https://www.signupgenius.com/go/10C044AA4A829AAF4CE9-64146307-free"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-primary hover:underline"
+            >
               Become a Volunteer →
-            </button>
+            </a>
           </div>
         </div>
       </div>
