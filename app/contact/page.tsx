@@ -12,10 +12,10 @@ export default function Contact() {
           <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold text-foreground">Email Us</h2>
             <a
-              href="mailto:aca_ohio@proton.me"
+              href="mailto:info@purplefireflies.org"
               className="text-lg text-primary hover:underline"
             >
-              aca_ohio@proton.me
+              info@purplefireflies.org
             </a>
             <p className="text-sm text-text-secondary">
               Send us an email to learn more about getting involved

@@ -6,10 +6,16 @@ export default function Footer() {
           <p className="font-semibold">Purple Fireflies</p>
           <p className="text-white/70 text-xs">Serving our community</p>
         </div>
-        <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2 backdrop-blur-sm">
-          <span className="font-bold text-lg tracking-tight">740-856-6176</span>
+        <div className="flex items-center gap-4 bg-white/10 rounded-lg px-4 py-2 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-lg tracking-tight">740-856-6176</span>
+            <span className="text-white/50 hidden sm:inline">|</span>
+            <span className="text-sm text-white/80">call to report</span>
+          </div>
           <span className="text-white/50">|</span>
-          <span className="text-sm text-white/80">call to report</span>
+          <a href="mailto:info@purplefireflies.org" className="text-sm text-white/80 hover:text-white transition-colors">
+            info@purplefireflies.org
+          </a>
         </div>
       </div>
     </footer>
