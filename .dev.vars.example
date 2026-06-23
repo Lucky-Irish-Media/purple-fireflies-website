@@ -1,0 +1,2 @@
+# Generate a secret key: openssl rand -base64 32
+SESSION_SECRET=your_secret_key_here
