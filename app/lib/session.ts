@@ -3,11 +3,13 @@ import type { JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import type { SessionPayload } from "./definitions";
 
-const secretKey = process.env.SESSION_SECRET;
-if (!secretKey) {
-  throw new Error("SESSION_SECRET environment variable is required");
+function getEncodedKey() {
+  const secretKey = process.env.SESSION_SECRET;
+  if (!secretKey) {
+    throw new Error("SESSION_SECRET environment variable is required");
+  }
+  return new TextEncoder().encode(secretKey);
 }
-const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function encrypt(
   payload: SessionPayload
@@ -16,14 +18,14 @@ export async function encrypt(
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(encodedKey);
+    .sign(getEncodedKey());
 }
 
 export async function decrypt(
   session: string | undefined = ""
 ): Promise<SessionPayload | undefined> {
   try {
-    const { payload } = await jwtVerify(session, encodedKey, {
+    const { payload } = await jwtVerify(session, getEncodedKey(), {
       algorithms: ["HS256"],
     });
     return payload as unknown as SessionPayload;
