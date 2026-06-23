@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { login } from "@/app/actions/auth";
 
+export const dynamic = "force-dynamic";
+
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined);
 

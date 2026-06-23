@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-function getDB(): D1Database {
-  const { env } = getCloudflareContext();
+async function getDB(): Promise<D1Database> {
+  const { env } = await getCloudflareContext({ async: true });
   return env.purple_fireflies_db;
 }
 
@@ -17,7 +17,7 @@ export interface Admin {
 export async function getAdminByEmail(
   email: string
 ): Promise<Admin | null> {
-  const db = getDB();
+  const db = await getDB();
   const result = await db
     .prepare("SELECT * FROM admins WHERE email = ?")
     .bind(email)
@@ -26,7 +26,7 @@ export async function getAdminByEmail(
 }
 
 export async function getAdminById(id: number): Promise<Admin | null> {
-  const db = getDB();
+  const db = await getDB();
   const result = await db
     .prepare("SELECT id, email, name, role, created_at FROM admins WHERE id = ?")
     .bind(id)
