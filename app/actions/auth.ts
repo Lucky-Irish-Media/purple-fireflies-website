@@ -6,6 +6,22 @@ import { LoginFormSchema, type LoginFormState } from "@/app/lib/definitions";
 import { createSession, deleteSession } from "@/app/lib/session";
 import { getAdminByEmail } from "@/app/lib/db";
 
+function getErrorMessage(e: unknown): string {
+  if (e instanceof Error) {
+    if (e.message.includes("SESSION_SECRET")) {
+      return "Server configuration error: SESSION_SECRET is not set. Please check your environment variables.";
+    }
+    if (e.message.includes("D1") || e.message.includes("database") || e.message.includes("getCloudflareContext")) {
+      return "Database connection error. Please try again later.";
+    }
+    if (e.message.includes("bcrypt")) {
+      return "Authentication error. Please try again.";
+    }
+    return e.message;
+  }
+  return "An unexpected error occurred. Please try again.";
+}
+
 export async function login(
   _state: LoginFormState,
   formData: FormData
@@ -35,7 +51,7 @@ export async function login(
     await createSession(admin.id, admin.email, admin.role);
   } catch (e) {
     console.error("login action error:", e);
-    return { message: "An unexpected error occurred. Please try again." };
+    return { message: getErrorMessage(e) };
   }
 
   redirect("/admin");
