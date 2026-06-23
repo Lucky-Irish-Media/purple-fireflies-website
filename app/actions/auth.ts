@@ -33,11 +33,12 @@ export async function login(
     }
 
     await createSession(admin.id, admin.email, admin.role);
-    redirect("/admin");
   } catch (e) {
     console.error("login action error:", e);
-    throw e;
+    return { message: "An unexpected error occurred. Please try again." };
   }
+
+  redirect("/admin");
 }
 
 export async function logout() {
