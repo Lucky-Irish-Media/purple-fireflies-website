@@ -9,6 +9,10 @@ export default function Navbar() {
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  if (pathname.startsWith("/admin") || pathname === "/login") {
+    return null;
+  }
+
   const linkClass = (path: string) =>
     `text-base font-semibold transition-colors duration-200 ${
       pathname === path

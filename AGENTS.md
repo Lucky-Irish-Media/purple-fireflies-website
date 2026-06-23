@@ -14,6 +14,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Deploy command for Cloudflare Workers Builds: (none - use build output directly)
 <!-- END:deployment-rules -->
 
+# Verification
+
+- BEFORE pushing any changes, run `npm run build` to type-check and compile. `npx tsc --noEmit` is unreliable in this project (it fails on `@cloudflare/workers-types`).
+- `npm run build` uses Turbopack which includes its own type checker and catches the same errors the CI build will catch.
+
 <!-- BEGIN:skills -->
 # Local Skills
 
