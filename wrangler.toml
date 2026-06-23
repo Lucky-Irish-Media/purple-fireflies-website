@@ -17,3 +17,8 @@ preview_database_id = "dcb6e0de-2d20-40bc-82c3-1ccd96f0a540"
 binding = "CACHE"
 id = "c7014b56c6d343e8a223d8a41d034731"
 preview_id = "daaa882613904099a98253c927a86f08"
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
