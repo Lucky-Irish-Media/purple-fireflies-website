@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 const email = process.env.ADMIN_EMAIL || "admin@purplefireflies.org";
-const password = process.env.ADMIN_PASSWORD || "changeme123!";
+const password = process.env.ADMIN_PASSWORD || "Admin123!";
 const name = process.env.ADMIN_NAME || "Admin";
 const role = process.env.ADMIN_ROLE || "admin";
 
