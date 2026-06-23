@@ -10,7 +10,7 @@ async function getEncodedKey() {
   if (!secretKey) {
     try {
       const { env } = await getCloudflareContext({ async: true });
-      secretKey = (env as Record<string, string | undefined>).SESSION_SECRET;
+      secretKey = (env as unknown as Record<string, string | undefined>).SESSION_SECRET;
     } catch {
       // Cloudflare context not available (e.g., running outside opennext)
     }
