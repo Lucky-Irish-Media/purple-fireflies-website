@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { submitDriverVolunteer } from "@/app/actions/driver-volunteer";
 import type { DriverVolunteerFormState } from "@/app/lib/definitions";
+import { LookupModal } from "@/components/LookupModal";
 
 const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"];
 
@@ -39,6 +40,7 @@ function generateDriverDateOptions() {
 
 export function DriverVolunteerForm() {
   const [state, formAction, isPending] = useActionState(submitDriverVolunteer, undefined as DriverVolunteerFormState);
+  const [showLookup, setShowLookup] = useState(false);
 
   const deliveryDateOptions = useMemo(() => generateDriverDateOptions(), []);
 
@@ -48,6 +50,12 @@ export function DriverVolunteerForm() {
       <p className="mb-8 text-lg text-text-secondary">
         Volunteer to deliver meals on Wednesdays and Thursdays. Signup opens 7 days before the day of service.
         Select all dates you are available to drive.
+      </p>
+
+      <p className="mb-8">
+        <button type="button" onClick={() => setShowLookup(true)} className="text-sm font-medium text-primary hover:underline">
+          Look up my existing volunteer signups →
+        </button>
       </p>
 
       <form action={formAction} className="space-y-6" noValidate>
@@ -229,6 +237,8 @@ export function DriverVolunteerForm() {
           {isPending ? "Submitting..." : "Submit Volunteer Signup"}
         </button>
       </form>
+
+      {showLookup && <LookupModal type="driver" onClose={() => setShowLookup(false)} />}
     </div>
   );
 }

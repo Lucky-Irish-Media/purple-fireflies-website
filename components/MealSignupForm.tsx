@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { submitMealSignup } from "@/app/actions/meal-signup";
 import type { MealSignupFormState } from "@/app/lib/definitions";
+import { LookupModal } from "@/components/LookupModal";
 
 const stateOptions = [
   { value: "AL", label: "AL" }, { value: "AK", label: "AK" }, { value: "AZ", label: "AZ" }, { value: "AR", label: "AR" },
@@ -53,6 +54,7 @@ function generateDeliveryDateOptions() {
 
 export function MealSignupForm() {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
+  const [showLookup, setShowLookup] = useState(false);
 
   const deliveryDateOptions = useMemo(() => generateDeliveryDateOptions(), []);
 
@@ -71,6 +73,12 @@ export function MealSignupForm() {
       <p className="mb-8 text-lg text-text-secondary">
         If you are more than 20 minutes from the meal pickup location, we may contact you to let you know we do not
         have a driver available that can accommodate the request.
+      </p>
+
+      <p className="mb-8">
+        <button type="button" onClick={() => setShowLookup(true)} className="text-sm font-medium text-primary hover:underline">
+          Look up my existing signups →
+        </button>
       </p>
 
       <form action={formAction} className="space-y-6" noValidate>
@@ -338,6 +346,8 @@ export function MealSignupForm() {
           {isPending ? "Submitting..." : "Submit Signup"}
         </button>
       </form>
+
+      {showLookup && <LookupModal type="meal" onClose={() => setShowLookup(false)} />}
     </div>
   );
 }

@@ -94,6 +94,26 @@ export async function getMealSignups(): Promise<MealSignup[]> {
   return result.results || [];
 }
 
+export async function getMealSignupsByEmail(email: string): Promise<MealSignup[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare("SELECT * FROM meal_signups WHERE email = ? AND delivery_date >= ? ORDER BY delivery_date ASC")
+    .bind(email.toLowerCase(), today)
+    .all<MealSignup>();
+  return result.results || [];
+}
+
+export async function getDriverVolunteersByEmail(email: string): Promise<DriverVolunteer[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare("SELECT * FROM driver_volunteers WHERE email = ? AND delivery_date >= ? ORDER BY delivery_date ASC")
+    .bind(email.toLowerCase(), today)
+    .all<DriverVolunteer>();
+  return result.results || [];
+}
+
 export async function createDriverVolunteer(data: {
   name: string;
   email: string;
