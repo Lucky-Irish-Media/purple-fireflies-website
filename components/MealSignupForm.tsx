@@ -65,7 +65,12 @@ export function MealSignupForm() {
     <div className="max-w-2xl mx-auto">
       <h2 className="mb-6 text-3xl font-bold text-foreground">Meal Delivery Signup</h2>
       <p className="mb-8 text-lg text-text-secondary">
-        Sign up to receive free meal deliveries. We deliver on Wednesdays at 12:00 PM and Thursdays at 5:00 PM.
+        Select your preferred delivery window for the next weekly meal service. Signup for the meals open 7 days
+        before the day of service. Signup is limited to 2 meals per household.
+      </p>
+      <p className="mb-8 text-lg text-text-secondary">
+        If you are more than 20 minutes from the meal pickup location, we may contact you to let you know we do not
+        have a driver available that can accommodate the request.
       </p>
 
       <form action={formAction} className="space-y-6" noValidate>
