@@ -43,8 +43,15 @@ function MealSignupsTableClient({ initialData }: { initialData: MealSignup[] }) 
     key: "delivery_date",
     dir: "asc",
   });
+  const [futureOnly, setFutureOnly] = useState(true);
 
-  const signups = useMemo(() => sortData(initialData, sort.key, sort.dir), [initialData, sort]);
+  const signups = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const filtered = futureOnly
+      ? initialData.filter((s) => s.delivery_date >= today)
+      : initialData;
+    return sortData(filtered, sort.key, sort.dir);
+  }, [initialData, sort, futureOnly]);
 
   function toggleSort(key: SortKey) {
     setSort((prev) => ({
@@ -68,7 +75,18 @@ function MealSignupsTableClient({ initialData }: { initialData: MealSignup[] }) 
 
   return (
     <section className="space-y-6">
-      <h2 className="text-2xl font-bold text-foreground">Meal Delivery Signups</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-foreground">Meal Delivery Signups</h2>
+        <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+          <input
+            type="checkbox"
+            checked={futureOnly}
+            onChange={(e) => setFutureOnly(e.target.checked)}
+            className="accent-primary"
+          />
+          Show future dates only
+        </label>
+      </div>
       <p className="text-text-secondary">
         Total signups: {signups.length}
       </p>
