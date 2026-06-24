@@ -26,6 +26,7 @@ export async function submitDriverVolunteer(
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
+      onSignal: formData.get("onSignal"),
       deliveryDates,
       regions,
     });
@@ -42,6 +43,7 @@ export async function submitDriverVolunteer(
         name: data.name,
         email: data.email,
         phone: data.phone,
+        onSignal: data.onSignal,
         regions: data.regions.join(", "),
         deliveryDate,
       });

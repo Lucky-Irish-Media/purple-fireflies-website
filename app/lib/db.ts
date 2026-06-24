@@ -98,17 +98,18 @@ export async function createDriverVolunteer(data: {
   name: string;
   email: string;
   phone: string;
+  onSignal: "yes" | "no" | "willing";
   regions: string;
   deliveryDate: string;
 }): Promise<DriverVolunteer> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO driver_volunteers (name, email, phone, regions, delivery_day, delivery_date)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO driver_volunteers (name, email, phone, on_signal, regions, delivery_day, delivery_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate)
+    .bind(data.name, data.email, data.phone, data.onSignal, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate)
     .first<DriverVolunteer>();
   if (!result) {
     throw new Error("Failed to create driver volunteer");

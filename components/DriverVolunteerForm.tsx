@@ -120,6 +120,47 @@ export function DriverVolunteerForm() {
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
+            Are you on Signal? If not, would you be willing to join? <span className="text-red-500">*</span>
+          </legend>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="onSignal"
+                value="yes"
+                required
+                className="h-4 w-4 text-primary border-input focus:ring-primary"
+              />
+              <span className="text-foreground">Yes, I'm on Signal</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="onSignal"
+                value="willing"
+                className="h-4 w-4 text-primary border-input focus:ring-primary"
+              />
+              <span className="text-foreground">No, but willing to join</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="onSignal"
+                value="no"
+                className="h-4 w-4 text-primary border-input focus:ring-primary"
+              />
+              <span className="text-foreground">No</span>
+            </label>
+          </div>
+          {state?.errors?.onSignal && (
+            <p className="text-sm text-red-500" role="alert">
+              {state.errors.onSignal[0]}
+            </p>
+          )}
+        </fieldset>
+
+        <fieldset className="space-y-2">
+          <legend className="block text-sm font-medium text-foreground">
             Available Delivery Dates <span className="text-red-500">*</span>
           </legend>
           <p className="text-sm text-text-secondary">Select all Wednesdays and Thursdays you can volunteer (next 30 days)</p>
