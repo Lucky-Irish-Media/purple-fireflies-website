@@ -32,12 +32,7 @@ export default function MealDeliveryPage() {
         </h2>
 
         <p>
-          We currently deliver to <strong>Athens</strong>, <strong>The Plains</strong>,         <strong>Chauncey</strong>, <strong>Canaanville</strong>, <strong>New Marshfield</strong>, and <strong>Athens Township</strong>.
-          If you live in one of these areas and need meal delivery, please reach out.
-        </p>
-
-        <p>
-          We may be able to deliver farther out based upon driver availability.
+          We deliver up to 20 minutes from Athens Uptown. If you are more than 20 minutes from the meal pickup location, we may contact you to let you know we do not have a driver available that can accommodate the request.
         </p>
 
         <h2 className="mt-8 mb-4 text-2xl font-semibold text-foreground">
@@ -51,24 +46,22 @@ export default function MealDeliveryPage() {
         </p>
 
         <div className="mt-8 flex gap-4">
-          <div className="rounded-lg border bg-background p-6">
+          <div className="flex-1 rounded-lg border bg-background p-6">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
               Receive a Meal
             </h3>
             <p className="mb-4 text-sm">
-              Sign up to receive meal deliveries in your area.
+              Sign up to receive meal deliveries in your area. We deliver on Wednesdays at 12:00 PM and Thursdays at 5:00 PM.
             </p>
             <a
-              href="https://grasshoppersignup.com/s/1twc2g"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
+              href="/programs/meal-delivery/delivery-signup"
+              className="inline-block text-sm font-medium text-primary hover:underline"
             >
-              Request Meals →
+              Sign Up for Meal Delivery →
             </a>
           </div>
 
-          <div className="rounded-lg border bg-background p-6">
+          <div className="flex-1 rounded-lg border bg-background p-6">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
               Deliver Meals
             </h3>
@@ -76,12 +69,10 @@ export default function MealDeliveryPage() {
               Help deliver meals to those who can&apos;t get to town.
             </p>
             <a
-              href="https://www.signupgenius.com/go/10C044AA4A829AAF4CE9-64146307-free"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
+              href="/programs/meal-delivery/volunteer-signup"
+              className="inline-block text-sm font-medium text-primary hover:underline"
             >
-              Become a Volunteer →
+              Sign Up to Volunteer →
             </a>
           </div>
         </div>
