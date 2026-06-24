@@ -9,6 +9,11 @@ function formatDate(isoDate: string): string {
   return `${month}/${day}/${year}`;
 }
 
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.length === 10) {
@@ -46,7 +51,7 @@ function MealSignupsTableClient({ initialData }: { initialData: MealSignup[] }) 
   const [futureOnly, setFutureOnly] = useState(true);
 
   const signups = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = todayLocal();
     const filtered = futureOnly
       ? initialData.filter((s) => s.delivery_date >= today)
       : initialData;
