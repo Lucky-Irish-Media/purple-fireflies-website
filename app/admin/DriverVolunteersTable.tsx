@@ -1,5 +1,13 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import { getDriverVolunteers } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
+
+function formatDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-");
+  return `${month}/${day}/${year}`;
+}
 
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -12,8 +20,51 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
+type SortKey = keyof DriverVolunteer;
+type SortDir = "asc" | "desc";
+
+function sortData(data: DriverVolunteer[], key: SortKey, dir: SortDir): DriverVolunteer[] {
+  return [...data].sort((a, b) => {
+    const aVal = a[key] ?? "";
+    const bVal = b[key] ?? "";
+    const cmp = typeof aVal === "string" ? aVal.localeCompare(String(bVal)) : Number(aVal) - Number(bVal);
+    return dir === "asc" ? cmp : -cmp;
+  });
+}
+
 async function DriverVolunteersTable() {
-  const volunteers = await getDriverVolunteers();
+  const initialData = await getDriverVolunteers();
+
+  return <DriverVolunteersTableClient initialData={initialData} />;
+}
+
+function DriverVolunteersTableClient({ initialData }: { initialData: DriverVolunteer[] }) {
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
+    key: "delivery_date",
+    dir: "asc",
+  });
+
+  const volunteers = useMemo(() => sortData(initialData, sort.key, sort.dir), [initialData, sort]);
+
+  function toggleSort(key: SortKey) {
+    setSort((prev) => ({
+      key,
+      dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc",
+    }));
+  }
+
+  function SortHeader({ sortKey, children }: { sortKey: SortKey; children: React.ReactNode }) {
+    const isActive = sort.key === sortKey;
+    return (
+      <th
+        className="pb-3 font-semibold text-foreground cursor-pointer select-none hover:text-primary"
+        onClick={() => toggleSort(sortKey)}
+      >
+        {children}
+        {isActive ? (sort.dir === "asc" ? " ▲" : " ▼") : null}
+      </th>
+    );
+  }
 
   return (
     <section className="space-y-6">
@@ -29,14 +80,14 @@ async function DriverVolunteersTable() {
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-primary/10">
-                <th className="pb-3 font-semibold text-foreground">Name</th>
-                <th className="pb-3 font-semibold text-foreground">Email</th>
-                <th className="pb-3 font-semibold text-foreground">Phone</th>
-                <th className="pb-3 font-semibold text-foreground">On Signal</th>
-                <th className="pb-3 font-semibold text-foreground">Regions</th>
-                <th className="pb-3 font-semibold text-foreground">Delivery Day</th>
-                <th className="pb-3 font-semibold text-foreground">Delivery Date</th>
-                <th className="pb-3 font-semibold text-foreground">Submitted</th>
+                <SortHeader sortKey="name">Name</SortHeader>
+                <SortHeader sortKey="email">Email</SortHeader>
+                <SortHeader sortKey="phone">Phone</SortHeader>
+                <SortHeader sortKey="on_signal">On Signal</SortHeader>
+                <SortHeader sortKey="regions">Regions</SortHeader>
+                <SortHeader sortKey="delivery_day">Delivery Day</SortHeader>
+                <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
+                <SortHeader sortKey="created_at">Submitted</SortHeader>
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/10">
@@ -62,7 +113,7 @@ async function DriverVolunteersTable() {
                     {v.regions}
                   </td>
                   <td className="py-3 text-text-secondary capitalize">{v.delivery_day}</td>
-                  <td className="py-3 text-text-secondary">{v.delivery_date}</td>
+                  <td className="py-3 text-text-secondary">{formatDate(v.delivery_date)}</td>
                   <td className="py-3 text-text-secondary">
                     {new Date(v.created_at).toLocaleString()}
                   </td>

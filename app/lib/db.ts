@@ -88,8 +88,10 @@ function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
 
 export async function getMealSignups(): Promise<MealSignup[]> {
   const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
   const result = await db
-    .prepare("SELECT * FROM meal_signups ORDER BY created_at DESC")
+    .prepare("SELECT * FROM meal_signups WHERE delivery_date >= ? ORDER BY created_at DESC")
+    .bind(today)
     .all<MealSignup>();
   return result.results || [];
 }
@@ -153,8 +155,10 @@ export async function getMealSignupCountsByDate(): Promise<Record<string, number
 
 export async function getDriverVolunteers(): Promise<DriverVolunteer[]> {
   const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
   const result = await db
-    .prepare("SELECT * FROM driver_volunteers ORDER BY created_at DESC")
+    .prepare("SELECT * FROM driver_volunteers WHERE delivery_date >= ? ORDER BY created_at DESC")
+    .bind(today)
     .all<DriverVolunteer>();
   return result.results || [];
 }

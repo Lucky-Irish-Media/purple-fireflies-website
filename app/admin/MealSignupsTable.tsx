@@ -1,5 +1,13 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import { getMealSignups } from "@/app/lib/db";
 import { MealSignup } from "@/app/lib/db";
+
+function formatDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-");
+  return `${month}/${day}/${year}`;
+}
 
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -12,8 +20,51 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
+type SortKey = keyof MealSignup;
+type SortDir = "asc" | "desc";
+
+function sortData(data: MealSignup[], key: SortKey, dir: SortDir): MealSignup[] {
+  return [...data].sort((a, b) => {
+    const aVal = a[key] ?? "";
+    const bVal = b[key] ?? "";
+    const cmp = typeof aVal === "string" ? aVal.localeCompare(String(bVal)) : Number(aVal) - Number(bVal);
+    return dir === "asc" ? cmp : -cmp;
+  });
+}
+
 async function MealSignupsTable() {
-  const signups = await getMealSignups();
+  const initialData = await getMealSignups();
+
+  return <MealSignupsTableClient initialData={initialData} />;
+}
+
+function MealSignupsTableClient({ initialData }: { initialData: MealSignup[] }) {
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
+    key: "delivery_date",
+    dir: "asc",
+  });
+
+  const signups = useMemo(() => sortData(initialData, sort.key, sort.dir), [initialData, sort]);
+
+  function toggleSort(key: SortKey) {
+    setSort((prev) => ({
+      key,
+      dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc",
+    }));
+  }
+
+  function SortHeader({ sortKey, children }: { sortKey: SortKey; children: React.ReactNode }) {
+    const isActive = sort.key === sortKey;
+    return (
+      <th
+        className="pb-3 font-semibold text-foreground cursor-pointer select-none hover:text-primary"
+        onClick={() => toggleSort(sortKey)}
+      >
+        {children}
+        {isActive ? (sort.dir === "asc" ? " ▲" : " ▼") : null}
+      </th>
+    );
+  }
 
   return (
     <section className="space-y-6">
@@ -29,15 +80,15 @@ async function MealSignupsTable() {
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-primary/10">
-                <th className="pb-3 font-semibold text-foreground">Name</th>
-                <th className="pb-3 font-semibold text-foreground">Email</th>
-                <th className="pb-3 font-semibold text-foreground">Phone</th>
-                <th className="pb-3 font-semibold text-foreground">Address</th>
-                <th className="pb-3 font-semibold text-foreground">Meal Type</th>
-                <th className="pb-3 font-semibold text-foreground">Delivery Day</th>
-                <th className="pb-3 font-semibold text-foreground">Delivery Date</th>
-                <th className="pb-3 font-semibold text-foreground">Comments</th>
-                <th className="pb-3 font-semibold text-foreground">Submitted</th>
+                <SortHeader sortKey="name">Name</SortHeader>
+                <SortHeader sortKey="email">Email</SortHeader>
+                <SortHeader sortKey="phone">Phone</SortHeader>
+                <SortHeader sortKey="address1">Address</SortHeader>
+                <SortHeader sortKey="meal_type">Meal Type</SortHeader>
+                <SortHeader sortKey="delivery_day">Delivery Day</SortHeader>
+                <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
+                <SortHeader sortKey="comments">Comments</SortHeader>
+                <SortHeader sortKey="created_at">Submitted</SortHeader>
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/10">
@@ -63,7 +114,7 @@ async function MealSignupsTable() {
                     </span>
                   </td>
                   <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
-                  <td className="py-3 text-text-secondary">{signup.delivery_date}</td>
+                  <td className="py-3 text-text-secondary">{formatDate(signup.delivery_date)}</td>
                   <td className="py-3 text-text-secondary max-w-xs truncate">
                     {signup.comments || "—"}
                   </td>
