@@ -204,6 +204,7 @@ export function MealSignupForm() {
               id="state"
               name="state"
               required
+              defaultValue="OH"
               className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground ${
                 state?.errors?.state ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
               }`}
