@@ -58,7 +58,7 @@ export function MealSignupForm() {
 
   const mealTypeOptions = [
     { value: "regular", label: "Regular" },
-    { value: "vegan", label: "Vegan" },
+    { value: "vegan", label: "Vegan / GF" },
   ];
 
   return (
