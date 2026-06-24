@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { getMealSignups } from "@/app/lib/db";
-import { MealSignup } from "@/app/lib/db";
+import type { MealSignup } from "@/app/lib/db";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
@@ -37,13 +36,7 @@ function sortData(data: MealSignup[], key: SortKey, dir: SortDir): MealSignup[] 
   });
 }
 
-async function MealSignupsTable() {
-  const initialData = await getMealSignups();
-
-  return <MealSignupsTableClient initialData={initialData} />;
-}
-
-function MealSignupsTableClient({ initialData }: { initialData: MealSignup[] }) {
+export default function MealSignupsTable({ initialData }: { initialData: MealSignup[] }) {
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: "delivery_date",
     dir: "asc",
@@ -153,5 +146,3 @@ function MealSignupsTableClient({ initialData }: { initialData: MealSignup[] }) 
     </section>
   );
 }
-
-export default MealSignupsTable;

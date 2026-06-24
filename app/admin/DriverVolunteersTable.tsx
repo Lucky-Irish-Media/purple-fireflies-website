@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { getDriverVolunteers } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 
 function formatDate(isoDate: string): string {
@@ -37,13 +36,7 @@ function sortData(data: DriverVolunteer[], key: SortKey, dir: SortDir): DriverVo
   });
 }
 
-async function DriverVolunteersTable() {
-  const initialData = await getDriverVolunteers();
-
-  return <DriverVolunteersTableClient initialData={initialData} />;
-}
-
-function DriverVolunteersTableClient({ initialData }: { initialData: DriverVolunteer[] }) {
+export default function DriverVolunteersTable({ initialData }: { initialData: DriverVolunteer[] }) {
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: "delivery_date",
     dir: "asc",
@@ -149,5 +142,3 @@ function DriverVolunteersTableClient({ initialData }: { initialData: DriverVolun
     </section>
   );
 }
-
-export default DriverVolunteersTable;
