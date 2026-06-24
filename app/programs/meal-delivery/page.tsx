@@ -51,7 +51,7 @@ export default function MealDeliveryPage() {
         </p>
 
         <div className="mt-8 flex gap-4">
-          <div className="rounded-lg border bg-background p-6">
+          <div className="flex-1 rounded-lg border bg-background p-6">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
               Receive a Meal
             </h3>
@@ -66,7 +66,7 @@ export default function MealDeliveryPage() {
             </a>
           </div>
 
-          <div className="rounded-lg border bg-background p-6">
+          <div className="flex-1 rounded-lg border bg-background p-6">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
               Deliver Meals
             </h3>
