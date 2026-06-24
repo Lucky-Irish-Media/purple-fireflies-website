@@ -28,11 +28,22 @@ function generateRandomPassword(): string {
   const array = new Uint8Array(20);
   crypto.getRandomValues(array);
 
-  let password = "";
-  for (let i = 0; i < 20; i++) {
-    password += all[array[i] % all.length];
+  const password: string[] = [];
+  password.push(uppercase[array[0] % uppercase.length]);
+  password.push(lowercase[array[1] % lowercase.length]);
+  password.push(digits[array[2] % digits.length]);
+  password.push(special[array[3] % special.length]);
+
+  for (let i = 4; i < 20; i++) {
+    password.push(all[array[i] % all.length]);
   }
-  return password;
+
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = array[i] % (i + 1);
+    [password[i], password[j]] = [password[j], password[i]];
+  }
+
+  return password.join("");
 }
 
 export async function createUserAction(
