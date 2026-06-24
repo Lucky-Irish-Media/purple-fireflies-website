@@ -9,7 +9,7 @@ import {
   type UsersActionState,
 } from "@/app/actions/users";
 import { DataTable } from "./components/DataTable";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 function getRoleBadge(role: string) {
   return (
@@ -65,21 +65,25 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       id: "name",
       header: "Name",
       cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.email, {
       id: "email",
       header: "Email",
       cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.role, {
       id: "role",
       header: "Role",
       cell: (info) => getRoleBadge(info.getValue()),
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",
       header: "Created",
       cell: (info) => <span className="text-text-secondary">{new Date(info.getValue()).toLocaleDateString()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.display({
       id: "actions",

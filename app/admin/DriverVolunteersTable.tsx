@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 import { DataTable } from "./components/DataTable";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
@@ -51,36 +51,43 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
       id: "name",
       header: "Name",
       cell: (info) => <span className="text-foreground">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.email, {
       id: "email",
       header: "Email",
       cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.phone, {
       id: "phone",
       header: "Phone",
       cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.on_signal, {
       id: "on_signal",
       header: "On Signal",
       cell: (info) => getSignalBadge(info.getValue()),
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.regions, {
       id: "regions",
       header: "Regions",
       cell: (info) => <span className="text-text-secondary max-w-xs truncate block">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.delivery_day, {
       id: "delivery_day",
       header: "Delivery Day",
       cell: (info) => getDeliveryDayBadge(info.getValue()),
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.delivery_date, {
       id: "delivery_date",
       header: "Delivery Date",
       cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",
@@ -88,6 +95,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
       cell: (info) => (
         <span className="text-text-secondary">{new Date(info.getValue()).toLocaleString()}</span>
       ),
+      filterFn: filterFns.includesString,
     }),
   ] as const, []);
 

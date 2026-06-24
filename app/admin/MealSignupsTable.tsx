@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { MealSignup } from "@/app/lib/db";
 import { DataTable } from "./components/DataTable";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
@@ -55,16 +55,19 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
       id: "name",
       header: "Name",
       cell: (info) => <span className="text-foreground">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.email, {
       id: "email",
       header: "Email",
       cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.phone, {
       id: "phone",
       header: "Phone",
       cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.address1, {
       id: "address1",
@@ -79,31 +82,37 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
           </span>
         );
       },
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.meal_type, {
       id: "meal_type",
       header: "Meal Type",
       cell: (info) => getMealTypeBadge(info.getValue()),
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.contact_method, {
       id: "contact_method",
       header: "Contact Method",
       cell: (info) => getContactMethodBadge(info.getValue()),
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.delivery_day, {
       id: "delivery_day",
       header: "Delivery Day",
       cell: (info) => getDeliveryDayBadge(info.getValue()),
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.delivery_date, {
       id: "delivery_date",
       header: "Delivery Date",
       cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.comments, {
       id: "comments",
       header: "Comments",
       cell: (info) => <span className="text-text-secondary max-w-xs truncate block">{info.getValue() || "—"}</span>,
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",
@@ -111,6 +120,7 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
       cell: (info) => (
         <span className="text-text-secondary">{new Date(info.getValue()).toLocaleString()}</span>
       ),
+      filterFn: filterFns.includesString,
     }),
   ] as const, []);
 

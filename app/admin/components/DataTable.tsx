@@ -125,6 +125,40 @@ export function DataTable<TData extends RowData>({
                 ))}
               </tr>
             ))}
+            {enableFiltering && (
+              <tr className="border-b border-primary/10">
+                {getHeaderGroups()[0]?.headers.map((header) => (
+                  <th key={header.id} className="pb-2">
+                    {header.column.getCanFilter() && (
+                      <div className="w-full">
+                        {header.column.getFilterValue() !== undefined && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              header.column.setFilterValue(undefined);
+                            }}
+                            className="absolute mt-1 mr-1 right-0 text-red-500 hover:text-red-700 text-xs"
+                          >
+                            ✕
+                          </button>
+                        )}
+                        <input
+                          type="text"
+                          placeholder={`Filter ${header.column.id}...`}
+                          value={(header.column.getFilterValue() as string) || ""}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            header.column.setFilterValue(e.target.value);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            )}
           </thead>
           <tbody className="divide-y divide-primary/10">
             {getRowModel().rows.length === 0 ? (
