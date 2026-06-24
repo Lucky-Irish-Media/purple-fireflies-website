@@ -14,6 +14,8 @@ export const LoginFormSchema = z.object({
     .trim(),
 });
 
+const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
+
 const stateAbbreviations = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
   "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
@@ -25,7 +27,7 @@ const stateAbbreviations = [
 export const MealSignupSchema = z.object({
   name: z.string().min(1, { message: "Name is required." }).trim(),
   email: z.string().email({ message: "Please enter a valid email." }).trim(),
-  phone: z.string().min(10, { message: "Phone number is required." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
   address1: z.string().min(1, { message: "Address line 1 is required." }).trim(),
   address2: z.string().optional(),
   city: z.string().min(1, { message: "City is required." }).trim(),
@@ -41,7 +43,7 @@ const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Gl
 export const DriverVolunteerSchema = z.object({
   name: z.string().min(1, { message: "Name is required." }).trim(),
   email: z.string().email({ message: "Please enter a valid email." }).trim(),
-  phone: z.string().min(10, { message: "Phone number is required." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
   onSignal: z.enum(["yes", "no", "willing"], { message: "Please select an option." }),
   deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
   regions: z.array(z.enum(regions)).min(1, { message: "Please select at least one region." }),
