@@ -158,3 +158,75 @@ export async function getDriverVolunteers(): Promise<DriverVolunteer[]> {
     .all<DriverVolunteer>();
   return result.results || [];
 }
+
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  password_hash?: string;
+  role: "admin" | "member";
+  created_at: string;
+}
+
+export async function getUsers(): Promise<User[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC")
+    .all<User>();
+  return result.results || [];
+}
+
+export async function getUserById(id: number): Promise<User | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT id, email, name, role, created_at FROM users WHERE id = ?")
+    .bind(id)
+    .first<User>();
+  return result || null;
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM users WHERE email = ?")
+    .bind(email)
+    .first<User>();
+  return result || null;
+}
+
+export async function createUser(data: {
+  email: string;
+  name: string;
+  passwordHash: string;
+  role: "admin" | "member";
+}): Promise<User> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO users (email, name, password_hash, role)
+       VALUES (?, ?, ?, ?)
+       RETURNING id, email, name, role, created_at`
+    )
+    .bind(data.email, data.name, data.passwordHash, data.role)
+    .first<User>();
+  if (!result) {
+    throw new Error("Failed to create user");
+  }
+  return result;
+}
+
+export async function deleteUser(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM users WHERE id = ?")
+    .bind(id)
+    .run();
+}
+
+export async function updateUserPassword(id: number, passwordHash: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+    .bind(passwordHash, id)
+    .run();
+}
