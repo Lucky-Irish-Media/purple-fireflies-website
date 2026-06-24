@@ -52,7 +52,9 @@ function generateDeliveryDateOptions() {
   return options;
 }
 
-export function MealSignupForm() {
+const MAX_SIGNUPS_PER_DATE = 15;
+
+export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string, number> }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
   const [showLookup, setShowLookup] = useState(false);
 
@@ -294,17 +296,28 @@ export function MealSignupForm() {
           </legend>
           <p className="text-sm text-text-secondary">Select one or more delivery dates</p>
           <div className="space-y-2">
-            {deliveryDateOptions.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 cursor-pointer block">
-                <input
-                  type="checkbox"
-                  name="deliveryDates"
-                  value={option.value}
-                  className="h-4 w-4 text-primary border-input focus:ring-primary rounded"
-                />
-                <span className="text-foreground">{option.label}</span>
-              </label>
-            ))}
+            {deliveryDateOptions.map((option) => {
+              const count = dateCounts[option.value] ?? 0;
+              const spacesLeft = MAX_SIGNUPS_PER_DATE - count;
+              const isFull = spacesLeft <= 0;
+              return (
+                <label key={option.value} className={`flex items-center gap-2 ${isFull ? "cursor-not-allowed" : "cursor-pointer"} block`}>
+                  <input
+                    type="checkbox"
+                    name="deliveryDates"
+                    value={option.value}
+                    disabled={isFull}
+                    className="h-4 w-4 text-primary border-input focus:ring-primary rounded disabled:opacity-40"
+                  />
+                  <span className={isFull ? "text-text-secondary line-through" : "text-foreground"}>
+                    {option.label}
+                  </span>
+                  <span className={`text-xs ${isFull ? "text-red-400" : "text-text-secondary"}`}>
+                    {isFull ? "Full" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
+                  </span>
+                </label>
+              );
+            })}
           </div>
           {state?.errors?.deliveryDates && (
             <p className="text-sm text-red-500" role="alert">
@@ -334,7 +347,7 @@ export function MealSignupForm() {
 
         {state?.message === "success" && (
           <div className="rounded-lg bg-green-50 p-4 text-green-600" role="status">
-            Thank you for signing up! Your delivery is scheduled for {state.selectedDate ? new Date(state.selectedDate).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) : "the selected date"}. We&apos;ll be in touch soon with delivery details.
+            Thank you for signing up! Your delivery is scheduled for {state.selectedDate || "the selected date"}. We&apos;ll be in touch soon with delivery details.
           </div>
         )}
 

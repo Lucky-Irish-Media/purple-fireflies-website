@@ -137,6 +137,20 @@ export async function createDriverVolunteer(data: {
   return result;
 }
 
+export async function getMealSignupCountsByDate(): Promise<Record<string, number>> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare("SELECT delivery_date, COUNT(*) as count FROM meal_signups WHERE delivery_date >= ? GROUP BY delivery_date")
+    .bind(today)
+    .all<{ delivery_date: string; count: number }>();
+  const counts: Record<string, number> = {};
+  for (const row of result.results || []) {
+    counts[row.delivery_date] = row.count;
+  }
+  return counts;
+}
+
 export async function getDriverVolunteers(): Promise<DriverVolunteer[]> {
   const db = await getDB();
   const result = await db
