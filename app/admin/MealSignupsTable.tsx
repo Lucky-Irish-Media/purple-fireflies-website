@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import type { MealSignup } from "@/app/lib/db";
+import { DataTable } from "./components/DataTable";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   return `${month}/${day}/${year}`;
-}
-
-function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatPhone(phone: string): string {
@@ -24,127 +21,111 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
-type SortKey = keyof MealSignup;
-type SortDir = "asc" | "desc";
-
-function sortData(data: MealSignup[], key: SortKey, dir: SortDir): MealSignup[] {
-  return [...data].sort((a, b) => {
-    const aVal = a[key] ?? "";
-    const bVal = b[key] ?? "";
-    const cmp = typeof aVal === "string" ? aVal.localeCompare(String(bVal)) : Number(aVal) - Number(bVal);
-    return dir === "asc" ? cmp : -cmp;
-  });
+function getMealTypeBadge(mealType: string) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        mealType === "vegan"
+          ? "bg-green-100 text-green-800"
+          : "bg-blue-100 text-blue-800"
+      }`}
+    >
+      {mealType}
+    </span>
+  );
 }
 
+function getContactMethodBadge(method: string) {
+  return (
+    <span className="capitalize text-text-secondary">{method}</span>
+  );
+}
+
+function getDeliveryDayBadge(day: string) {
+  return (
+    <span className="capitalize text-text-secondary">{day}</span>
+  );
+}
+
+const columnHelper = createColumnHelper<MealSignup>();
+
 export default function MealSignupsTable({ initialData }: { initialData: MealSignup[] }) {
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
-    key: "delivery_date",
-    dir: "asc",
-  });
-  const [futureOnly, setFutureOnly] = useState(true);
+  const columns = useMemo(() => [
+    columnHelper.accessor((row) => row.name, {
+      id: "name",
+      header: "Name",
+      cell: (info) => <span className="text-foreground">{info.getValue()}</span>,
+    }),
+    columnHelper.accessor((row) => row.email, {
+      id: "email",
+      header: "Email",
+      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+    }),
+    columnHelper.accessor((row) => row.phone, {
+      id: "phone",
+      header: "Phone",
+      cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
+    }),
+    columnHelper.accessor((row) => row.address1, {
+      id: "address1",
+      header: "Address",
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <span className="text-text-secondary max-w-xs truncate block">
+            {row.address1}
+            {row.address2 && `, ${row.address2}`}
+            {`, ${row.city}, ${row.state} ${row.zip_code}`}
+          </span>
+        );
+      },
+    }),
+    columnHelper.accessor((row) => row.meal_type, {
+      id: "meal_type",
+      header: "Meal Type",
+      cell: (info) => getMealTypeBadge(info.getValue()),
+    }),
+    columnHelper.accessor((row) => row.contact_method, {
+      id: "contact_method",
+      header: "Contact Method",
+      cell: (info) => getContactMethodBadge(info.getValue()),
+    }),
+    columnHelper.accessor((row) => row.delivery_day, {
+      id: "delivery_day",
+      header: "Delivery Day",
+      cell: (info) => getDeliveryDayBadge(info.getValue()),
+    }),
+    columnHelper.accessor((row) => row.delivery_date, {
+      id: "delivery_date",
+      header: "Delivery Date",
+      cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+    }),
+    columnHelper.accessor((row) => row.comments, {
+      id: "comments",
+      header: "Comments",
+      cell: (info) => <span className="text-text-secondary max-w-xs truncate block">{info.getValue() || "—"}</span>,
+    }),
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
+      header: "Submitted",
+      cell: (info) => (
+        <span className="text-text-secondary">{new Date(info.getValue()).toLocaleString()}</span>
+      ),
+    }),
+  ] as const, []);
 
-  const signups = useMemo(() => {
-    const today = todayLocal();
-    const filtered = futureOnly
-      ? initialData.filter((s) => s.delivery_date >= today)
-      : initialData;
-    return sortData(filtered, sort.key, sort.dir);
-  }, [initialData, sort, futureOnly]);
-
-  function toggleSort(key: SortKey) {
-    setSort((prev) => ({
-      key,
-      dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc",
-    }));
-  }
-
-  function SortHeader({ sortKey, children }: { sortKey: SortKey; children: React.ReactNode }) {
-    const isActive = sort.key === sortKey;
-    return (
-      <th
-        className="pb-3 font-semibold text-foreground cursor-pointer select-none hover:text-primary"
-        onClick={() => toggleSort(sortKey)}
-      >
-        {children}
-        {isActive ? (sort.dir === "asc" ? " ▲" : " ▼") : null}
-      </th>
-    );
-  }
+  const typedColumns = columns as unknown as ColumnDef<MealSignup, unknown>[];
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Meal Delivery Signups</h2>
-        <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-          <input
-            type="checkbox"
-            checked={futureOnly}
-            onChange={(e) => setFutureOnly(e.target.checked)}
-            className="accent-primary"
-          />
-          Show future dates only
-        </label>
-      </div>
-      <p className="text-text-secondary">
-        Total signups: {signups.length}
-      </p>
-
-      {signups.length === 0 ? (
-        <p className="text-text-secondary">No meal signups yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b border-primary/10">
-                <SortHeader sortKey="name">Name</SortHeader>
-                <SortHeader sortKey="email">Email</SortHeader>
-                <SortHeader sortKey="phone">Phone</SortHeader>
-                <SortHeader sortKey="address1">Address</SortHeader>
-                <SortHeader sortKey="meal_type">Meal Type</SortHeader>
-                <SortHeader sortKey="contact_method">Contact Method</SortHeader>
-                <SortHeader sortKey="delivery_day">Delivery Day</SortHeader>
-                <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
-                <SortHeader sortKey="comments">Comments</SortHeader>
-                <SortHeader sortKey="created_at">Submitted</SortHeader>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-primary/10">
-              {signups.map((signup: MealSignup) => (
-                <tr key={signup.id} className="hover:bg-primary/5">
-                  <td className="py-3 text-foreground">{signup.name}</td>
-                  <td className="py-3 text-text-secondary">{signup.email}</td>
-                  <td className="py-3 text-text-secondary">{formatPhone(signup.phone)}</td>
-                  <td className="py-3 text-text-secondary max-w-xs truncate">
-                    {signup.address1}
-                    {signup.address2 && `, ${signup.address2}`}
-                    {`, ${signup.city}, ${signup.state} ${signup.zip_code}`}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        signup.meal_type === "vegan"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {signup.meal_type}
-                    </span>
-                  </td>
-                    <td className="py-3 text-text-secondary capitalize">{signup.contact_method}</td>
-                    <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
-                  <td className="py-3 text-text-secondary">{formatDate(signup.delivery_date)}</td>
-                  <td className="py-3 text-text-secondary max-w-xs truncate">
-                    {signup.comments || "—"}
-                  </td>
-                  <td className="py-3 text-text-secondary">
-                    {new Date(signup.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+    <DataTable
+      data={initialData}
+      columns={typedColumns}
+      searchKey="name"
+      searchPlaceholder="Search by name..."
+      enableSorting
+      enableFiltering
+      enablePagination
+      pageSize={15}
+    />
   );
 }
