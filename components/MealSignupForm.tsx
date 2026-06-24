@@ -277,25 +277,25 @@ export function MealSignupForm() {
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
-            Delivery Date <span className="text-red-500">*</span>
+            Delivery Dates <span className="text-red-500">*</span>
           </legend>
+          <p className="text-sm text-text-secondary">Select one or more delivery dates</p>
           <div className="space-y-2">
             {deliveryDateOptions.map((option) => (
               <label key={option.value} className="flex items-center gap-2 cursor-pointer block">
                 <input
-                  type="radio"
-                  name="deliveryDate"
+                  type="checkbox"
+                  name="deliveryDates"
                   value={option.value}
-                  required
-                  className="h-4 w-4 text-primary border-input focus:ring-primary"
+                  className="h-4 w-4 text-primary border-input focus:ring-primary rounded"
                 />
                 <span className="text-foreground">{option.label}</span>
               </label>
             ))}
           </div>
-          {state?.errors?.deliveryDate && (
+          {state?.errors?.deliveryDates && (
             <p className="text-sm text-red-500" role="alert">
-              {state.errors.deliveryDate[0]}
+              {state.errors.deliveryDates[0]}
             </p>
           )}
         </fieldset>

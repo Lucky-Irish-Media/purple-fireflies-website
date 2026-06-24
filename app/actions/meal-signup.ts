@@ -20,6 +20,8 @@ export async function submitMealSignup(
   formData: FormData
 ): Promise<MealSignupFormState> {
   try {
+    const deliveryDates = formData.getAll("deliveryDates") as string[];
+
     const validatedFields = MealSignupSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
@@ -30,7 +32,7 @@ export async function submitMealSignup(
       state: formData.get("state"),
       zipCode: formData.get("zipCode"),
       mealType: formData.get("mealType"),
-      deliveryDate: formData.get("deliveryDate"),
+      deliveryDates,
       comments: formData.get("comments"),
     });
 
@@ -40,23 +42,29 @@ export async function submitMealSignup(
 
     const data = validatedFields.data;
 
-    const signup = await createMealSignup({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address1: data.address1,
-      address2: data.address2,
-      city: data.city,
-      state: data.state,
-      zipCode: data.zipCode,
-      mealType: data.mealType,
-      deliveryDate: data.deliveryDate,
-      comments: data.comments,
-    });
+    const signups = [];
+    for (const deliveryDate of data.deliveryDates) {
+      const signup = await createMealSignup({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        mealType: data.mealType,
+        deliveryDate,
+        comments: data.comments,
+      });
+      signups.push(signup);
+    }
 
-    await sendMealSignupConfirmation(signup);
+    await sendMealSignupConfirmation(signups[0]);
 
-    return { message: "success", selectedDate: data.deliveryDate };
+    const datesFormatted = data.deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+
+    return { message: "success", selectedDate: datesFormatted };
   } catch (e) {
     console.error("meal signup action error:", e);
     return { message: getErrorMessage(e) };

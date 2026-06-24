@@ -32,12 +32,12 @@ export const MealSignupSchema = z.object({
   state: z.enum(stateAbbreviations, { message: "Please select a valid state." }),
   zipCode: z.string().min(5, { message: "ZIP code is required." }).max(10).trim(),
   mealType: z.enum(["regular", "vegan"], { message: "Please select a meal type." }),
-  deliveryDate: z.string().min(1, { message: "Please select a delivery date." }),
+  deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
   comments: z.string().optional(),
 });
 
 export type MealSignupFormState =
-  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; mealType?: string[]; deliveryDate?: string[]; comments?: string[] }; message?: string; selectedDate?: string }
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; mealType?: string[]; deliveryDates?: string[]; comments?: string[] }; message?: string; selectedDate?: string }
   | undefined;
 
 export type LoginFormState =
