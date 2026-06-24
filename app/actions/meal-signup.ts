@@ -32,6 +32,7 @@ export async function submitMealSignup(
       state: formData.get("state"),
       zipCode: formData.get("zipCode"),
       mealType: formData.get("mealType"),
+      contactMethod: formData.get("contactMethod"),
       deliveryDates,
       comments: formData.get("comments"),
     });
@@ -54,6 +55,7 @@ export async function submitMealSignup(
         state: data.state,
         zipCode: data.zipCode,
         mealType: data.mealType,
+        contactMethod: data.contactMethod,
         deliveryDate,
         comments: data.comments,
       });

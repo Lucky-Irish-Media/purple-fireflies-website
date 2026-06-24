@@ -101,6 +101,7 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
                 <SortHeader sortKey="phone">Phone</SortHeader>
                 <SortHeader sortKey="address1">Address</SortHeader>
                 <SortHeader sortKey="meal_type">Meal Type</SortHeader>
+                <SortHeader sortKey="contact_method">Contact Method</SortHeader>
                 <SortHeader sortKey="delivery_day">Delivery Day</SortHeader>
                 <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
                 <SortHeader sortKey="comments">Comments</SortHeader>
@@ -129,7 +130,8 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
                       {signup.meal_type}
                     </span>
                   </td>
-                  <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
+                    <td className="py-3 text-text-secondary capitalize">{signup.contact_method}</td>
+                    <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
                   <td className="py-3 text-text-secondary">{formatDate(signup.delivery_date)}</td>
                   <td className="py-3 text-text-secondary max-w-xs truncate">
                     {signup.comments || "—"}

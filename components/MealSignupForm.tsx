@@ -152,6 +152,32 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
         </div>
 
         <div className="space-y-2">
+          <label htmlFor="contactMethod" className="block text-sm font-medium text-foreground">
+            What is the best way to contact you? <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="contactMethod"
+            name="contactMethod"
+            required
+            defaultValue="call"
+            className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground ${
+              state?.errors?.contactMethod ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
+            }`}
+            aria-invalid={state?.errors?.contactMethod ? "true" : "false"}
+            aria-describedby={state?.errors?.contactMethod ? "contactMethod-error" : undefined}
+          >
+            <option value="call">Call</option>
+            <option value="text">Text</option>
+            <option value="email">Email</option>
+          </select>
+          {state?.errors?.contactMethod && (
+            <p id="contactMethod-error" className="text-sm text-red-500" role="alert">
+              {state.errors.contactMethod[0]}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <label htmlFor="address1" className="block text-sm font-medium text-foreground">
             Address Line 1 <span className="text-red-500">*</span>
           </label>

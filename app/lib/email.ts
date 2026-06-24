@@ -5,6 +5,7 @@ export async function sendMealSignupConfirmation(signup: MealSignup): Promise<vo
   console.log("[EMAIL STUB] Meal signup confirmation would be sent to:", signup.email);
   console.log("[EMAIL STUB] Signup details:", {
     name: signup.name,
+    contactMethod: signup.contact_method,
     mealType: signup.meal_type,
     deliveryDay: signup.delivery_day,
     address,

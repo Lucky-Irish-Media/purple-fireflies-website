@@ -17,6 +17,7 @@ export interface MealSignup {
   state: string;
   zip_code: string;
   meal_type: "regular" | "vegan";
+  contact_method: "call" | "text" | "email";
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   comments: string | null;
@@ -33,17 +34,18 @@ export async function createMealSignup(data: {
   state: string;
   zipCode: string;
   mealType: "regular" | "vegan";
+  contactMethod: "call" | "text" | "email";
   deliveryDate: string;
   comments?: string;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO meal_signups (name, email, phone, address1, address2, city, state, zip_code, meal_type, delivery_day, delivery_date, comments)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO meal_signups (name, email, phone, address1, address2, city, state, zip_code, meal_type, contact_method, delivery_day, delivery_date, comments)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to create meal signup");
