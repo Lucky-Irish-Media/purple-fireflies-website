@@ -62,7 +62,7 @@ export type LoginFormState =
   | undefined;
 
 export interface SessionPayload {
-  adminId: number;
+  userId: number;
   email: string;
   role: string;
   expiresAt: Date;

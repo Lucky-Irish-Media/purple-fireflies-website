@@ -84,8 +84,7 @@ export async function resetPasswordAction(
 ): Promise<UsersActionState> {
   try {
     const userId = Number(formData.get("userId"));
-    const source = formData.get("source") as "admins" | "users" | null;
-    if (!userId || !source) {
+    if (!userId) {
       return { message: "Invalid user ID." };
     }
 
@@ -93,7 +92,7 @@ export async function resetPasswordAction(
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(plainPassword, salt);
 
-    await updateUserPassword(userId, passwordHash, source);
+    await updateUserPassword(userId, passwordHash);
 
     revalidatePath("/admin/users");
 
@@ -113,12 +112,11 @@ export async function deleteUserAction(
 ): Promise<UsersActionState> {
   try {
     const userId = Number(formData.get("userId"));
-    const source = formData.get("source") as "admins" | "users" | null;
-    if (!userId || !source) {
+    if (!userId) {
       return { message: "Invalid user ID." };
     }
 
-    await deleteUserRecord(userId, source);
+    await deleteUserRecord(userId);
 
     const users = await getUsers();
 

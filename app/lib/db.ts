@@ -6,15 +6,6 @@ async function getDB(): Promise<D1Database> {
   return env.purple_fireflies_db;
 }
 
-export interface Admin {
-  id: number;
-  email: string;
-  name: string;
-  password_hash: string;
-  role: string;
-  created_at: string;
-}
-
 export interface MealSignup {
   id: number;
   name: string;
@@ -30,26 +21,6 @@ export interface MealSignup {
   delivery_date: string;
   comments: string | null;
   created_at: string;
-}
-
-export async function getAdminByEmail(
-  email: string
-): Promise<Admin | null> {
-  const db = await getDB();
-  const result = await db
-    .prepare("SELECT * FROM admins WHERE email = ?")
-    .bind(email)
-    .first<Admin>();
-  return result || null;
-}
-
-export async function getAdminById(id: number): Promise<Admin | null> {
-  const db = await getDB();
-  const result = await db
-    .prepare("SELECT id, email, name, role, created_at FROM admins WHERE id = ?")
-    .bind(id)
-    .first<Admin>();
-  return result || null;
 }
 
 export async function createMealSignup(data: {
@@ -166,16 +137,14 @@ export interface User {
   password_hash?: string;
   role: "admin" | "member";
   created_at: string;
-  source: "admins" | "users";
 }
 
 export async function getUsers(): Promise<User[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT id, email, name, 'admin' as role, created_at, 'admins' as source FROM admins
-       UNION ALL
-       SELECT id, email, name, role, created_at, 'users' as source FROM users
+      `SELECT id, email, name, role, created_at
+       FROM users
        ORDER BY created_at DESC`
     )
     .all<User>();
@@ -184,13 +153,8 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDB();
-  const admin = await db
-    .prepare("SELECT id, email, name, 'admin' as role, created_at, 'admins' as source, password_hash FROM admins WHERE email = ?")
-    .bind(email)
-    .first<User>();
-  if (admin) return admin;
   const user = await db
-    .prepare("SELECT id, email, name, role, created_at, 'users' as source, password_hash FROM users WHERE email = ?")
+    .prepare("SELECT id, email, name, role, created_at, password_hash FROM users WHERE email = ?")
     .bind(email)
     .first<User>();
   return user || null;
@@ -214,23 +178,21 @@ export async function createUser(data: {
   if (!result) {
     throw new Error("Failed to create user");
   }
-  return { ...result, source: "users" as const };
+  return result;
 }
 
-export async function deleteUserRecord(id: number, source: "admins" | "users"): Promise<void> {
+export async function deleteUserRecord(id: number): Promise<void> {
   const db = await getDB();
-  const table = source === "admins" ? "admins" : "users";
   await db
-    .prepare(`DELETE FROM ${table} WHERE id = ?`)
+    .prepare("DELETE FROM users WHERE id = ?")
     .bind(id)
     .run();
 }
 
-export async function updateUserPassword(id: number, passwordHash: string, source: "admins" | "users"): Promise<void> {
+export async function updateUserPassword(id: number, passwordHash: string): Promise<void> {
   const db = await getDB();
-  const table = source === "admins" ? "admins" : "users";
   await db
-    .prepare(`UPDATE ${table} SET password_hash = ? WHERE id = ?`)
+    .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
     .bind(passwordHash, id)
     .run();
 }
