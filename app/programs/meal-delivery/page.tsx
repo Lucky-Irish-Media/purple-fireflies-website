@@ -56,15 +56,13 @@ export default function MealDeliveryPage() {
               Receive a Meal
             </h3>
             <p className="mb-4 text-sm">
-              Sign up to receive meal deliveries in your area.
+              Sign up to receive meal deliveries in your area. We deliver on Wednesdays at 12:00 PM and Thursdays at 5:00 PM.
             </p>
             <a
-              href="https://grasshoppersignup.com/s/1twc2g"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
+              href="/programs/meal-delivery/delivery-signup"
+              className="inline-block text-sm font-medium text-primary hover:underline"
             >
-              Request Meals →
+              Sign Up for Meal Delivery →
             </a>
           </div>
 

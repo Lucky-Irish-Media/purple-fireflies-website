@@ -14,6 +14,18 @@ export interface Admin {
   created_at: string;
 }
 
+export interface MealSignup {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  meal_type: "regular" | "vegan";
+  delivery_day: "wednesday" | "thursday";
+  comments: string | null;
+  created_at: string;
+}
+
 export async function getAdminByEmail(
   email: string
 ): Promise<Admin | null> {
@@ -32,4 +44,36 @@ export async function getAdminById(id: number): Promise<Admin | null> {
     .bind(id)
     .first<Admin>();
   return result || null;
+}
+
+export async function createMealSignup(data: {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  mealType: "regular" | "vegan";
+  deliveryDay: "wednesday" | "thursday";
+  comments?: string;
+}): Promise<MealSignup> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO meal_signups (name, email, phone, address, meal_type, delivery_day, comments)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, data.address, data.mealType, data.deliveryDay, data.comments || null)
+    .first<MealSignup>();
+  if (!result) {
+    throw new Error("Failed to create meal signup");
+  }
+  return result;
+}
+
+export async function getMealSignups(): Promise<MealSignup[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM meal_signups ORDER BY created_at DESC")
+    .all<MealSignup>();
+  return result.results || [];
 }

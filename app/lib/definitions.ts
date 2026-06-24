@@ -14,6 +14,20 @@ export const LoginFormSchema = z.object({
     .trim(),
 });
 
+export const MealSignupSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().min(10, { message: "Phone number is required." }).trim(),
+  address: z.string().min(1, { message: "Address is required." }).trim(),
+  mealType: z.enum(["regular", "vegan"], { message: "Please select a meal type." }),
+  deliveryDay: z.enum(["wednesday", "thursday"], { message: "Please select a delivery day." }),
+  comments: z.string().optional(),
+});
+
+export type MealSignupFormState =
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address?: string[]; mealType?: string[]; deliveryDay?: string[]; comments?: string[] }; message?: string }
+  | undefined;
+
 export type LoginFormState =
   | { errors?: { email?: string[]; password?: string[] }; message?: string }
   | undefined;
@@ -23,4 +37,16 @@ export interface SessionPayload {
   email: string;
   role: string;
   expiresAt: Date;
+}
+
+export interface MealSignup {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  meal_type: "regular" | "vegan";
+  delivery_day: "wednesday" | "thursday";
+  comments: string | null;
+  created_at: string;
 }
