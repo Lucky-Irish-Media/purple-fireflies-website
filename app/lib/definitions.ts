@@ -36,11 +36,14 @@ export const MealSignupSchema = z.object({
   comments: z.string().optional(),
 });
 
+const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"] as const;
+
 export const DriverVolunteerSchema = z.object({
   name: z.string().min(1, { message: "Name is required." }).trim(),
   email: z.string().email({ message: "Please enter a valid email." }).trim(),
   phone: z.string().min(10, { message: "Phone number is required." }).trim(),
   deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
+  regions: z.array(z.enum(regions)).min(1, { message: "Please select at least one region." }),
 });
 
 export type MealSignupFormState =
@@ -48,7 +51,7 @@ export type MealSignupFormState =
   | undefined;
 
 export type DriverVolunteerFormState =
-  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; deliveryDates?: string[] }; message?: string; selectedDates?: string }
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; deliveryDates?: string[]; regions?: string[] }; message?: string; selectedDates?: string }
   | undefined;
 
 export type LoginFormState =
@@ -84,6 +87,7 @@ export interface DriverVolunteer {
   name: string;
   email: string;
   phone: string;
+  regions: string;
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   created_at: string;

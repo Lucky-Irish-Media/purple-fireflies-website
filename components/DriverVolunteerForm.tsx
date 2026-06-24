@@ -4,6 +4,8 @@ import { useActionState, useMemo } from "react";
 import { submitDriverVolunteer } from "@/app/actions/driver-volunteer";
 import type { DriverVolunteerFormState } from "@/app/lib/definitions";
 
+const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"];
+
 function generateDriverDateOptions() {
   const options: { value: string; label: string }[] = [];
   const today = new Date();
@@ -21,13 +23,13 @@ function generateDriverDateOptions() {
       const dateStr = d.toISOString().split("T")[0];
       options.push({
         value: dateStr,
-        label: `Wednesday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+        label: `Wednesday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 12:00 PM`,
       });
     } else if (dayOfWeek === 4) {
       const dateStr = d.toISOString().split("T")[0];
       options.push({
         value: dateStr,
-        label: `Thursday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+        label: `Thursday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 5:00 PM`,
       });
     }
   }
@@ -137,6 +139,31 @@ export function DriverVolunteerForm() {
           {state?.errors?.deliveryDates && (
             <p className="text-sm text-red-500" role="alert">
               {state.errors.deliveryDates[0]}
+            </p>
+          )}
+        </fieldset>
+
+        <fieldset className="space-y-2">
+          <legend className="block text-sm font-medium text-foreground">
+            Available Regions <span className="text-red-500">*</span>
+          </legend>
+          <p className="text-sm text-text-secondary">Select all regions you can deliver to</p>
+          <div className="space-y-2">
+            {regions.map((region) => (
+              <label key={region} className="flex items-center gap-2 cursor-pointer block">
+                <input
+                  type="checkbox"
+                  name="regions"
+                  value={region}
+                  className="h-4 w-4 text-primary border-input focus:ring-primary rounded"
+                />
+                <span className="text-foreground">{region}</span>
+              </label>
+            ))}
+          </div>
+          {state?.errors?.regions && (
+            <p className="text-sm text-red-500" role="alert">
+              {state.errors.regions[0]}
             </p>
           )}
         </fieldset>

@@ -20,12 +20,14 @@ export async function submitDriverVolunteer(
 ): Promise<DriverVolunteerFormState> {
   try {
     const deliveryDates = formData.getAll("deliveryDates") as string[];
+    const regions = formData.getAll("regions") as string[];
 
     const validatedFields = DriverVolunteerSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
       deliveryDates,
+      regions,
     });
 
     if (!validatedFields.success) {
@@ -40,6 +42,7 @@ export async function submitDriverVolunteer(
         name: data.name,
         email: data.email,
         phone: data.phone,
+        regions: data.regions.join(", "),
         deliveryDate,
       });
       signups.push(signup);
