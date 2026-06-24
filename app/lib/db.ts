@@ -166,32 +166,34 @@ export interface User {
   password_hash?: string;
   role: "admin" | "member";
   created_at: string;
+  source: "admins" | "users";
 }
 
 export async function getUsers(): Promise<User[]> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC")
+    .prepare(
+      `SELECT id, email, name, 'admin' as role, created_at, 'admins' as source FROM admins
+       UNION ALL
+       SELECT id, email, name, role, created_at, 'users' as source FROM users
+       ORDER BY created_at DESC`
+    )
     .all<User>();
   return result.results || [];
 }
 
-export async function getUserById(id: number): Promise<User | null> {
-  const db = await getDB();
-  const result = await db
-    .prepare("SELECT id, email, name, role, created_at FROM users WHERE id = ?")
-    .bind(id)
-    .first<User>();
-  return result || null;
-}
-
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDB();
-  const result = await db
-    .prepare("SELECT * FROM users WHERE email = ?")
+  const admin = await db
+    .prepare("SELECT id, email, name, 'admin' as role, created_at, 'admins' as source, password_hash FROM admins WHERE email = ?")
     .bind(email)
     .first<User>();
-  return result || null;
+  if (admin) return admin;
+  const user = await db
+    .prepare("SELECT id, email, name, role, created_at, 'users' as source, password_hash FROM users WHERE email = ?")
+    .bind(email)
+    .first<User>();
+  return user || null;
 }
 
 export async function createUser(data: {
@@ -212,21 +214,23 @@ export async function createUser(data: {
   if (!result) {
     throw new Error("Failed to create user");
   }
-  return result;
+  return { ...result, source: "users" as const };
 }
 
-export async function deleteUser(id: number): Promise<void> {
+export async function deleteUserRecord(id: number, source: "admins" | "users"): Promise<void> {
   const db = await getDB();
+  const table = source === "admins" ? "admins" : "users";
   await db
-    .prepare("DELETE FROM users WHERE id = ?")
+    .prepare(`DELETE FROM ${table} WHERE id = ?`)
     .bind(id)
     .run();
 }
 
-export async function updateUserPassword(id: number, passwordHash: string): Promise<void> {
+export async function updateUserPassword(id: number, passwordHash: string, source: "admins" | "users"): Promise<void> {
   const db = await getDB();
+  const table = source === "admins" ? "admins" : "users";
   await db
-    .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+    .prepare(`UPDATE ${table} SET password_hash = ? WHERE id = ?`)
     .bind(passwordHash, id)
     .run();
 }

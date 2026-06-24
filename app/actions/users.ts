@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createUser, deleteUser, getUserByEmail, updateUserPassword, getUsers, type User } from "@/app/lib/db";
+import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, getUsers, type User } from "@/app/lib/db";
 
 const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required.").trim(),
@@ -84,7 +84,8 @@ export async function resetPasswordAction(
 ): Promise<UsersActionState> {
   try {
     const userId = Number(formData.get("userId"));
-    if (!userId) {
+    const source = formData.get("source") as "admins" | "users" | null;
+    if (!userId || !source) {
       return { message: "Invalid user ID." };
     }
 
@@ -92,7 +93,7 @@ export async function resetPasswordAction(
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(plainPassword, salt);
 
-    await updateUserPassword(userId, passwordHash);
+    await updateUserPassword(userId, passwordHash, source);
 
     revalidatePath("/admin/users");
 
@@ -112,11 +113,12 @@ export async function deleteUserAction(
 ): Promise<UsersActionState> {
   try {
     const userId = Number(formData.get("userId"));
-    if (!userId) {
+    const source = formData.get("source") as "admins" | "users" | null;
+    if (!userId || !source) {
       return { message: "Invalid user ID." };
     }
 
-    await deleteUser(userId);
+    await deleteUserRecord(userId, source);
 
     const users = await getUsers();
 

@@ -216,6 +216,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                     <div className="flex items-center gap-2">
                       <form action={resetAction} className="inline">
                         <input type="hidden" name="userId" value={user.id} />
+                        <input type="hidden" name="source" value={user.source} />
                         <button
                           type="submit"
                           disabled={resetPending}
@@ -235,6 +236,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                         }}
                       >
                         <input type="hidden" name="userId" value={user.id} />
+                        <input type="hidden" name="source" value={user.source} />
                         <button
                           type="submit"
                           disabled={deletePending}
