@@ -1,7 +1,7 @@
 "use server";
 
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
-import { createDriverVolunteer, getDriverVolunteers } from "@/app/lib/db";
+import { createDriverVolunteer, getDriverVolunteersByEmailOrPhone } from "@/app/lib/db";
 
 function getErrorMessage(e: unknown): string {
   if (e instanceof Error) {
@@ -37,11 +37,9 @@ export async function submitDriverVolunteer(
 
     const data = validatedFields.data;
 
-    const existingVolunteers = await getDriverVolunteers();
+    const existingVolunteers = await getDriverVolunteersByEmailOrPhone(data.email, data.phone);
     const existingDates = new Set(
-      existingVolunteers
-        .filter((v) => v.email === data.email || v.phone === data.phone)
-        .map((v) => v.delivery_date)
+      existingVolunteers.map((v) => v.delivery_date)
     );
 
     const newDates = data.deliveryDates.filter((d) => !existingDates.has(d));

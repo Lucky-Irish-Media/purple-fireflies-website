@@ -62,7 +62,7 @@ function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
 export async function getMealSignups(): Promise<MealSignup[]> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT * FROM meal_signups ORDER BY created_at DESC")
+    .prepare("SELECT * FROM meal_signups WHERE delivery_date >= date('now', '-90 days') ORDER BY created_at DESC LIMIT 500")
     .all<MealSignup>();
   return result.results || [];
 }
@@ -127,7 +127,17 @@ export async function getMealSignupCountsByDate(): Promise<Record<string, number
 export async function getDriverVolunteers(): Promise<DriverVolunteer[]> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT * FROM driver_volunteers ORDER BY created_at DESC")
+    .prepare("SELECT * FROM driver_volunteers WHERE delivery_date >= date('now', '-90 days') ORDER BY created_at DESC LIMIT 500")
+    .all<DriverVolunteer>();
+  return result.results || [];
+}
+
+export async function getDriverVolunteersByEmailOrPhone(email: string, phone: string): Promise<DriverVolunteer[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare("SELECT * FROM driver_volunteers WHERE (email = ? OR phone = ?) AND delivery_date >= ? ORDER BY delivery_date ASC")
+    .bind(email.toLowerCase(), phone, today)
     .all<DriverVolunteer>();
   return result.results || [];
 }
