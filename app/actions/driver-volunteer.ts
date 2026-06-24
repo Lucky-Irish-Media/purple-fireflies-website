@@ -1,7 +1,7 @@
 "use server";
 
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
-import { createDriverVolunteer } from "@/app/lib/db";
+import { createDriverVolunteer, getDriverVolunteers } from "@/app/lib/db";
 
 function getErrorMessage(e: unknown): string {
   if (e instanceof Error) {
@@ -37,8 +37,18 @@ export async function submitDriverVolunteer(
 
     const data = validatedFields.data;
 
+    const existingVolunteers = await getDriverVolunteers();
+    const existingDates = new Set(
+      existingVolunteers
+        .filter((v) => v.email === data.email || v.phone === data.phone)
+        .map((v) => v.delivery_date)
+    );
+
+    const newDates = data.deliveryDates.filter((d) => !existingDates.has(d));
+    const duplicateDates = data.deliveryDates.filter((d) => existingDates.has(d));
+
     const signups = [];
-    for (const deliveryDate of data.deliveryDates) {
+    for (const deliveryDate of newDates) {
       const signup = await createDriverVolunteer({
         name: data.name,
         email: data.email,
@@ -50,11 +60,26 @@ export async function submitDriverVolunteer(
       signups.push(signup);
     }
 
-    const datesFormatted = data.deliveryDates
+    let message = "success";
+    let selectedDates = newDates
       .map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }))
       .join(", ");
 
-    return { message: "success", selectedDates: datesFormatted };
+    if (duplicateDates.length > 0) {
+      const dupFormatted = duplicateDates
+        .map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }))
+        .join(", ");
+      if (newDates.length > 0) {
+        message = `Added: ${selectedDates}. Already signed up: ${dupFormatted}.`;
+      } else {
+        message = `You were already signed up for: ${dupFormatted}.`;
+      }
+      selectedDates = data.deliveryDates
+        .map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }))
+        .join(", ");
+    }
+
+    return { message, selectedDates };
   } catch (e) {
     console.error("driver volunteer action error:", e);
     return { message: getErrorMessage(e) };
