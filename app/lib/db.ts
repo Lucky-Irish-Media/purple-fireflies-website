@@ -19,7 +19,11 @@ export interface MealSignup {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address1: string;
+  address2: string | null;
+  city: string;
+  state: string;
+  zip_code: string;
   meal_type: "regular" | "vegan";
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
@@ -51,7 +55,11 @@ export async function createMealSignup(data: {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  zipCode: string;
   mealType: "regular" | "vegan";
   deliveryDate: string;
   comments?: string;
@@ -59,11 +67,11 @@ export async function createMealSignup(data: {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO meal_signups (name, email, phone, address, meal_type, delivery_day, delivery_date, comments)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO meal_signups (name, email, phone, address1, address2, city, state, zip_code, meal_type, delivery_day, delivery_date, comments)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address, data.mealType, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to create meal signup");

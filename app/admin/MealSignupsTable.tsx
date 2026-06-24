@@ -34,7 +34,11 @@ async function MealSignupsTable() {
                   <td className="py-3 text-foreground">{signup.name}</td>
                   <td className="py-3 text-text-secondary">{signup.email}</td>
                   <td className="py-3 text-text-secondary">{signup.phone}</td>
-                  <td className="py-3 text-text-secondary max-w-xs truncate">{signup.address}</td>
+                  <td className="py-3 text-text-secondary max-w-xs truncate">
+                    {signup.address1}
+                    {signup.address2 && `, ${signup.address2}`}
+                    {`, ${signup.city}, ${signup.state} ${signup.zip_code}`}
+                  </td>
                   <td className="py-3">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

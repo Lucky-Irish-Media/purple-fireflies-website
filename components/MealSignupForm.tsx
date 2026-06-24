@@ -4,6 +4,22 @@ import { useActionState, useMemo } from "react";
 import { submitMealSignup } from "@/app/actions/meal-signup";
 import type { MealSignupFormState } from "@/app/lib/definitions";
 
+const stateOptions = [
+  { value: "AL", label: "AL" }, { value: "AK", label: "AK" }, { value: "AZ", label: "AZ" }, { value: "AR", label: "AR" },
+  { value: "CA", label: "CA" }, { value: "CO", label: "CO" }, { value: "CT", label: "CT" }, { value: "DE", label: "DE" },
+  { value: "FL", label: "FL" }, { value: "GA", label: "GA" }, { value: "HI", label: "HI" }, { value: "ID", label: "ID" },
+  { value: "IL", label: "IL" }, { value: "IN", label: "IN" }, { value: "IA", label: "IA" }, { value: "KS", label: "KS" },
+  { value: "KY", label: "KY" }, { value: "LA", label: "LA" }, { value: "ME", label: "ME" }, { value: "MD", label: "MD" },
+  { value: "MA", label: "MA" }, { value: "MI", label: "MI" }, { value: "MN", label: "MN" }, { value: "MS", label: "MS" },
+  { value: "MO", label: "MO" }, { value: "MT", label: "MT" }, { value: "NE", label: "NE" }, { value: "NV", label: "NV" },
+  { value: "NH", label: "NH" }, { value: "NJ", label: "NJ" }, { value: "NM", label: "NM" }, { value: "NY", label: "NY" },
+  { value: "NC", label: "NC" }, { value: "ND", label: "ND" }, { value: "OH", label: "OH" }, { value: "OK", label: "OK" },
+  { value: "OR", label: "OR" }, { value: "PA", label: "PA" }, { value: "RI", label: "RI" }, { value: "SC", label: "SC" },
+  { value: "SD", label: "SD" }, { value: "TN", label: "TN" }, { value: "TX", label: "TX" }, { value: "UT", label: "UT" },
+  { value: "VT", label: "VT" }, { value: "VA", label: "VA" }, { value: "WA", label: "WA" }, { value: "WV", label: "WV" },
+  { value: "WI", label: "WI" }, { value: "WY", label: "WY" },
+];
+
 function generateDeliveryDateOptions() {
   const options: { value: string; label: string }[] = [];
   const today = new Date();
@@ -121,26 +137,116 @@ export function MealSignupForm() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="address" className="block text-sm font-medium text-foreground">
-            Full Address <span className="text-red-500">*</span>
+          <label htmlFor="address1" className="block text-sm font-medium text-foreground">
+            Address Line 1 <span className="text-red-500">*</span>
           </label>
-          <textarea
-            id="address"
-            name="address"
+          <input
+            type="text"
+            id="address1"
+            name="address1"
             required
-            rows={3}
-            placeholder="Street address, city, state, ZIP"
+            placeholder="123 Main Street"
             className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
-              state?.errors?.address ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
+              state?.errors?.address1 ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
             }`}
-            aria-invalid={state?.errors?.address ? "true" : "false"}
-            aria-describedby={state?.errors?.address ? "address-error" : undefined}
+            aria-invalid={state?.errors?.address1 ? "true" : "false"}
+            aria-describedby={state?.errors?.address1 ? "address1-error" : undefined}
           />
-          {state?.errors?.address && (
-            <p id="address-error" className="text-sm text-red-500" role="alert">
-              {state.errors.address[0]}
+          {state?.errors?.address1 && (
+            <p id="address1-error" className="text-sm text-red-500" role="alert">
+              {state.errors.address1[0]}
             </p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="address2" className="block text-sm font-medium text-foreground">
+            Address Line 2 (Optional)
+          </label>
+          <input
+            type="text"
+            id="address2"
+            name="address2"
+            placeholder="Apartment, suite, unit, etc."
+            className="w-full rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-text-secondary focus:border-primary focus:ring-primary"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="city" className="block text-sm font-medium text-foreground">
+              City <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="city"
+              name="city"
+              required
+              placeholder="City"
+              className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                state?.errors?.city ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
+              }`}
+              aria-invalid={state?.errors?.city ? "true" : "false"}
+              aria-describedby={state?.errors?.city ? "city-error" : undefined}
+            />
+            {state?.errors?.city && (
+              <p id="city-error" className="text-sm text-red-500" role="alert">
+                {state.errors.city[0]}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="state" className="block text-sm font-medium text-foreground">
+              State <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="state"
+              name="state"
+              required
+              className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground ${
+                state?.errors?.state ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
+              }`}
+              aria-invalid={state?.errors?.state ? "true" : "false"}
+              aria-describedby={state?.errors?.state ? "state-error" : undefined}
+            >
+              <option value="" disabled>Select State</option>
+              {stateOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {state?.errors?.state && (
+              <p id="state-error" className="text-sm text-red-500" role="alert">
+                {state.errors.state[0]}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="zipCode" className="block text-sm font-medium text-foreground">
+              ZIP Code <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="zipCode"
+              name="zipCode"
+              required
+              placeholder="12345"
+              maxLength={10}
+              className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                state?.errors?.zipCode ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
+              }`}
+              aria-invalid={state?.errors?.zipCode ? "true" : "false"}
+              aria-describedby={state?.errors?.zipCode ? "zipCode-error" : undefined}
+            />
+            {state?.errors?.zipCode && (
+              <p id="zipCode-error" className="text-sm text-red-500" role="alert">
+                {state.errors.zipCode[0]}
+              </p>
+            )}
+          </div>
         </div>
 
         <fieldset className="space-y-2">
