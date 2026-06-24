@@ -1,4 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { DriverVolunteer } from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
@@ -90,5 +91,34 @@ export async function getMealSignups(): Promise<MealSignup[]> {
   const result = await db
     .prepare("SELECT * FROM meal_signups ORDER BY created_at DESC")
     .all<MealSignup>();
+  return result.results || [];
+}
+
+export async function createDriverVolunteer(data: {
+  name: string;
+  email: string;
+  phone: string;
+  deliveryDate: string;
+}): Promise<DriverVolunteer> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO driver_volunteers (name, email, phone, delivery_day, delivery_date)
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, getDeliveryDay(data.deliveryDate), data.deliveryDate)
+    .first<DriverVolunteer>();
+  if (!result) {
+    throw new Error("Failed to create driver volunteer");
+  }
+  return result;
+}
+
+export async function getDriverVolunteers(): Promise<DriverVolunteer[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM driver_volunteers ORDER BY created_at DESC")
+    .all<DriverVolunteer>();
   return result.results || [];
 }

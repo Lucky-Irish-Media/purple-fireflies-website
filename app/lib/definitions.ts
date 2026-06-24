@@ -36,8 +36,19 @@ export const MealSignupSchema = z.object({
   comments: z.string().optional(),
 });
 
+export const DriverVolunteerSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().min(10, { message: "Phone number is required." }).trim(),
+  deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
+});
+
 export type MealSignupFormState =
   | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; mealType?: string[]; deliveryDates?: string[]; comments?: string[] }; message?: string; selectedDate?: string }
+  | undefined;
+
+export type DriverVolunteerFormState =
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; deliveryDates?: string[] }; message?: string; selectedDates?: string }
   | undefined;
 
 export type LoginFormState =
@@ -56,10 +67,24 @@ export interface MealSignup {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address1: string;
+  address2: string | null;
+  city: string;
+  state: string;
+  zip_code: string;
   meal_type: "regular" | "vegan";
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   comments: string | null;
+  created_at: string;
+}
+
+export interface DriverVolunteer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  delivery_day: "wednesday" | "thursday";
+  delivery_date: string;
   created_at: string;
 }

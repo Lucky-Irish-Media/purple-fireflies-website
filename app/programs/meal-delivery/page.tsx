@@ -74,12 +74,10 @@ export default function MealDeliveryPage() {
               Help deliver meals to those who can&apos;t get to town.
             </p>
             <a
-              href="https://www.signupgenius.com/go/10C044AA4A829AAF4CE9-64146307-free"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
+              href="/programs/meal-delivery/volunteer-signup"
+              className="inline-block text-sm font-medium text-primary hover:underline"
             >
-              Become a Volunteer →
+              Sign Up to Volunteer →
             </a>
           </div>
         </div>
