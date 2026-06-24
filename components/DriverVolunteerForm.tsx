@@ -48,7 +48,7 @@ export function DriverVolunteerForm() {
     <div className="max-w-2xl mx-auto">
       <h2 className="mb-6 text-3xl font-bold text-foreground">Driver Volunteer Signup</h2>
       <p className="mb-8 text-lg text-text-secondary">
-        Volunteer to deliver meals on Wednesdays and Thursdays. Signup opens 7 days before the day of service.
+        Volunteer to deliver meals on Wednesdays and Thursdays. Signup is open for a rolling 30-days.
         Select all dates you are available to drive.
       </p>
 

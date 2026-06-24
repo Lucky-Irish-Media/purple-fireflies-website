@@ -12,7 +12,7 @@ export default function VolunteerSignupPage() {
         </p>
 
         <p>
-          Deliveries typically take 1-2 hours. You&apos;ll pick up meals from our partner locations and deliver to
+          Deliveries typically take about 1 hour. You&apos;ll pick up meals from our partner locations and deliver to
           households in Athens, The Plains, Chauncey, Canaanville, New Marshfield, and Athens Township.
         </p>
 

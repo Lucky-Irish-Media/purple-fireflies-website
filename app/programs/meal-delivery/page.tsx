@@ -32,12 +32,7 @@ export default function MealDeliveryPage() {
         </h2>
 
         <p>
-          We currently deliver to <strong>Athens</strong>, <strong>The Plains</strong>,         <strong>Chauncey</strong>, <strong>Canaanville</strong>, <strong>New Marshfield</strong>, and <strong>Athens Township</strong>.
-          If you live in one of these areas and need meal delivery, please reach out.
-        </p>
-
-        <p>
-          We may be able to deliver farther out based upon driver availability.
+          We deliver up to 20 minutes from Athens Uptown. If you are more than 20 minutes from the meal pickup location, we may contact you to let you know we do not have a driver available that can accommodate the request.
         </p>
 
         <h2 className="mt-8 mb-4 text-2xl font-semibold text-foreground">
