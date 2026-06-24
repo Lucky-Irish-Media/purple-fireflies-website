@@ -1,6 +1,17 @@
 import { getDriverVolunteers } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  return phone;
+}
+
 async function DriverVolunteersTable() {
   const volunteers = await getDriverVolunteers();
 
@@ -33,7 +44,7 @@ async function DriverVolunteersTable() {
                 <tr key={v.id} className="hover:bg-primary/5">
                   <td className="py-3 text-foreground">{v.name}</td>
                   <td className="py-3 text-text-secondary">{v.email}</td>
-                  <td className="py-3 text-text-secondary">{v.phone}</td>
+                  <td className="py-3 text-text-secondary">{formatPhone(v.phone)}</td>
                   <td className="py-3">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${

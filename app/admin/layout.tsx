@@ -52,6 +52,17 @@ export default async function AdminLayout({
           >
             Dashboard
           </Link>
+
+          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Programs
+          </span>
+
+          <Link
+            href="/admin/programs/meal-delivery"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+          >
+            Meal Delivery
+          </Link>
         </aside>
 
         <main className="flex-1 p-6">{children}</main>

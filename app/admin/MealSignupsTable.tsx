@@ -1,6 +1,17 @@
 import { getMealSignups } from "@/app/lib/db";
 import { MealSignup } from "@/app/lib/db";
 
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  return phone;
+}
+
 async function MealSignupsTable() {
   const signups = await getMealSignups();
 
@@ -24,6 +35,7 @@ async function MealSignupsTable() {
                 <th className="pb-3 font-semibold text-foreground">Address</th>
                 <th className="pb-3 font-semibold text-foreground">Meal Type</th>
                 <th className="pb-3 font-semibold text-foreground">Delivery Day</th>
+                <th className="pb-3 font-semibold text-foreground">Delivery Date</th>
                 <th className="pb-3 font-semibold text-foreground">Comments</th>
                 <th className="pb-3 font-semibold text-foreground">Submitted</th>
               </tr>
@@ -33,7 +45,7 @@ async function MealSignupsTable() {
                 <tr key={signup.id} className="hover:bg-primary/5">
                   <td className="py-3 text-foreground">{signup.name}</td>
                   <td className="py-3 text-text-secondary">{signup.email}</td>
-                  <td className="py-3 text-text-secondary">{signup.phone}</td>
+                  <td className="py-3 text-text-secondary">{formatPhone(signup.phone)}</td>
                   <td className="py-3 text-text-secondary max-w-xs truncate">
                     {signup.address1}
                     {signup.address2 && `, ${signup.address2}`}
@@ -51,6 +63,7 @@ async function MealSignupsTable() {
                     </span>
                   </td>
                   <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
+                  <td className="py-3 text-text-secondary">{signup.delivery_date}</td>
                   <td className="py-3 text-text-secondary max-w-xs truncate">
                     {signup.comments || "—"}
                   </td>
