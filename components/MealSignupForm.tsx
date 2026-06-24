@@ -52,11 +52,17 @@ function generateDeliveryDateOptions() {
   return options;
 }
 
+function isFirstWednesday(dateStr: string): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  return date.getDay() === 3 && date.getDate() <= 7;
+}
+
 const MAX_SIGNUPS_PER_DATE = 15;
 
 export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string, number> }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
   const [showLookup, setShowLookup] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState("");
 
   const deliveryDateOptions = useMemo(() => generateDeliveryDateOptions(), []);
 
@@ -303,12 +309,18 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
                   name="mealType"
                   value={option.value}
                   required
+                  onChange={(e) => setSelectedMealType(e.target.value)}
                   className="h-4 w-4 text-primary border-input focus:ring-primary"
                 />
                 <span className="text-foreground">{option.label}</span>
               </label>
             ))}
           </div>
+          {selectedMealType === "vegan" && (
+            <p className="text-sm text-amber-600" role="note">
+              Note: Vegan / GF meals are not available on the first Wednesday of each month.
+            </p>
+          )}
           {state?.errors?.mealType && (
             <p className="text-sm text-red-500" role="alert">
               {state.errors.mealType[0]}
@@ -326,20 +338,23 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               const count = dateCounts[option.value] ?? 0;
               const spacesLeft = MAX_SIGNUPS_PER_DATE - count;
               const isFull = spacesLeft <= 0;
+              const isFirstWed = isFirstWednesday(option.value);
+              const veganRestricted = selectedMealType === "vegan" && isFirstWed;
+              const disabled = isFull || veganRestricted;
               return (
-                <label key={option.value} className={`flex items-center gap-2 ${isFull ? "cursor-not-allowed" : "cursor-pointer"} block`}>
+                <label key={option.value} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"} block`}>
                   <input
                     type="checkbox"
                     name="deliveryDates"
                     value={option.value}
-                    disabled={isFull}
+                    disabled={disabled}
                     className="h-4 w-4 text-primary border-input focus:ring-primary rounded disabled:opacity-40"
                   />
-                  <span className={isFull ? "text-text-secondary line-through" : "text-foreground"}>
+                  <span className={disabled ? "text-text-secondary line-through" : "text-foreground"}>
                     {option.label}
                   </span>
-                  <span className={`text-xs ${isFull ? "text-red-400" : "text-text-secondary"}`}>
-                    {isFull ? "Full" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
+                  <span className={`text-xs ${isFull ? "text-red-400" : veganRestricted ? "text-amber-600" : "text-text-secondary"}`}>
+                    {isFull ? "Full" : veganRestricted ? "Not available for Vegan / GF" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
                   </span>
                 </label>
               );

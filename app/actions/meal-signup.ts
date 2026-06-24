@@ -4,6 +4,11 @@ import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definition
 import { createMealSignup } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 
+function isFirstWednesday(dateStr: string): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  return date.getDay() === 3 && date.getDate() <= 7;
+}
+
 function getErrorMessage(e: unknown): string {
   if (e instanceof Error) {
     console.error("Actual error:", e.message, e.stack);
@@ -42,6 +47,19 @@ export async function submitMealSignup(
     }
 
     const data = validatedFields.data;
+
+    const invalidDates = data.deliveryDates.filter(
+      (d) => data.mealType === "vegan" && isFirstWednesday(d)
+    );
+    if (invalidDates.length > 0) {
+      return {
+        errors: {
+          deliveryDates: [
+            `Vegan / GF meals are not available on ${invalidDates.length === 1 ? "the first Wednesday" : "the first Wednesdays"} of the month. Please select a different date or choose the Regular meal type.`,
+          ],
+        },
+      };
+    }
 
     const signups = [];
     for (const deliveryDate of data.deliveryDates) {
