@@ -6,6 +6,7 @@ import { sendMealSignupConfirmation } from "@/app/lib/email";
 
 function getErrorMessage(e: unknown): string {
   if (e instanceof Error) {
+    console.error("Actual error:", e.message, e.stack);
     if (e.message.includes("D1") || e.message.includes("database") || e.message.includes("getCloudflareContext")) {
       return "Database connection error. Please try again later.";
     }
