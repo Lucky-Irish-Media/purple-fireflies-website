@@ -26,7 +26,7 @@ export async function submitMealSignup(
       phone: formData.get("phone"),
       address: formData.get("address"),
       mealType: formData.get("mealType"),
-      deliveryDay: formData.get("deliveryDay"),
+      deliveryDate: formData.get("deliveryDate"),
       comments: formData.get("comments"),
     });
 
@@ -42,13 +42,13 @@ export async function submitMealSignup(
       phone: data.phone,
       address: data.address,
       mealType: data.mealType,
-      deliveryDay: data.deliveryDay,
+      deliveryDate: data.deliveryDate,
       comments: data.comments,
     });
 
     await sendMealSignupConfirmation(signup);
 
-    return { message: "success" };
+    return { message: "success", selectedDate: data.deliveryDate };
   } catch (e) {
     console.error("meal signup action error:", e);
     return { message: getErrorMessage(e) };

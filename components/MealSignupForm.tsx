@@ -1,16 +1,44 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo } from "react";
 import { submitMealSignup } from "@/app/actions/meal-signup";
 import type { MealSignupFormState } from "@/app/lib/definitions";
+
+function generateDeliveryDateOptions() {
+  const options: { value: string; label: string }[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const minDate = new Date(today);
+  minDate.setDate(today.getDate() + 7);
+
+  const maxDate = new Date(today);
+  maxDate.setDate(today.getDate() + 14);
+
+  for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek === 3) {
+      const dateStr = d.toISOString().split("T")[0];
+      options.push({
+        value: dateStr,
+        label: `Wednesday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 12:00 PM`,
+      });
+    } else if (dayOfWeek === 4) {
+      const dateStr = d.toISOString().split("T")[0];
+      options.push({
+        value: dateStr,
+        label: `Thursday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 5:00 PM`,
+      });
+    }
+  }
+
+  return options;
+}
 
 export function MealSignupForm() {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
 
-  const deliveryDayOptions = [
-    { value: "wednesday", label: "Wednesday at 12:00 PM" },
-    { value: "thursday", label: "Thursday at 5:00 PM" },
-  ];
+  const deliveryDateOptions = useMemo(() => generateDeliveryDateOptions(), []);
 
   const mealTypeOptions = [
     { value: "regular", label: "Regular" },
@@ -142,14 +170,14 @@ export function MealSignupForm() {
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
-            Delivery Day <span className="text-red-500">*</span>
+            Delivery Date <span className="text-red-500">*</span>
           </legend>
-          <div className="flex gap-6">
-            {deliveryDayOptions.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+          <div className="space-y-2">
+            {deliveryDateOptions.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 cursor-pointer block">
                 <input
                   type="radio"
-                  name="deliveryDay"
+                  name="deliveryDate"
                   value={option.value}
                   required
                   className="h-4 w-4 text-primary border-input focus:ring-primary"
@@ -158,9 +186,9 @@ export function MealSignupForm() {
               </label>
             ))}
           </div>
-          {state?.errors?.deliveryDay && (
+          {state?.errors?.deliveryDate && (
             <p className="text-sm text-red-500" role="alert">
-              {state.errors.deliveryDay[0]}
+              {state.errors.deliveryDate[0]}
             </p>
           )}
         </fieldset>
@@ -186,7 +214,7 @@ export function MealSignupForm() {
 
         {state?.message === "success" && (
           <div className="rounded-lg bg-green-50 p-4 text-green-600" role="status">
-            Thank you for signing up! We&apos;ll be in touch soon with delivery details.
+            Thank you for signing up! Your delivery is scheduled for {state.selectedDate ? new Date(state.selectedDate).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) : "the selected date"}. We&apos;ll be in touch soon with delivery details.
           </div>
         )}
 
