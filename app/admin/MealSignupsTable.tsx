@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
+import { DataTable } from "./components/DataTable";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   return `${month}/${day}/${year}`;
-}
-
-function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatPhone(phone: string): string {
@@ -27,16 +24,145 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
-type SortKey = keyof MealSignupWithAssignmentDb;
-type SortDir = "asc" | "desc";
+function getMealTypeBadge(mealType: string) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        mealType === "vegan"
+          ? "bg-green-100 text-green-800"
+          : "bg-blue-100 text-blue-800"
+      }`}
+    >
+      {mealType}
+    </span>
+  );
+}
 
-function sortData(data: MealSignupWithAssignmentDb[], key: SortKey, dir: SortDir): MealSignupWithAssignmentDb[] {
-  return [...data].sort((a, b) => {
-    const aVal = a[key] ?? "";
-    const bVal = b[key] ?? "";
-    const cmp = typeof aVal === "string" ? aVal.localeCompare(String(bVal)) : Number(aVal) - Number(bVal);
-    return dir === "asc" ? cmp : -cmp;
-  });
+function getContactMethodBadge(method: string) {
+  return (
+    <span className="capitalize text-text-secondary">{method}</span>
+  );
+}
+
+function getDeliveryDayBadge(day: string) {
+  return (
+    <span className="capitalize text-text-secondary">{day}</span>
+  );
+}
+
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function MealTypeFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Meal Types</option>
+      <option value="regular">Regular</option>
+      <option value="vegan">Vegan</option>
+    </select>
+  );
+}
+
+function ContactMethodFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Methods</option>
+      <option value="call">Call</option>
+      <option value="text">Text</option>
+      <option value="email">Email</option>
+    </select>
+  );
+}
+
+function DeliveryDateFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  const today = todayLocal();
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Dates</option>
+      <option value="future">Future Dates Only</option>
+      <option value="past">Past Dates Only</option>
+      <option value="today">Today</option>
+    </select>
+  );
+}
+
+function deliveryDateFilterFn(row: any, columnId: string, value: string): boolean {
+  const date = row.getValue(columnId);
+  const today = todayLocal();
+  switch (value) {
+    case "future":
+      return date >= today;
+    case "past":
+      return date < today;
+    case "today":
+      return date === today;
+    default:
+      return true;
+  }
+}
+
+const columnHelper = createColumnHelper<MealSignupWithAssignmentDb>();
+
+function DriverSelectCell({ row, drivers, isPending, onAssign }: {
+  row: { original: MealSignupWithAssignmentDb };
+  drivers: DriverVolunteer[];
+  isPending: boolean;
+  onAssign: (mealSignupId: number, driverVolunteerId: string) => void;
+}) {
+  const signup = row.original;
+  const availableDrivers = useMemo(
+    () => drivers.filter((d) => d.delivery_date === signup.delivery_date),
+    [drivers, signup.delivery_date]
+  );
+
+  return (
+    <div>
+      <select
+        value={signup.driver_id ? String(signup.driver_id) : "0"}
+        onChange={(e) => onAssign(signup.id, e.target.value)}
+        disabled={isPending}
+        className="text-sm border border-primary/20 rounded px-2 py-1 bg-background text-foreground max-w-[140px]"
+      >
+        <option value="0">—</option>
+        {availableDrivers.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
+      {signup.driver_name && (
+        <span className="ml-1 text-xs text-text-secondary block truncate max-w-[140px]">
+          {formatPhone(signup.driver_phone || "")}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function MealSignupsTable({
@@ -48,49 +174,6 @@ export default function MealSignupsTable({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
-    key: "delivery_date",
-    dir: "asc",
-  });
-  const [futureOnly, setFutureOnly] = useState(true);
-
-  const signups = useMemo(() => {
-    const today = todayLocal();
-    const filtered = futureOnly
-      ? initialData.filter((s) => s.delivery_date >= today)
-      : initialData;
-    return sortData(filtered, sort.key, sort.dir);
-  }, [initialData, sort, futureOnly]);
-
-  const driversByDate = useMemo(() => {
-    const map = new Map<string, DriverVolunteer[]>();
-    for (const d of drivers) {
-      const existing = map.get(d.delivery_date) || [];
-      existing.push(d);
-      map.set(d.delivery_date, existing);
-    }
-    return map;
-  }, [drivers]);
-
-  function toggleSort(key: SortKey) {
-    setSort((prev) => ({
-      key,
-      dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc",
-    }));
-  }
-
-  function SortHeader({ sortKey, children }: { sortKey: SortKey; children: React.ReactNode }) {
-    const isActive = sort.key === sortKey;
-    return (
-      <th
-        className="pb-3 font-semibold text-foreground cursor-pointer select-none hover:text-primary"
-        onClick={() => toggleSort(sortKey)}
-      >
-        {children}
-        {isActive ? (sort.dir === "asc" ? " ▲" : " ▼") : null}
-      </th>
-    );
-  }
 
   function handleAssignment(mealSignupId: number, driverVolunteerId: string) {
     const formData = new FormData();
@@ -102,104 +185,105 @@ export default function MealSignupsTable({
     });
   }
 
-  return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Meal Delivery Signups</h2>
-        <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-          <input
-            type="checkbox"
-            checked={futureOnly}
-            onChange={(e) => setFutureOnly(e.target.checked)}
-            className="accent-primary"
-          />
-          Show future dates only
-        </label>
-      </div>
-      <p className="text-text-secondary">
-        Total signups: {signups.length}
-      </p>
+  const columns = useMemo(() => [
+    columnHelper.accessor((row) => row.name, {
+      id: "name",
+      header: "Name",
+      cell: (info) => <span className="text-foreground">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.email, {
+      id: "email",
+      header: "Email",
+      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.phone, {
+      id: "phone",
+      header: "Phone",
+      cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.address1, {
+      id: "address1",
+      header: "Address",
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <span className="text-text-secondary max-w-xs truncate block">
+            {row.address1}
+            {row.address2 && `, ${row.address2}`}
+            {`, ${row.city}, ${row.state} ${row.zip_code}`}
+          </span>
+        );
+      },
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.meal_type, {
+      id: "meal_type",
+      header: "Meal Type",
+      cell: (info) => getMealTypeBadge(info.getValue()),
+      filterFn: filterFns.equals,
+      meta: { filterComponent: MealTypeFilter },
+    }),
+    columnHelper.accessor((row) => row.contact_method, {
+      id: "contact_method",
+      header: "Contact Method",
+      cell: (info) => getContactMethodBadge(info.getValue()),
+      filterFn: filterFns.equals,
+      meta: { filterComponent: ContactMethodFilter },
+    }),
+    columnHelper.accessor((row) => row.delivery_day, {
+      id: "delivery_day",
+      header: "Delivery Day",
+      cell: (info) => getDeliveryDayBadge(info.getValue()),
+      filterFn: filterFns.equals,
+    }),
+    columnHelper.accessor((row) => row.delivery_date, {
+      id: "delivery_date",
+      header: "Delivery Date",
+      cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+      filterFn: deliveryDateFilterFn,
+      meta: { filterComponent: DeliveryDateFilter },
+    }),
+    columnHelper.accessor((row) => row.comments, {
+      id: "comments",
+      header: "Comments",
+      cell: (info) => <span className="text-text-secondary max-w-xs truncate block">{info.getValue() || "—"}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
+      header: "Submitted",
+      cell: (info) => (
+        <span className="text-text-secondary">{new Date(info.getValue()).toLocaleString()}</span>
+      ),
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.display({
+      id: "assigned_driver",
+      header: "Assigned Driver",
+      cell: (info) => (
+        <DriverSelectCell
+          row={info.row}
+          drivers={drivers}
+          isPending={isPending}
+          onAssign={handleAssignment}
+        />
+      ),
+    }),
+  ] as const, [drivers, isPending, handleAssignment]);
 
-      {signups.length === 0 ? (
-        <p className="text-text-secondary">No meal signups yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b border-primary/10">
-                <SortHeader sortKey="name">Name</SortHeader>
-                <SortHeader sortKey="email">Email</SortHeader>
-                <SortHeader sortKey="phone">Phone</SortHeader>
-                <SortHeader sortKey="address1">Address</SortHeader>
-                <SortHeader sortKey="meal_type">Meal Type</SortHeader>
-                <SortHeader sortKey="contact_method">Contact Method</SortHeader>
-                <SortHeader sortKey="delivery_day">Delivery Day</SortHeader>
-                <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
-                <SortHeader sortKey="comments">Comments</SortHeader>
-                <SortHeader sortKey="created_at">Submitted</SortHeader>
-                <th className="pb-3 font-semibold text-foreground">Assigned Driver</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-primary/10">
-              {signups.map((signup) => {
-                const availableDrivers = driversByDate.get(signup.delivery_date) || [];
-                return (
-                  <tr key={signup.id} className="hover:bg-primary/5">
-                    <td className="py-3 text-foreground">{signup.name}</td>
-                    <td className="py-3 text-text-secondary">{signup.email}</td>
-                    <td className="py-3 text-text-secondary">{formatPhone(signup.phone)}</td>
-                    <td className="py-3 text-text-secondary max-w-xs truncate">
-                      {signup.address1}
-                      {signup.address2 && `, ${signup.address2}`}
-                      {`, ${signup.city}, ${signup.state} ${signup.zip_code}`}
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          signup.meal_type === "vegan"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {signup.meal_type}
-                      </span>
-                    </td>
-                    <td className="py-3 text-text-secondary capitalize">{signup.contact_method}</td>
-                    <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
-                    <td className="py-3 text-text-secondary">{formatDate(signup.delivery_date)}</td>
-                    <td className="py-3 text-text-secondary max-w-xs truncate">
-                      {signup.comments || "—"}
-                    </td>
-                    <td className="py-3 text-text-secondary">
-                      {new Date(signup.created_at).toLocaleString()}
-                    </td>
-                    <td className="py-3">
-                      <select
-                        value={signup.driver_id ? String(signup.driver_id) : "0"}
-                        onChange={(e) => handleAssignment(signup.id, e.target.value)}
-                        disabled={isPending}
-                        className="text-sm border border-primary/20 rounded px-2 py-1 bg-background text-foreground max-w-[140px]"
-                      >
-                        <option value="0">—</option>
-                        {availableDrivers.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name}
-                          </option>
-                        ))}
-                      </select>
-                      {signup.driver_name && (
-                        <span className="ml-1 text-xs text-text-secondary block truncate max-w-[140px]">
-                          {formatPhone(signup.driver_phone || "")}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+  const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignmentDb, unknown>[];
+
+  return (
+    <DataTable
+      data={initialData}
+      columns={typedColumns}
+      enableSorting
+      enableFiltering
+      enablePagination
+      pageSize={15}
+    />
   );
 }
