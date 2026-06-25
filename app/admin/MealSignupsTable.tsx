@@ -370,7 +370,7 @@ export default function MealSignupsTable({
             </div>
             <div>
               <label htmlFor="ms-state" className="block text-sm font-medium text-foreground mb-1">State</label>
-              <select id="ms-state" name="state" required
+              <select id="ms-state" name="state" required defaultValue="OH"
                 className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select</option>
