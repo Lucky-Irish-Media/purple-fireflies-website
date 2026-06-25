@@ -87,6 +87,38 @@ export async function getDriverVolunteersByEmail(email: string): Promise<DriverV
   return result.results || [];
 }
 
+export async function updateMealSignup(id: number, data: {
+  name: string;
+  email: string;
+  phone: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  mealType: "regular" | "vegan";
+  contactMethod: "call" | "text" | "email";
+  deliveryDate: string;
+  comments?: string;
+}): Promise<MealSignup> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE meal_signups
+       SET name = ?, email = ?, phone = ?, address1 = ?, address2 = ?,
+           city = ?, state = ?, zip_code = ?, meal_type = ?,
+           contact_method = ?, delivery_day = ?, delivery_date = ?, comments = ?
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, id)
+    .first<MealSignup>();
+  if (!result) {
+    throw new Error("Failed to update meal signup");
+  }
+  return result;
+}
+
 export async function createDriverVolunteer(data: {
   name: string;
   email: string;
@@ -106,6 +138,30 @@ export async function createDriverVolunteer(data: {
     .first<DriverVolunteer>();
   if (!result) {
     throw new Error("Failed to create driver volunteer");
+  }
+  return result;
+}
+
+export async function updateDriverVolunteer(id: number, data: {
+  name: string;
+  email: string;
+  phone: string;
+  onSignal: "yes" | "no" | "willing";
+  regions: string;
+  deliveryDate: string;
+}): Promise<DriverVolunteer> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE driver_volunteers
+       SET name = ?, email = ?, phone = ?, on_signal = ?, regions = ?, delivery_day = ?, delivery_date = ?
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, data.onSignal, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate, id)
+    .first<DriverVolunteer>();
+  if (!result) {
+    throw new Error("Failed to update driver volunteer");
   }
   return result;
 }
@@ -189,6 +245,25 @@ export async function createUser(data: {
     .first<User>();
   if (!result) {
     throw new Error("Failed to create user");
+  }
+  return result;
+}
+
+export async function updateUserRecord(id: number, data: {
+  name: string;
+  email: string;
+  role: "admin" | "member";
+}): Promise<User> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?
+       RETURNING id, email, name, role, created_at`
+    )
+    .bind(data.name, data.email, data.role, id)
+    .first<User>();
+  if (!result) {
+    throw new Error("Failed to update user");
   }
   return result;
 }
