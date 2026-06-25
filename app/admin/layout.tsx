@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { verifySession } from "@/app/lib/dal";
 import { logout } from "@/app/actions/auth";
+import { MobileSidebar } from "@/app/admin/components/MobileSidebar";
 
 export default async function AdminLayout({
   children,
@@ -13,7 +14,8 @@ export default async function AdminLayout({
     <div className="min-h-full flex flex-col bg-background">
       <header className="bg-gradient-to-r from-primary-dark to-primary shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 sm:gap-6">
+            <MobileSidebar />
             <Link
               href="/admin"
               className="text-lg font-bold text-white tracking-tight"
@@ -25,7 +27,7 @@ export default async function AdminLayout({
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/"
               className="text-sm text-white/70 hover:text-white transition-colors"
@@ -53,7 +55,7 @@ export default async function AdminLayout({
             Dashboard
           </Link>
 
-          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
             Programs
           </span>
 
@@ -64,7 +66,7 @@ export default async function AdminLayout({
             Meal Delivery
           </Link>
 
-          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
             Administration
           </span>
 
@@ -76,7 +78,7 @@ export default async function AdminLayout({
           </Link>
         </aside>
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

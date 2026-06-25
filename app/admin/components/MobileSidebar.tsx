@@ -1,0 +1,91 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+
+const navLinks = [
+  { href: "/admin", label: "Dashboard", section: false },
+  { type: "heading", label: "Programs" },
+  { href: "/admin/programs/meal-delivery", label: "Meal Delivery", section: true },
+  { type: "heading", label: "Administration" },
+  { href: "/admin/users", label: "Users", section: true },
+];
+
+export function MobileSidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="sm:hidden rounded-lg p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+        aria-label="Open navigation menu"
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 sm:hidden"
+          onClick={() => setOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+
+          <div
+            className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-primary/10 shadow-xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-semibold text-foreground">Navigation</span>
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-lg p-1.5 text-text-secondary hover:text-foreground hover:bg-primary/5 transition-colors"
+                aria-label="Close navigation menu"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <nav className="flex flex-col gap-1">
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
+              >
+                Dashboard
+              </Link>
+
+              <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                Programs
+              </span>
+
+              <Link
+                href="/admin/programs/meal-delivery"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+              >
+                Meal Delivery
+              </Link>
+
+              <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                Administration
+              </span>
+
+              <Link
+                href="/admin/users"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+              >
+                Users
+              </Link>
+            </nav>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

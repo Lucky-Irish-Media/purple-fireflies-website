@@ -111,7 +111,7 @@ export function DataTable<TData extends RowData>({
   return (
     <div className={`space-y-4 ${className}`}>
       {(enableFiltering || enableColumnVisibility) && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {enableFiltering && (
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -266,8 +266,8 @@ export function DataTable<TData extends RowData>({
       </div>
 
       {enablePagination && (
-        <div className="flex items-center justify-between text-sm text-text-secondary">
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-text-secondary">
+          <div className="order-2 sm:order-1">
             Showing{" "}
             <strong>
               {pagination.pageIndex * pagination.pageSize + 1}{" "}
@@ -280,18 +280,19 @@ export function DataTable<TData extends RowData>({
               {getRowModel().rows.length} results
             </strong>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="order-1 sm:order-2 flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex-1 sm:flex-initial" />
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-initial rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-initial rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
