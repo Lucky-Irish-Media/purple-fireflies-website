@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useMemo } from "react";
 import type { User } from "@/app/lib/db";
 import {
   createUserAction,
@@ -8,6 +8,24 @@ import {
   deleteUserAction,
   type UsersActionState,
 } from "@/app/actions/users";
+import { DataTable } from "./components/DataTable";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
+
+function getRoleBadge(role: string) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        role === "admin"
+          ? "bg-purple-100 text-purple-800"
+          : "bg-blue-100 text-blue-800"
+      }`}
+    >
+      {role}
+    </span>
+  );
+}
+
+const columnHelper = createColumnHelper<User>();
 
 export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState(initialUsers);
@@ -41,6 +59,75 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   }, undefined);
 
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
+
+  const columns = useMemo(() => [
+    columnHelper.accessor((row) => row.name, {
+      id: "name",
+      header: "Name",
+      cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.email, {
+      id: "email",
+      header: "Email",
+      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.role, {
+      id: "role",
+      header: "Role",
+      cell: (info) => getRoleBadge(info.getValue()),
+      filterFn: filterFns.equals,
+    }),
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
+      header: "Created",
+      cell: (info) => <span className="text-text-secondary">{new Date(info.getValue()).toLocaleDateString()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => {
+        const user = info.row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <form action={resetAction} className="inline">
+              <input type="hidden" name="userId" value={user.id} />
+              <button
+                type="submit"
+                disabled={resetPending}
+                className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800 transition-all hover:bg-amber-200 disabled:opacity-50"
+              >
+                Reset Password
+              </button>
+            </form>
+
+            <form
+              action={deleteAction}
+              className="inline"
+              onSubmit={(e) => {
+                if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <input type="hidden" name="userId" value={user.id} />
+              <button
+                type="submit"
+                disabled={deletePending}
+                className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-medium text-red-800 transition-all hover:bg-red-200 disabled:opacity-50"
+              >
+                Delete
+              </button>
+            </form>
+          </div>
+        );
+      },
+    }),
+  ] as const, []);
+
+  const typedColumns = columns as unknown as ColumnDef<User, unknown>[];
 
   return (
     <section className="space-y-6">
@@ -174,83 +261,14 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
         <p className="text-sm text-green-600">{resetState.message}</p>
       )}
 
-      {users.length === 0 ? (
-        <p className="text-text-secondary">No users yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b border-primary/10">
-                <th className="pb-3 font-semibold text-foreground">Name</th>
-                <th className="pb-3 font-semibold text-foreground">Email</th>
-                <th className="pb-3 font-semibold text-foreground">Role</th>
-                <th className="pb-3 font-semibold text-foreground">Created</th>
-                <th className="pb-3 font-semibold text-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-primary/10">
-              {users.map((user: User) => (
-                <tr
-                  key={user.id}
-                  className={`hover:bg-primary/5 transition-colors ${
-                    highlightedId === user.id ? "bg-primary/5" : ""
-                  }`}
-                >
-                  <td className="py-3 text-foreground font-medium">{user.name}</td>
-                  <td className="py-3 text-text-secondary">{user.email}</td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === "admin"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="py-3 text-text-secondary">
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      <form action={resetAction} className="inline">
-                        <input type="hidden" name="userId" value={user.id} />
-                        <button
-                          type="submit"
-                          disabled={resetPending}
-                          className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800 transition-all hover:bg-amber-200 disabled:opacity-50"
-                        >
-                          Reset Password
-                        </button>
-                      </form>
-
-                      <form
-                        action={deleteAction}
-                        className="inline"
-                        onSubmit={(e) => {
-                          if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) {
-                            e.preventDefault();
-                          }
-                        }}
-                      >
-                        <input type="hidden" name="userId" value={user.id} />
-                        <button
-                          type="submit"
-                          disabled={deletePending}
-                          className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-medium text-red-800 transition-all hover:bg-red-200 disabled:opacity-50"
-                        >
-                          Delete
-                        </button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        data={users}
+        columns={typedColumns}
+        enableSorting
+        enableFiltering
+        enablePagination
+        pageSize={15}
+      />
     </section>
   );
 }

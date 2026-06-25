@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import type { DriverVolunteer } from "@/app/lib/definitions";
+import { DataTable } from "./components/DataTable";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   return `${month}/${day}/${year}`;
-}
-
-function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatPhone(phone: string): string {
@@ -24,121 +21,155 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
-type SortKey = keyof DriverVolunteer;
-type SortDir = "asc" | "desc";
-
-function sortData(data: DriverVolunteer[], key: SortKey, dir: SortDir): DriverVolunteer[] {
-  return [...data].sort((a, b) => {
-    const aVal = a[key] ?? "";
-    const bVal = b[key] ?? "";
-    const cmp = typeof aVal === "string" ? aVal.localeCompare(String(bVal)) : Number(aVal) - Number(bVal);
-    return dir === "asc" ? cmp : -cmp;
-  });
+function getSignalBadge(signal: string) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+        signal === "yes"
+          ? "bg-green-100 text-green-800"
+          : signal === "willing"
+          ? "bg-yellow-100 text-yellow-800"
+          : "bg-gray-100 text-gray-800"
+      }`}
+    >
+      {signal}
+    </span>
+  );
 }
 
+function getDeliveryDayBadge(day: string) {
+  return (
+    <span className="capitalize text-text-secondary">{day}</span>
+  );
+}
+
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function SignalFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Signals</option>
+      <option value="yes">Yes</option>
+      <option value="willing">Willing</option>
+      <option value="no">No</option>
+    </select>
+  );
+}
+
+function DeliveryDateFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  const today = todayLocal();
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Dates</option>
+      <option value="future">Future Dates Only</option>
+      <option value="past">Past Dates Only</option>
+      <option value="today">Today</option>
+    </select>
+  );
+}
+
+function deliveryDateFilterFn(row: any, columnId: string, value: string): boolean {
+  const date = row.getValue(columnId);
+  const today = todayLocal();
+  switch (value) {
+    case "future":
+      return date >= today;
+    case "past":
+      return date < today;
+    case "today":
+      return date === today;
+    default:
+      return true;
+  }
+}
+
+const columnHelper = createColumnHelper<DriverVolunteer>();
+
 export default function DriverVolunteersTable({ initialData }: { initialData: DriverVolunteer[] }) {
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
-    key: "delivery_date",
-    dir: "asc",
-  });
-  const [futureOnly, setFutureOnly] = useState(true);
+  const columns = useMemo(() => [
+    columnHelper.accessor((row) => row.name, {
+      id: "name",
+      header: "Name",
+      cell: (info) => <span className="text-foreground">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.email, {
+      id: "email",
+      header: "Email",
+      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.phone, {
+      id: "phone",
+      header: "Phone",
+      cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.on_signal, {
+      id: "on_signal",
+      header: "On Signal",
+      cell: (info) => getSignalBadge(info.getValue()),
+      filterFn: filterFns.equals,
+      meta: { filterComponent: SignalFilter },
+    }),
+    columnHelper.accessor((row) => row.regions, {
+      id: "regions",
+      header: "Regions",
+      cell: (info) => <span className="text-text-secondary max-w-xs truncate block">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.delivery_day, {
+      id: "delivery_day",
+      header: "Delivery Day",
+      cell: (info) => getDeliveryDayBadge(info.getValue()),
+      filterFn: filterFns.equals,
+    }),
+    columnHelper.accessor((row) => row.delivery_date, {
+      id: "delivery_date",
+      header: "Delivery Date",
+      cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+      filterFn: deliveryDateFilterFn,
+      meta: { filterComponent: DeliveryDateFilter },
+    }),
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
+      header: "Submitted",
+      cell: (info) => (
+        <span className="text-text-secondary">{new Date(info.getValue()).toLocaleString()}</span>
+      ),
+      filterFn: filterFns.includesString,
+    }),
+  ] as const, []);
 
-  const volunteers = useMemo(() => {
-    const today = todayLocal();
-    const filtered = futureOnly
-      ? initialData.filter((v) => v.delivery_date >= today)
-      : initialData;
-    return sortData(filtered, sort.key, sort.dir);
-  }, [initialData, sort, futureOnly]);
-
-  function toggleSort(key: SortKey) {
-    setSort((prev) => ({
-      key,
-      dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc",
-    }));
-  }
-
-  function SortHeader({ sortKey, children }: { sortKey: SortKey; children: React.ReactNode }) {
-    const isActive = sort.key === sortKey;
-    return (
-      <th
-        className="pb-3 font-semibold text-foreground cursor-pointer select-none hover:text-primary"
-        onClick={() => toggleSort(sortKey)}
-      >
-        {children}
-        {isActive ? (sort.dir === "asc" ? " ▲" : " ▼") : null}
-      </th>
-    );
-  }
+  const typedColumns = columns as unknown as ColumnDef<DriverVolunteer, unknown>[];
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Driver Volunteers</h2>
-        <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-          <input
-            type="checkbox"
-            checked={futureOnly}
-            onChange={(e) => setFutureOnly(e.target.checked)}
-            className="accent-primary"
-          />
-          Show future dates only
-        </label>
-      </div>
-      <p className="text-text-secondary">
-        Total volunteers: {volunteers.length}
-      </p>
-
-      {volunteers.length === 0 ? (
-        <p className="text-text-secondary">No driver volunteers yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b border-primary/10">
-                <SortHeader sortKey="name">Name</SortHeader>
-                <SortHeader sortKey="email">Email</SortHeader>
-                <SortHeader sortKey="phone">Phone</SortHeader>
-                <SortHeader sortKey="on_signal">On Signal</SortHeader>
-                <SortHeader sortKey="regions">Regions</SortHeader>
-                <SortHeader sortKey="delivery_day">Delivery Day</SortHeader>
-                <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
-                <SortHeader sortKey="created_at">Submitted</SortHeader>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-primary/10">
-              {volunteers.map((v: DriverVolunteer) => (
-                <tr key={v.id} className="hover:bg-primary/5">
-                  <td className="py-3 text-foreground">{v.name}</td>
-                  <td className="py-3 text-text-secondary">{v.email}</td>
-                  <td className="py-3 text-text-secondary">{formatPhone(v.phone)}</td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        v.on_signal === "yes"
-                          ? "bg-green-100 text-green-800"
-                          : v.on_signal === "willing"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {v.on_signal}
-                    </span>
-                  </td>
-                  <td className="py-3 text-text-secondary max-w-xs truncate">
-                    {v.regions}
-                  </td>
-                  <td className="py-3 text-text-secondary capitalize">{v.delivery_day}</td>
-                  <td className="py-3 text-text-secondary">{formatDate(v.delivery_date)}</td>
-                  <td className="py-3 text-text-secondary">
-                    {new Date(v.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+    <DataTable
+      data={initialData}
+      columns={typedColumns}
+      enableSorting
+      enableFiltering
+      enablePagination
+      pageSize={15}
+    />
   );
 }
