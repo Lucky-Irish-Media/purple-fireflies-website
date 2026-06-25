@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { MealSignup } from "@/app/lib/db";
+import { useState, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
+import type { DriverVolunteer } from "@/app/lib/definitions";
+import { assignDriverAction } from "@/app/actions/assignments";
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
@@ -24,10 +27,10 @@ function formatPhone(phone: string): string {
   return phone;
 }
 
-type SortKey = keyof MealSignup;
+type SortKey = keyof MealSignupWithAssignmentDb;
 type SortDir = "asc" | "desc";
 
-function sortData(data: MealSignup[], key: SortKey, dir: SortDir): MealSignup[] {
+function sortData(data: MealSignupWithAssignmentDb[], key: SortKey, dir: SortDir): MealSignupWithAssignmentDb[] {
   return [...data].sort((a, b) => {
     const aVal = a[key] ?? "";
     const bVal = b[key] ?? "";
@@ -36,7 +39,15 @@ function sortData(data: MealSignup[], key: SortKey, dir: SortDir): MealSignup[] 
   });
 }
 
-export default function MealSignupsTable({ initialData }: { initialData: MealSignup[] }) {
+export default function MealSignupsTable({
+  initialData,
+  drivers,
+}: {
+  initialData: MealSignupWithAssignmentDb[];
+  drivers: DriverVolunteer[];
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: "delivery_date",
     dir: "asc",
@@ -50,6 +61,16 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
       : initialData;
     return sortData(filtered, sort.key, sort.dir);
   }, [initialData, sort, futureOnly]);
+
+  const driversByDate = useMemo(() => {
+    const map = new Map<string, DriverVolunteer[]>();
+    for (const d of drivers) {
+      const existing = map.get(d.delivery_date) || [];
+      existing.push(d);
+      map.set(d.delivery_date, existing);
+    }
+    return map;
+  }, [drivers]);
 
   function toggleSort(key: SortKey) {
     setSort((prev) => ({
@@ -69,6 +90,16 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
         {isActive ? (sort.dir === "asc" ? " ▲" : " ▼") : null}
       </th>
     );
+  }
+
+  function handleAssignment(mealSignupId: number, driverVolunteerId: string) {
+    const formData = new FormData();
+    formData.set("mealSignupId", String(mealSignupId));
+    formData.set("driverVolunteerId", driverVolunteerId);
+    startTransition(async () => {
+      await assignDriverAction(formData);
+      router.refresh();
+    });
   }
 
   return (
@@ -106,41 +137,65 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
                 <SortHeader sortKey="delivery_date">Delivery Date</SortHeader>
                 <SortHeader sortKey="comments">Comments</SortHeader>
                 <SortHeader sortKey="created_at">Submitted</SortHeader>
+                <th className="pb-3 font-semibold text-foreground">Assigned Driver</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/10">
-              {signups.map((signup: MealSignup) => (
-                <tr key={signup.id} className="hover:bg-primary/5">
-                  <td className="py-3 text-foreground">{signup.name}</td>
-                  <td className="py-3 text-text-secondary">{signup.email}</td>
-                  <td className="py-3 text-text-secondary">{formatPhone(signup.phone)}</td>
-                  <td className="py-3 text-text-secondary max-w-xs truncate">
-                    {signup.address1}
-                    {signup.address2 && `, ${signup.address2}`}
-                    {`, ${signup.city}, ${signup.state} ${signup.zip_code}`}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        signup.meal_type === "vegan"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {signup.meal_type}
-                    </span>
-                  </td>
+              {signups.map((signup) => {
+                const availableDrivers = driversByDate.get(signup.delivery_date) || [];
+                return (
+                  <tr key={signup.id} className="hover:bg-primary/5">
+                    <td className="py-3 text-foreground">{signup.name}</td>
+                    <td className="py-3 text-text-secondary">{signup.email}</td>
+                    <td className="py-3 text-text-secondary">{formatPhone(signup.phone)}</td>
+                    <td className="py-3 text-text-secondary max-w-xs truncate">
+                      {signup.address1}
+                      {signup.address2 && `, ${signup.address2}`}
+                      {`, ${signup.city}, ${signup.state} ${signup.zip_code}`}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          signup.meal_type === "vegan"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {signup.meal_type}
+                      </span>
+                    </td>
                     <td className="py-3 text-text-secondary capitalize">{signup.contact_method}</td>
                     <td className="py-3 text-text-secondary capitalize">{signup.delivery_day}</td>
-                  <td className="py-3 text-text-secondary">{formatDate(signup.delivery_date)}</td>
-                  <td className="py-3 text-text-secondary max-w-xs truncate">
-                    {signup.comments || "—"}
-                  </td>
-                  <td className="py-3 text-text-secondary">
-                    {new Date(signup.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+                    <td className="py-3 text-text-secondary">{formatDate(signup.delivery_date)}</td>
+                    <td className="py-3 text-text-secondary max-w-xs truncate">
+                      {signup.comments || "—"}
+                    </td>
+                    <td className="py-3 text-text-secondary">
+                      {new Date(signup.created_at).toLocaleString()}
+                    </td>
+                    <td className="py-3">
+                      <select
+                        value={signup.driver_id ? String(signup.driver_id) : "0"}
+                        onChange={(e) => handleAssignment(signup.id, e.target.value)}
+                        disabled={isPending}
+                        className="text-sm border border-primary/20 rounded px-2 py-1 bg-background text-foreground max-w-[140px]"
+                      >
+                        <option value="0">—</option>
+                        {availableDrivers.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))}
+                      </select>
+                      {signup.driver_name && (
+                        <span className="ml-1 text-xs text-text-secondary block truncate max-w-[140px]">
+                          {formatPhone(signup.driver_phone || "")}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

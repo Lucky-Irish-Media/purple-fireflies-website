@@ -1,5 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { DriverVolunteer } from "@/app/lib/definitions";
+import type { DriverVolunteer, DeliveryAssignment } from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
@@ -206,5 +206,78 @@ export async function updateUserPassword(id: number, passwordHash: string): Prom
   await db
     .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
     .bind(passwordHash, id)
+    .run();
+}
+
+export interface MealSignupWithAssignmentDb {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address1: string;
+  address2: string | null;
+  city: string;
+  state: string;
+  zip_code: string;
+  meal_type: "regular" | "vegan";
+  contact_method: "call" | "text" | "email";
+  delivery_day: "wednesday" | "thursday";
+  delivery_date: string;
+  comments: string | null;
+  created_at: string;
+  assignment_id: number | null;
+  driver_id: number | null;
+  driver_name: string | null;
+  driver_phone: string | null;
+}
+
+export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAssignmentDb[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ms.*, da.id as assignment_id, da.driver_volunteer_id as driver_id, dv.name as driver_name, dv.phone as driver_phone
+       FROM meal_signups ms
+       LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
+       LEFT JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
+       WHERE ms.delivery_date >= date('now', '-90 days')
+       ORDER BY ms.delivery_date ASC, ms.created_at DESC
+       LIMIT 500`
+    )
+    .all<MealSignupWithAssignmentDb>();
+  return result.results || [];
+}
+
+export async function createAssignment(
+  mealSignupId: number,
+  driverVolunteerId: number
+): Promise<DeliveryAssignment> {
+  const db = await getDB();
+  const existing = await db
+    .prepare("SELECT id FROM delivery_assignments WHERE meal_signup_id = ?")
+    .bind(mealSignupId)
+    .first<{ id: number }>();
+
+  if (existing) {
+    const result = await db
+      .prepare("UPDATE delivery_assignments SET driver_volunteer_id = ? WHERE meal_signup_id = ? RETURNING *")
+      .bind(driverVolunteerId, mealSignupId)
+      .first<DeliveryAssignment>();
+    if (!result) throw new Error("Failed to update assignment");
+    return result;
+  }
+
+  const result = await db
+    .prepare("INSERT INTO delivery_assignments (meal_signup_id, driver_volunteer_id) VALUES (?, ?) RETURNING *")
+    .bind(mealSignupId, driverVolunteerId)
+    .first<DeliveryAssignment>();
+  if (!result) throw new Error("Failed to create assignment");
+  return result;
+}
+
+export async function deleteAssignmentByMealSignupId(mealSignupId: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM delivery_assignments WHERE meal_signup_id = ?")
+    .bind(mealSignupId)
     .run();
 }

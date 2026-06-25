@@ -98,3 +98,18 @@ export interface DriverVolunteer {
   delivery_date: string;
   created_at: string;
 }
+
+export interface DeliveryAssignment {
+  id: number;
+  meal_signup_id: number;
+  driver_volunteer_id: number;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface MealSignupWithAssignment extends MealSignup {
+  assignment_id: number | null;
+  driver_id: number | null;
+  driver_name: string | null;
+  driver_phone: string | null;
+}

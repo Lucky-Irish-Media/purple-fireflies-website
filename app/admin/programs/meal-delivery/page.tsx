@@ -1,10 +1,10 @@
 import MealSignupsTable from "../../MealSignupsTable";
 import DriverVolunteersTable from "../../DriverVolunteersTable";
-import { getMealSignups, getDriverVolunteers } from "@/app/lib/db";
+import { getMealSignupsWithAssignments, getDriverVolunteers } from "@/app/lib/db";
 
 export default async function AdminMealDeliveryPage() {
   const [mealSignups, driverVolunteers] = await Promise.all([
-    getMealSignups(),
+    getMealSignupsWithAssignments(),
     getDriverVolunteers(),
   ]);
 
@@ -13,7 +13,7 @@ export default async function AdminMealDeliveryPage() {
       <h1 className="text-2xl font-bold text-foreground">
         Meal Delivery — Signups
       </h1>
-      <MealSignupsTable initialData={mealSignups} />
+      <MealSignupsTable initialData={mealSignups} drivers={driverVolunteers} />
       <DriverVolunteersTable initialData={driverVolunteers} />
     </div>
   );
