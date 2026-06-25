@@ -43,6 +43,65 @@ function getDeliveryDayBadge(day: string) {
   );
 }
 
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function SignalFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Signals</option>
+      <option value="yes">Yes</option>
+      <option value="willing">Willing</option>
+      <option value="no">No</option>
+    </select>
+  );
+}
+
+function DeliveryDateFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  const today = todayLocal();
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All Dates</option>
+      <option value="future">Future Dates Only</option>
+      <option value="past">Past Dates Only</option>
+      <option value="today">Today</option>
+    </select>
+  );
+}
+
+function deliveryDateFilterFn(row: any, columnId: string, value: string): boolean {
+  const date = row.getValue(columnId);
+  const today = todayLocal();
+  switch (value) {
+    case "future":
+      return date >= today;
+    case "past":
+      return date < today;
+    case "today":
+      return date === today;
+    default:
+      return true;
+  }
+}
+
 const columnHelper = createColumnHelper<DriverVolunteer>();
 
 export default function DriverVolunteersTable({ initialData }: { initialData: DriverVolunteer[] }) {
@@ -70,6 +129,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
       header: "On Signal",
       cell: (info) => getSignalBadge(info.getValue()),
       filterFn: filterFns.equals,
+      meta: { filterComponent: SignalFilter },
     }),
     columnHelper.accessor((row) => row.regions, {
       id: "regions",
@@ -87,7 +147,8 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
       id: "delivery_date",
       header: "Delivery Date",
       cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
-      filterFn: filterFns.includesString,
+      filterFn: deliveryDateFilterFn,
+      meta: { filterComponent: DeliveryDateFilter },
     }),
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",

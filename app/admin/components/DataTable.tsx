@@ -19,6 +19,12 @@ import {
 } from "@tanstack/react-table";
 import { useState, useMemo } from "react";
 
+export type FilterComponent<TData extends RowData> = (props: {
+  column: any;
+  table: any;
+  header: any;
+}) => React.ReactNode;
+
 type DataTableProps<TData extends RowData> = {
   data: TData[];
   columns: ColumnDef<TData, unknown>[];
@@ -130,29 +136,42 @@ export function DataTable<TData extends RowData>({
                 {getHeaderGroups()[0]?.headers.map((header) => (
                   <th key={header.id} className="pb-2">
                     {header.column.getCanFilter() && (
-                      <div className="w-full">
-                        {header.column.getFilterValue() !== undefined && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              header.column.setFilterValue(undefined);
-                            }}
-                            className="absolute mt-1 mr-1 right-0 text-red-500 hover:text-red-700 text-xs"
-                          >
-                            ✕
-                          </button>
+                      <div className="w-full relative">
+                        {(header.column.columnDef.meta as any)?.filterComponent ? (
+                          flexRender(
+                            (header.column.columnDef.meta as any).filterComponent,
+                            {
+                              column: header.column,
+                              table: table,
+                              header: header.getContext(),
+                            } as any
+                          )
+                        ) : (
+                          <>
+                            {header.column.getFilterValue() !== undefined && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  header.column.setFilterValue(undefined);
+                                }}
+                                className="absolute mt-1 mr-1 right-0 text-red-500 hover:text-red-700 text-xs"
+                              >
+                                ✕
+                              </button>
+                            )}
+                            <input
+                              type="text"
+                              placeholder={`Filter ${header.column.id}...`}
+                              value={(header.column.getFilterValue() as string) || ""}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                header.column.setFilterValue(e.target.value);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </>
                         )}
-                        <input
-                          type="text"
-                          placeholder={`Filter ${header.column.id}...`}
-                          value={(header.column.getFilterValue() as string) || ""}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            header.column.setFilterValue(e.target.value);
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
                       </div>
                     )}
                   </th>
