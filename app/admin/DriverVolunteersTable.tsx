@@ -270,6 +270,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
     }),
     columnHelper.display({
       id: "edit",
+      enableHiding: false,
       header: "",
       cell: (info) => (
         <button
@@ -337,6 +338,8 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
         enableSorting
         enableFiltering
         enablePagination
+        enableColumnVisibility
+        initialVisibility={{ created_at: false }}
         pageSize={15}
       />
     </section>

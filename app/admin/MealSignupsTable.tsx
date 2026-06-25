@@ -430,6 +430,7 @@ export default function MealSignupsTable({
     }),
     columnHelper.display({
       id: "edit",
+      enableHiding: false,
       header: "",
       cell: (info) => (
         <button
@@ -497,6 +498,8 @@ export default function MealSignupsTable({
         enableSorting
         enableFiltering
         enablePagination
+        enableColumnVisibility
+        initialVisibility={{ created_at: false }}
         pageSize={15}
       />
     </section>
