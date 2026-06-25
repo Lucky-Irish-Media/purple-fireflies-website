@@ -14,7 +14,7 @@ const AdminDriverVolunteerSchema = z.object({
   email: z.string().email("Please enter a valid email.").trim(),
   phone: z.string().regex(phoneRegex, "Please enter a valid phone number.").trim(),
   onSignal: z.enum(["yes", "no", "willing"], "Please select an option."),
-  regions: z.string().min(1, "At least one region is required."),
+  regions: z.array(z.enum(regions)).min(1, "Select at least one region."),
   deliveryDate: z.string().min(1, "Delivery date is required."),
 });
 
@@ -29,12 +29,14 @@ export async function createDriverVolunteerAction(
   formData: FormData,
 ): Promise<AdminDriverVolunteerActionState> {
   try {
+    const regions = formData.getAll("regions") as string[];
+
     const validated = AdminDriverVolunteerSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
       onSignal: formData.get("onSignal"),
-      regions: formData.get("regions"),
+      regions,
       deliveryDate: formData.get("deliveryDate"),
     });
 
@@ -49,7 +51,7 @@ export async function createDriverVolunteerAction(
       email: data.email,
       phone: data.phone,
       onSignal: data.onSignal,
-      regions: data.regions,
+      regions: data.regions.join(", "),
       deliveryDate: data.deliveryDate,
     });
 

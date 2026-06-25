@@ -6,6 +6,8 @@ import { createDriverVolunteerAction, type AdminDriverVolunteerActionState } fro
 import { DataTable } from "./components/DataTable";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
+const REGION_OPTIONS = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"] as const;
+
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   return `${month}/${day}/${year}`;
@@ -233,11 +235,20 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
               {createState?.errors?.onSignal && <p className="mt-1 text-sm text-red-500">{createState.errors.onSignal[0]}</p>}
             </div>
             <div>
-              <label htmlFor="dv-regions" className="block text-sm font-medium text-foreground mb-1">Regions</label>
-              <input id="dv-regions" name="regions" type="text" required
-                placeholder="e.g. North, South, East"
-                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              <label className="block text-sm font-medium text-foreground mb-1">Regions</label>
+              <div className="flex flex-wrap gap-3">
+                {REGION_OPTIONS.map((region) => (
+                  <label key={region} className="flex items-center gap-1.5 text-sm text-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="regions"
+                      value={region}
+                      className="rounded border-primary/30 text-primary focus:ring-primary"
+                    />
+                    {region}
+                  </label>
+                ))}
+              </div>
               {createState?.errors?.regions && <p className="mt-1 text-sm text-red-500">{createState.errors.regions[0]}</p>}
             </div>
             <div>
