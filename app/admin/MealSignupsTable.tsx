@@ -308,7 +308,7 @@ export default function MealSignupsTable({
           }}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
         >
-          {showAddForm ? "Cancel" : "Add Signup"}
+          {showAddForm ? "Close" : "Add Signup"}
         </button>
       </div>
 

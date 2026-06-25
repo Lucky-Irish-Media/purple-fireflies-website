@@ -187,7 +187,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
           onClick={() => setShowAddForm(!showAddForm)}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
         >
-          {showAddForm ? "Cancel" : "Add Driver"}
+          {showAddForm ? "Close" : "Add Driver"}
         </button>
       </div>
 
