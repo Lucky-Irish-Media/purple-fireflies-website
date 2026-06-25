@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { MealSignup } from "@/app/lib/db";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
+import type { DriverVolunteer } from "@/app/lib/definitions";
+import { assignDriverAction } from "@/app/actions/assignments";
 import { DataTable } from "./components/DataTable";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
@@ -124,9 +127,64 @@ function deliveryDateFilterFn(row: any, columnId: string, value: string): boolea
   }
 }
 
-const columnHelper = createColumnHelper<MealSignup>();
+const columnHelper = createColumnHelper<MealSignupWithAssignmentDb>();
 
-export default function MealSignupsTable({ initialData }: { initialData: MealSignup[] }) {
+function DriverSelectCell({ row, drivers, isPending, onAssign }: {
+  row: { original: MealSignupWithAssignmentDb };
+  drivers: DriverVolunteer[];
+  isPending: boolean;
+  onAssign: (mealSignupId: number, driverVolunteerId: string) => void;
+}) {
+  const signup = row.original;
+  const availableDrivers = useMemo(
+    () => drivers.filter((d) => d.delivery_date === signup.delivery_date),
+    [drivers, signup.delivery_date]
+  );
+
+  return (
+    <div>
+      <select
+        value={signup.driver_id ? String(signup.driver_id) : "0"}
+        onChange={(e) => onAssign(signup.id, e.target.value)}
+        disabled={isPending}
+        className="text-sm border border-primary/20 rounded px-2 py-1 bg-background text-foreground max-w-[140px]"
+      >
+        <option value="0">—</option>
+        {availableDrivers.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
+      {signup.driver_name && (
+        <span className="ml-1 text-xs text-text-secondary block truncate max-w-[140px]">
+          {formatPhone(signup.driver_phone || "")}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export default function MealSignupsTable({
+  initialData,
+  drivers,
+}: {
+  initialData: MealSignupWithAssignmentDb[];
+  drivers: DriverVolunteer[];
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function handleAssignment(mealSignupId: number, driverVolunteerId: string) {
+    const formData = new FormData();
+    formData.set("mealSignupId", String(mealSignupId));
+    formData.set("driverVolunteerId", driverVolunteerId);
+    startTransition(async () => {
+      await assignDriverAction(formData);
+      router.refresh();
+    });
+  }
+
   const columns = useMemo(() => [
     columnHelper.accessor((row) => row.name, {
       id: "name",
@@ -202,9 +260,21 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
       ),
       filterFn: filterFns.includesString,
     }),
-  ] as const, []);
+    columnHelper.display({
+      id: "assigned_driver",
+      header: "Assigned Driver",
+      cell: (info) => (
+        <DriverSelectCell
+          row={info.row}
+          drivers={drivers}
+          isPending={isPending}
+          onAssign={handleAssignment}
+        />
+      ),
+    }),
+  ] as const, [drivers, isPending, handleAssignment]);
 
-  const typedColumns = columns as unknown as ColumnDef<MealSignup, unknown>[];
+  const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignmentDb, unknown>[];
 
   return (
     <DataTable
