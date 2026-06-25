@@ -210,8 +210,6 @@ export default function MealSignupsTable({ initialData }: { initialData: MealSig
     <DataTable
       data={initialData}
       columns={typedColumns}
-      searchKey="name"
-      searchPlaceholder="Search by name..."
       enableSorting
       enableFiltering
       enablePagination

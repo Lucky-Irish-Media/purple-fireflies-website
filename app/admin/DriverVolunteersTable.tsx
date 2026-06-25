@@ -166,8 +166,6 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
     <DataTable
       data={initialData}
       columns={typedColumns}
-      searchKey="name"
-      searchPlaceholder="Search by name..."
       enableSorting
       enableFiltering
       enablePagination

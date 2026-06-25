@@ -28,8 +28,6 @@ export type FilterComponent<TData extends RowData> = (props: {
 type DataTableProps<TData extends RowData> = {
   data: TData[];
   columns: ColumnDef<TData, unknown>[];
-  searchKey?: string;
-  searchPlaceholder?: string;
   enableSorting?: boolean;
   enableFiltering?: boolean;
   enablePagination?: boolean;
@@ -43,8 +41,6 @@ type DataTableProps<TData extends RowData> = {
 export function DataTable<TData extends RowData>({
   data,
   columns,
-  searchKey,
-  searchPlaceholder = "Search...",
   enableSorting = true,
   enableFiltering = true,
   enablePagination = true,
@@ -54,6 +50,7 @@ export function DataTable<TData extends RowData>({
   onRowClick,
   className = "",
 }: DataTableProps<TData>) {
+  const [showFilters, setShowFilters] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -89,21 +86,14 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {(searchKey || enableFiltering) && (
-        <div className="flex items-center gap-4">
-          {searchKey && (
-            <div className="flex-1 max-w-md">
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={(table.getColumn(searchKey)?.getFilterValue() as string) || ""}
-                onChange={(e) =>
-                  table.getColumn(searchKey)?.setFilterValue(e.target.value)
-                }
-                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          )}
+      {enableFiltering && (
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 transition-colors"
+          >
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </button>
         </div>
       )}
 
@@ -131,7 +121,7 @@ export function DataTable<TData extends RowData>({
                 ))}
               </tr>
             ))}
-            {enableFiltering && (
+            {enableFiltering && showFilters && (
               <tr className="border-b border-primary/10">
                 {getHeaderGroups()[0]?.headers.map((header) => (
                   <th key={header.id} className="pb-2">

@@ -264,8 +264,6 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       <DataTable
         data={users}
         columns={typedColumns}
-        searchKey="name"
-        searchPlaceholder="Search by name..."
         enableSorting
         enableFiltering
         enablePagination
