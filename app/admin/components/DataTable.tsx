@@ -266,6 +266,54 @@ export function DataTable<TData extends RowData>({
         </table>
       </div>
 
+      {/* Mobile filters */}
+      {enableFiltering && showFilters && (
+        <div className="sm:hidden grid grid-cols-2 gap-3">
+          {getHeaderGroups()[0]?.headers.map((header) =>
+            header.column.getCanFilter() ? (
+              <div key={header.id} className="relative">
+                <label className="text-xs font-medium text-text-secondary block mb-1">
+                  {typeof header.column.columnDef.header === "string"
+                    ? header.column.columnDef.header
+                    : header.column.id}
+                </label>
+                {(header.column.columnDef.meta as any)?.filterComponent ? (
+                  flexRender(
+                    (header.column.columnDef.meta as any).filterComponent,
+                    { column: header.column, table: table, header: header.getContext() } as any
+                  )
+                ) : (
+                  <div className="relative">
+                    {header.column.getFilterValue() !== undefined && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          header.column.setFilterValue(undefined);
+                        }}
+                        className="absolute top-1 right-1 text-red-500 hover:text-red-700 text-xs z-10"
+                      >
+                        ✕
+                      </button>
+                    )}
+                    <input
+                      type="text"
+                      placeholder={`Filter ${typeof header.column.columnDef.header === "string" ? header.column.columnDef.header : header.column.id}...`}
+                      value={(header.column.getFilterValue() as string) || ""}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        header.column.setFilterValue(e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full rounded border border-primary/10 bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : null
+          )}
+        </div>
+      )}
+
       {/* Mobile cards */}
       <div className="sm:hidden space-y-3">
         {getRowModel().rows.length === 0 ? (
