@@ -36,6 +36,7 @@ type DataTableProps<TData extends RowData> = {
   enableExpanding?: boolean;
   enableColumnVisibility?: boolean;
   initialVisibility?: VisibilityState;
+  initialSorting?: SortingState;
   pageSize?: number;
   onRowClick?: (row: TData) => void;
   className?: string;
@@ -51,12 +52,13 @@ export function DataTable<TData extends RowData>({
   enableExpanding = false,
   enableColumnVisibility = false,
   initialVisibility = {},
+  initialSorting = [],
   pageSize = 10,
   onRowClick,
   className = "",
 }: DataTableProps<TData>) {
   const [showFilters, setShowFilters] = useState(false);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,

@@ -500,6 +500,7 @@ export default function MealSignupsTable({
         enablePagination
         enableColumnVisibility
         initialVisibility={{ created_at: false }}
+        initialSorting={[{ id: "delivery_date", desc: false }]}
         pageSize={15}
       />
     </section>
