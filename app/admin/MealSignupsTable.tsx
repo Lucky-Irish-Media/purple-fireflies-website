@@ -1,12 +1,21 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
+import { createMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
+
+const STATE_OPTIONS = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+];
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
@@ -174,6 +183,19 @@ export default function MealSignupsTable({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [signups, setSignups] = useState(initialData);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const [createState, createAction, createPending] = useActionState<
+    AdminMealSignupActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await createMealSignupAction(prev, formData);
+    if (result?.signups) {
+      setSignups(result.signups);
+    }
+    return result;
+  }, undefined);
 
   function handleAssignment(mealSignupId: number, driverVolunteerId: string) {
     const formData = new FormData();
@@ -277,13 +299,154 @@ export default function MealSignupsTable({
   const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignmentDb, unknown>[];
 
   return (
-    <DataTable
-      data={initialData}
-      columns={typedColumns}
-      enableSorting
-      enableFiltering
-      enablePagination
-      pageSize={15}
-    />
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">Meal Signups</h2>
+        <button
+          onClick={() => {
+            setShowAddForm(!showAddForm);
+          }}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
+        >
+          {showAddForm ? "Cancel" : "Add Signup"}
+        </button>
+      </div>
+
+      {showAddForm && (
+        <form
+          action={createAction}
+          className="rounded-lg border border-primary/10 bg-card p-4 space-y-4"
+        >
+          <h3 className="font-semibold text-foreground">New Meal Signup</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="ms-name" className="block text-sm font-medium text-foreground mb-1">Name</label>
+              <input id="ms-name" name="name" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.name && <p className="mt-1 text-sm text-red-500">{createState.errors.name[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-email" className="block text-sm font-medium text-foreground mb-1">Email</label>
+              <input id="ms-email" name="email" type="email" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.email && <p className="mt-1 text-sm text-red-500">{createState.errors.email[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-phone" className="block text-sm font-medium text-foreground mb-1">Phone</label>
+              <input id="ms-phone" name="phone" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.phone && <p className="mt-1 text-sm text-red-500">{createState.errors.phone[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="ms-address1" className="block text-sm font-medium text-foreground mb-1">Address Line 1</label>
+              <input id="ms-address1" name="address1" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.address1 && <p className="mt-1 text-sm text-red-500">{createState.errors.address1[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-address2" className="block text-sm font-medium text-foreground mb-1">Address Line 2</label>
+              <input id="ms-address2" name="address2" type="text"
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.address2 && <p className="mt-1 text-sm text-red-500">{createState.errors.address2[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <label htmlFor="ms-city" className="block text-sm font-medium text-foreground mb-1">City</label>
+              <input id="ms-city" name="city" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.city && <p className="mt-1 text-sm text-red-500">{createState.errors.city[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-state" className="block text-sm font-medium text-foreground mb-1">State</label>
+              <select id="ms-state" name="state" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Select</option>
+                {STATE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              {createState?.errors?.state && <p className="mt-1 text-sm text-red-500">{createState.errors.state[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-zipCode" className="block text-sm font-medium text-foreground mb-1">ZIP Code</label>
+              <input id="ms-zipCode" name="zipCode" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.zipCode && <p className="mt-1 text-sm text-red-500">{createState.errors.zipCode[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-deliveryDate" className="block text-sm font-medium text-foreground mb-1">Delivery Date</label>
+              <input id="ms-deliveryDate" name="deliveryDate" type="date" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.deliveryDate && <p className="mt-1 text-sm text-red-500">{createState.errors.deliveryDate[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="ms-mealType" className="block text-sm font-medium text-foreground mb-1">Meal Type</label>
+              <select id="ms-mealType" name="mealType" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="regular">Regular</option>
+                <option value="vegan">Vegan / GF</option>
+              </select>
+              {createState?.errors?.mealType && <p className="mt-1 text-sm text-red-500">{createState.errors.mealType[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-contactMethod" className="block text-sm font-medium text-foreground mb-1">Contact Method</label>
+              <select id="ms-contactMethod" name="contactMethod" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="call">Call</option>
+                <option value="text">Text</option>
+                <option value="email">Email</option>
+              </select>
+              {createState?.errors?.contactMethod && <p className="mt-1 text-sm text-red-500">{createState.errors.contactMethod[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="ms-comments" className="block text-sm font-medium text-foreground mb-1">Comments</label>
+              <textarea id="ms-comments" name="comments" rows={1}
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.comments && <p className="mt-1 text-sm text-red-500">{createState.errors.comments[0]}</p>}
+            </div>
+          </div>
+
+          {createState?.message && !createState?.errors && (
+            <p className="text-sm text-green-600">{createState.message}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={createPending}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+          >
+            {createPending ? "Adding..." : "Add Signup"}
+          </button>
+        </form>
+      )}
+
+      <DataTable
+        data={signups}
+        columns={typedColumns}
+        enableSorting
+        enableFiltering
+        enablePagination
+        pageSize={15}
+      />
+    </section>
   );
 }
