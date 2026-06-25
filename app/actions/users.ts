@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, getUsers, type User } from "@/app/lib/db";
+import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, updateUserRecord, getUsers, type User } from "@/app/lib/db";
 
 const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required.").trim(),
@@ -44,6 +44,44 @@ function generateRandomPassword(): string {
   }
 
   return password.join("");
+}
+
+const UpdateUserSchema = z.object({
+  id: z.coerce.number(),
+  name: z.string().min(1, "Name is required.").trim(),
+  email: z.string().email("Please enter a valid email.").trim(),
+  role: z.enum(["admin", "member"], "Please select a role."),
+});
+
+export async function updateUserAction(
+  _prevState: UsersActionState,
+  formData: FormData,
+): Promise<UsersActionState> {
+  try {
+    const validated = UpdateUserSchema.safeParse({
+      id: formData.get("id"),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      role: formData.get("role"),
+    });
+
+    if (!validated.success) {
+      return { errors: validated.error.flatten().fieldErrors };
+    }
+
+    const { id, name, email, role } = validated.data;
+
+    await updateUserRecord(id, { name, email, role });
+
+    const users = await getUsers();
+
+    revalidatePath("/admin/users");
+
+    return { message: `User "${name}" updated successfully.`, users };
+  } catch (e) {
+    console.error("updateUser action error:", e);
+    return { message: "Failed to update user." };
+  }
 }
 
 export async function createUserAction(

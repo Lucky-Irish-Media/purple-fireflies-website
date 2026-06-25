@@ -4,11 +4,13 @@ import { useState, useActionState, useMemo } from "react";
 import type { User } from "@/app/lib/db";
 import {
   createUserAction,
+  updateUserAction,
   resetPasswordAction,
   deleteUserAction,
   type UsersActionState,
 } from "@/app/actions/users";
 import { DataTable } from "./components/DataTable";
+import { Modal } from "./components/Modal";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 function getRoleBadge(role: string) {
@@ -27,9 +29,95 @@ function getRoleBadge(role: string) {
 
 const columnHelper = createColumnHelper<User>();
 
+function UserFormFields({ state, user }: {
+  state: UsersActionState;
+  user: User | null;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
+            Name
+          </label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            required
+            defaultValue={user?.name || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.name && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.name[0]}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            defaultValue={user?.email || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.email && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.email[0]}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
+            Role
+          </label>
+          <select
+            id="role"
+            name="role"
+            required
+            defaultValue={user?.role || "member"}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+          {state?.errors?.role && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.role[0]}</p>
+          )}
+        </div>
+      </div>
+
+      {state?.message && (
+        <p
+          className={`text-sm ${
+            state.generatedPassword ? "text-green-600" : "text-red-500"
+          }`}
+        >
+          {state.message}
+        </p>
+      )}
+
+      {state?.generatedPassword && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+          <p className="text-sm font-semibold text-amber-800">
+            Generated Password (save this now — it won&apos;t be shown again):
+          </p>
+          <code className="mt-1 block text-lg font-mono text-amber-900 select-all">
+            {state.generatedPassword}
+          </code>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState(initialUsers);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const [createState, createAction, createPending] = useActionState<
     UsersActionState,
@@ -38,6 +126,18 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     const result = await createUserAction(prev, formData);
     if (result?.users) {
       setUsers(result.users);
+    }
+    return result;
+  }, undefined);
+
+  const [updateState, updateAction, updatePending] = useActionState<
+    UsersActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await updateUserAction(prev, formData);
+    if (result?.users) {
+      setUsers(result.users);
+      setModalOpen(false);
     }
     return result;
   }, undefined);
@@ -92,6 +192,16 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
         const user = info.row.original;
         return (
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setEditingUser(user);
+                setModalOpen(true);
+              }}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Edit
+            </button>
+
             <form action={resetAction} className="inline">
               <input type="hidden" name="userId" value={user.id} />
               <button
@@ -129,112 +239,64 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
 
   const typedColumns = columns as unknown as ColumnDef<User, unknown>[];
 
+  const formState = editingUser ? updateState : createState;
+  const formPending = editingUser ? updatePending : createPending;
+  const formAction = editingUser ? updateAction : createAction;
+
+  function handleCreateAddForm() {
+    setEditingUser(null);
+    setModalOpen(true);
+    setHighlightedId(null);
+  }
+
+  function handleModalClose() {
+    setModalOpen(false);
+    setEditingUser(null);
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Users</h2>
         <button
-          onClick={() => {
-            setShowAddForm(!showAddForm);
-            setHighlightedId(null);
-          }}
+          onClick={handleCreateAddForm}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
         >
-          {showAddForm ? "Cancel" : "Add User"}
+          Add User
         </button>
       </div>
 
       <p className="text-text-secondary">Total users: {users.length}</p>
 
-      {showAddForm && (
-        <form
-          action={createAction}
-          className="rounded-lg border border-primary/10 bg-card p-4 space-y-4"
-        >
-          <h3 className="font-semibold text-foreground">New User</h3>
+      <Modal
+        open={modalOpen}
+        onClose={handleModalClose}
+        title={editingUser ? "Edit User" : "New User"}
+      >
+        <form action={formAction} className="space-y-4" onSubmit={() => {
+          if (!editingUser) return;
+        }}>
+          {editingUser && <input type="hidden" name="id" value={editingUser.id} />}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
-                Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {createState?.errors?.name && (
-                <p className="mt-1 text-sm text-red-500">{createState.errors.name[0]}</p>
-              )}
-            </div>
+          <UserFormFields state={formState} user={editingUser} />
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {createState?.errors?.email && (
-                <p className="mt-1 text-sm text-red-500">{createState.errors.email[0]}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                required
-                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-              </select>
-              {createState?.errors?.role && (
-                <p className="mt-1 text-sm text-red-500">{createState.errors.role[0]}</p>
-              )}
-            </div>
-          </div>
-
-          {createState?.message && (
-            <p
-              className={`text-sm ${
-                createState.generatedPassword ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              {createState.message}
+          {!editingUser && (
+            <p className="text-sm text-text-secondary">
+              A random password will be generated for the new user. Save it — it won&apos;t be shown again.
             </p>
-          )}
-
-          {createState?.generatedPassword && (
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-              <p className="text-sm font-semibold text-amber-800">
-                Generated Password (save this now — it won&apos;t be shown again):
-              </p>
-              <code className="mt-1 block text-lg font-mono text-amber-900 select-all">
-                {createState.generatedPassword}
-              </code>
-            </div>
           )}
 
           <button
             type="submit"
-            disabled={createPending}
+            disabled={formPending}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
           >
-            {createPending ? "Creating..." : "Create User"}
+            {formPending
+              ? (editingUser ? "Saving..." : "Creating...")
+              : (editingUser ? "Save Changes" : "Create User")}
           </button>
         </form>
-      )}
+      </Modal>
 
       {deleteState?.message && (
         <p

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createDriverVolunteer, getDriverVolunteers } from "@/app/lib/db";
+import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -23,6 +23,59 @@ export type AdminDriverVolunteerActionState = {
   message?: string;
   volunteers?: DriverVolunteer[];
 } | undefined;
+
+const AdminDriverVolunteerUpdateSchema = z.object({
+  id: z.coerce.number(),
+  name: z.string().min(1, "Name is required.").trim(),
+  email: z.string().email("Please enter a valid email.").trim(),
+  phone: z.string().regex(phoneRegex, "Please enter a valid phone number.").trim(),
+  onSignal: z.enum(["yes", "no", "willing"], "Please select an option."),
+  regions: z.array(z.enum(regions)).min(1, "Select at least one region."),
+  deliveryDate: z.string().min(1, "Delivery date is required."),
+});
+
+export async function updateDriverVolunteerAction(
+  _prevState: AdminDriverVolunteerActionState,
+  formData: FormData,
+): Promise<AdminDriverVolunteerActionState> {
+  try {
+    const regions = formData.getAll("regions") as string[];
+
+    const validated = AdminDriverVolunteerUpdateSchema.safeParse({
+      id: formData.get("id"),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      onSignal: formData.get("onSignal"),
+      regions,
+      deliveryDate: formData.get("deliveryDate"),
+    });
+
+    if (!validated.success) {
+      return { errors: validated.error.flatten().fieldErrors };
+    }
+
+    const data = validated.data;
+
+    await updateDriverVolunteer(data.id, {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      onSignal: data.onSignal,
+      regions: data.regions.join(", "),
+      deliveryDate: data.deliveryDate,
+    });
+
+    const volunteers = await getDriverVolunteers();
+
+    revalidatePath("/admin/programs/meal-delivery");
+
+    return { message: "Driver volunteer updated successfully.", volunteers };
+  } catch (e) {
+    console.error("updateDriverVolunteer action error:", e);
+    return { message: "Failed to update driver volunteer. Please try again." };
+  }
+}
 
 export async function createDriverVolunteerAction(
   _prevState: AdminDriverVolunteerActionState,
