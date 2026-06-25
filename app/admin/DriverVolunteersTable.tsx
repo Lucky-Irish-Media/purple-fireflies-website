@@ -340,7 +340,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
         enablePagination
         enableColumnVisibility
         initialVisibility={{ created_at: false }}
-        initialSorting={[{ id: "delivery_date", desc: false }]}
+        initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
       />
     </section>
