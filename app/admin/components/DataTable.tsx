@@ -152,7 +152,8 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-sm text-left" role="grid">
           <thead>
             {getHeaderGroups().map((headerGroup) => (
@@ -160,7 +161,7 @@ export function DataTable<TData extends RowData>({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="pb-3 font-semibold text-foreground"
+                    className="pb-3 pr-3 font-semibold text-foreground"
                     style={{
                       cursor: header.column.getCanSort() ? "pointer" : "default",
                       userSelect: "none",
@@ -179,7 +180,7 @@ export function DataTable<TData extends RowData>({
             {enableFiltering && showFilters && (
               <tr className="border-b border-primary/10">
                 {getHeaderGroups()[0]?.headers.map((header) => (
-                  <th key={header.id} className="pb-2">
+                  <th key={header.id} className="pb-2 pr-3">
                     {header.column.getCanFilter() && (
                       <div className="w-full relative">
                         {(header.column.columnDef.meta as any)?.filterComponent ? (
@@ -241,7 +242,7 @@ export function DataTable<TData extends RowData>({
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="py-3">
+                    <td key={cell.id} className="py-3 pr-3">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -254,7 +255,7 @@ export function DataTable<TData extends RowData>({
               {getFooterGroups().map((footerGroup) => (
                 <tr key={footerGroup.id}>
                   {footerGroup.headers.map((header) => (
-                    <th key={header.id} className="pt-3">
+                    <th key={header.id} className="pt-3 pr-3">
                       {flexRender(header.column.columnDef.footer, header.getContext())}
                     </th>
                   ))}
@@ -263,6 +264,45 @@ export function DataTable<TData extends RowData>({
             </tfoot>
           )}
         </table>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-3">
+        {getRowModel().rows.length === 0 ? (
+          <div className="py-8 text-center text-text-secondary">
+            No data available
+          </div>
+        ) : (
+          getRowModel().rows.map((row) => (
+            <div
+              key={row.id}
+              className={`rounded-lg border border-primary/10 bg-card p-4 space-y-2 ${
+                onRowClick ? "cursor-pointer" : ""
+              }`}
+              onClick={() => onRowClick?.(row.original)}
+            >
+              {row.getVisibleCells().map((cell) => {
+                const headerLabel =
+                  typeof cell.column.columnDef.header === "string" &&
+                  cell.column.columnDef.header.trim()
+                    ? cell.column.columnDef.header
+                    : null;
+                return (
+                  <div key={cell.id}>
+                    {headerLabel && (
+                      <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary block">
+                        {headerLabel}
+                      </span>
+                    )}
+                    <div className="text-sm text-foreground">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
       </div>
 
       {enablePagination && (
