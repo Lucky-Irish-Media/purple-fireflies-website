@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useActionState } from "react";
 import type { DriverVolunteer } from "@/app/lib/definitions";
+import { createDriverVolunteerAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
 import { DataTable } from "./components/DataTable";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
+
+const REGION_OPTIONS = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"] as const;
 
 function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
@@ -105,6 +108,20 @@ function deliveryDateFilterFn(row: any, columnId: string, value: string): boolea
 const columnHelper = createColumnHelper<DriverVolunteer>();
 
 export default function DriverVolunteersTable({ initialData }: { initialData: DriverVolunteer[] }) {
+  const [volunteers, setVolunteers] = useState(initialData);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const [createState, createAction, createPending] = useActionState<
+    AdminDriverVolunteerActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await createDriverVolunteerAction(prev, formData);
+    if (result?.volunteers) {
+      setVolunteers(result.volunteers);
+    }
+    return result;
+  }, undefined);
+
   const columns = useMemo(() => [
     columnHelper.accessor((row) => row.name, {
       id: "name",
@@ -163,13 +180,108 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
   const typedColumns = columns as unknown as ColumnDef<DriverVolunteer, unknown>[];
 
   return (
-    <DataTable
-      data={initialData}
-      columns={typedColumns}
-      enableSorting
-      enableFiltering
-      enablePagination
-      pageSize={15}
-    />
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">Driver Volunteers</h2>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
+        >
+          {showAddForm ? "Close" : "Add Driver"}
+        </button>
+      </div>
+
+      {showAddForm && (
+        <form
+          action={createAction}
+          className="rounded-lg border border-primary/10 bg-card p-4 space-y-4"
+        >
+          <h3 className="font-semibold text-foreground">New Driver Volunteer</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="dv-name" className="block text-sm font-medium text-foreground mb-1">Name</label>
+              <input id="dv-name" name="name" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.name && <p className="mt-1 text-sm text-red-500">{createState.errors.name[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="dv-email" className="block text-sm font-medium text-foreground mb-1">Email</label>
+              <input id="dv-email" name="email" type="email" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.email && <p className="mt-1 text-sm text-red-500">{createState.errors.email[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="dv-phone" className="block text-sm font-medium text-foreground mb-1">Phone</label>
+              <input id="dv-phone" name="phone" type="text" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.phone && <p className="mt-1 text-sm text-red-500">{createState.errors.phone[0]}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="dv-onSignal" className="block text-sm font-medium text-foreground mb-1">On Signal?</label>
+              <select id="dv-onSignal" name="onSignal" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="no">No</option>
+                <option value="willing">Willing to Learn</option>
+                <option value="yes">Yes</option>
+              </select>
+              {createState?.errors?.onSignal && <p className="mt-1 text-sm text-red-500">{createState.errors.onSignal[0]}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Regions</label>
+              <div className="flex flex-wrap gap-3">
+                {REGION_OPTIONS.map((region) => (
+                  <label key={region} className="flex items-center gap-1.5 text-sm text-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="regions"
+                      value={region}
+                      className="rounded border-primary/30 text-primary focus:ring-primary"
+                    />
+                    {region}
+                  </label>
+                ))}
+              </div>
+              {createState?.errors?.regions && <p className="mt-1 text-sm text-red-500">{createState.errors.regions[0]}</p>}
+            </div>
+            <div>
+              <label htmlFor="dv-deliveryDate" className="block text-sm font-medium text-foreground mb-1">Delivery Date</label>
+              <input id="dv-deliveryDate" name="deliveryDate" type="date" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {createState?.errors?.deliveryDate && <p className="mt-1 text-sm text-red-500">{createState.errors.deliveryDate[0]}</p>}
+            </div>
+          </div>
+
+          {createState?.message && !createState?.errors && (
+            <p className="text-sm text-green-600">{createState.message}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={createPending}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+          >
+            {createPending ? "Adding..." : "Add Driver"}
+          </button>
+        </form>
+      )}
+
+      <DataTable
+        data={volunteers}
+        columns={typedColumns}
+        enableSorting
+        enableFiltering
+        enablePagination
+        pageSize={15}
+      />
+    </section>
   );
 }
