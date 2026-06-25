@@ -454,7 +454,7 @@ export default function MealSignupsTable({
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-foreground">Meal Signups</h2>
         <button
           onClick={() => {

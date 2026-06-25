@@ -111,7 +111,7 @@ export function DataTable<TData extends RowData>({
   return (
     <div className={`space-y-4 ${className}`}>
       {(enableFiltering || enableColumnVisibility) && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {enableFiltering && (
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -152,7 +152,8 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-sm text-left" role="grid">
           <thead>
             {getHeaderGroups().map((headerGroup) => (
@@ -160,7 +161,7 @@ export function DataTable<TData extends RowData>({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="pb-3 font-semibold text-foreground"
+                    className="pb-3 pr-3 font-semibold text-foreground"
                     style={{
                       cursor: header.column.getCanSort() ? "pointer" : "default",
                       userSelect: "none",
@@ -179,7 +180,7 @@ export function DataTable<TData extends RowData>({
             {enableFiltering && showFilters && (
               <tr className="border-b border-primary/10">
                 {getHeaderGroups()[0]?.headers.map((header) => (
-                  <th key={header.id} className="pb-2">
+                  <th key={header.id} className="pb-2 pr-3">
                     {header.column.getCanFilter() && (
                       <div className="w-full relative">
                         {(header.column.columnDef.meta as any)?.filterComponent ? (
@@ -241,7 +242,7 @@ export function DataTable<TData extends RowData>({
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="py-3">
+                    <td key={cell.id} className="py-3 pr-3">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -254,7 +255,7 @@ export function DataTable<TData extends RowData>({
               {getFooterGroups().map((footerGroup) => (
                 <tr key={footerGroup.id}>
                   {footerGroup.headers.map((header) => (
-                    <th key={header.id} className="pt-3">
+                    <th key={header.id} className="pt-3 pr-3">
                       {flexRender(header.column.columnDef.footer, header.getContext())}
                     </th>
                   ))}
@@ -265,9 +266,96 @@ export function DataTable<TData extends RowData>({
         </table>
       </div>
 
+      {/* Mobile filters */}
+      {enableFiltering && showFilters && (
+        <div className="sm:hidden grid grid-cols-2 gap-3">
+          {getHeaderGroups()[0]?.headers.map((header) =>
+            header.column.getCanFilter() ? (
+              <div key={header.id} className="relative">
+                <label className="text-xs font-medium text-text-secondary block mb-1">
+                  {typeof header.column.columnDef.header === "string"
+                    ? header.column.columnDef.header
+                    : header.column.id}
+                </label>
+                {(header.column.columnDef.meta as any)?.filterComponent ? (
+                  flexRender(
+                    (header.column.columnDef.meta as any).filterComponent,
+                    { column: header.column, table: table, header: header.getContext() } as any
+                  )
+                ) : (
+                  <div className="relative">
+                    {header.column.getFilterValue() !== undefined && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          header.column.setFilterValue(undefined);
+                        }}
+                        className="absolute top-1 right-1 text-red-500 hover:text-red-700 text-xs z-10"
+                      >
+                        ✕
+                      </button>
+                    )}
+                    <input
+                      type="text"
+                      placeholder={`Filter ${typeof header.column.columnDef.header === "string" ? header.column.columnDef.header : header.column.id}...`}
+                      value={(header.column.getFilterValue() as string) || ""}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        header.column.setFilterValue(e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full rounded border border-primary/10 bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : null
+          )}
+        </div>
+      )}
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-3">
+        {getRowModel().rows.length === 0 ? (
+          <div className="py-8 text-center text-text-secondary">
+            No data available
+          </div>
+        ) : (
+          getRowModel().rows.map((row) => (
+            <div
+              key={row.id}
+              className={`rounded-lg border border-primary/10 bg-card p-4 space-y-2 ${
+                onRowClick ? "cursor-pointer" : ""
+              }`}
+              onClick={() => onRowClick?.(row.original)}
+            >
+              {row.getVisibleCells().map((cell) => {
+                const headerLabel =
+                  typeof cell.column.columnDef.header === "string" &&
+                  cell.column.columnDef.header.trim()
+                    ? cell.column.columnDef.header
+                    : null;
+                return (
+                  <div key={cell.id}>
+                    {headerLabel && (
+                      <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary block">
+                        {headerLabel}
+                      </span>
+                    )}
+                    <div className="text-sm text-foreground">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
+      </div>
+
       {enablePagination && (
-        <div className="flex items-center justify-between text-sm text-text-secondary">
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-text-secondary">
+          <div className="order-2 sm:order-1">
             Showing{" "}
             <strong>
               {pagination.pageIndex * pagination.pageSize + 1}{" "}
@@ -280,18 +368,19 @@ export function DataTable<TData extends RowData>({
               {getRowModel().rows.length} results
             </strong>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="order-1 sm:order-2 flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex-1 sm:flex-initial" />
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-initial rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-initial rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
