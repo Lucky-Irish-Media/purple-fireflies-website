@@ -46,40 +46,30 @@ export default async function AdminLayout({
         </div>
       </header>
 
-      <div className="flex flex-1">
-        <aside className="hidden sm:flex w-56 flex-col bg-card border-r border-primary/10 p-4 gap-1">
-          <Link
-            href="/admin"
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
-          >
-            Dashboard
-          </Link>
+      <nav className="hidden sm:flex items-center gap-1 px-4 sm:px-6 lg:px-8 py-2 bg-card border-b border-primary/10">
+        <Link
+          href="/admin"
+          className="rounded-lg px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
+        >
+          Dashboard
+        </Link>
+        <span className="text-text-secondary text-xs mx-1">|</span>
+        <Link
+          href="/admin/programs/meal-delivery"
+          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+        >
+          Meal Delivery
+        </Link>
+        <span className="text-text-secondary text-xs mx-1">|</span>
+        <Link
+          href="/admin/users"
+          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+        >
+          Users
+        </Link>
+      </nav>
 
-          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-            Programs
-          </span>
-
-          <Link
-            href="/admin/programs/meal-delivery"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-          >
-            Meal Delivery
-          </Link>
-
-          <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-            Administration
-          </span>
-
-          <Link
-            href="/admin/users"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-          >
-            Users
-          </Link>
-        </aside>
-
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
-      </div>
+      <main className="flex-1 p-4 sm:p-6">{children}</main>
     </div>
   );
 }
