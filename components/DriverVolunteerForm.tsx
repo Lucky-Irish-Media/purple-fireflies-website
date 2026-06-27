@@ -13,7 +13,7 @@ function generateDriverDateOptions() {
   today.setHours(0, 0, 0, 0);
 
   const minDate = new Date(today);
-  minDate.setDate(today.getDate() + 7);
+  minDate.setDate(today.getDate());
 
   const maxDate = new Date(today);
   maxDate.setDate(today.getDate() + 30);
