@@ -7,6 +7,7 @@ import {
   getMealTypeBreakdown,
   getCoverageGaps,
   getVolunteerAvailability,
+  getDriverTotalAssignments,
 } from "@/app/lib/reports";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -57,6 +58,13 @@ const cgCols = [
   cgch.accessor("driver_count", { header: "Drivers", enableSorting: true }),
 ];
 
+const dtach = createColumnHelper<any>();
+const dtaCols = [
+  dtach.accessor("driver_name", { header: "Driver", enableSorting: true }),
+  dtach.accessor("driver_phone", { header: "Phone" }),
+  dtach.accessor("assignment_count", { header: "Total Assignments", enableSorting: true }),
+];
+
 const vach = createColumnHelper<any>();
 const vaCols = [
   vach.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
@@ -73,6 +81,7 @@ export default async function AdminReportsPage() {
     mealTypeBreakdown,
     coverageGaps,
     volunteerAvailability,
+    driverTotalAssignments,
   ] = await Promise.all([
     getWeeklyAssignments(),
     getUnassignedSignups(),
@@ -80,6 +89,7 @@ export default async function AdminReportsPage() {
     getMealTypeBreakdown(),
     getCoverageGaps(),
     getVolunteerAvailability(),
+    getDriverTotalAssignments(),
   ]);
 
   const weeks = [...new Set(weeklyAssignments.map((r) => r.iso_week))].sort().reverse();
@@ -228,6 +238,26 @@ export default async function AdminReportsPage() {
           />
         ) : (
           <p className="text-text-secondary italic">No volunteer availability data available.</p>
+        )}
+      </section>
+
+      {/* Driver Total Assignments */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Driver Total Assignments</h2>
+          <p className="text-sm text-text-secondary mt-1">
+            All-time assignment count per driver.
+          </p>
+        </div>
+        {driverTotalAssignments.length > 0 ? (
+          <DataTable
+            data={driverTotalAssignments}
+            columns={dtaCols}
+            pageSize={20}
+            initialSorting={[{ id: "assignment_count", desc: true }]}
+          />
+        ) : (
+          <p className="text-text-secondary italic">No assignment data available.</p>
         )}
       </section>
     </div>

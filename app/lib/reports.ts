@@ -195,6 +195,31 @@ export async function getVolunteerAvailability(): Promise<VolunteerAvailabilityR
   return result.results || [];
 }
 
+export interface DriverTotalAssignmentRow {
+  driver_id: number;
+  driver_name: string;
+  driver_phone: string;
+  assignment_count: number;
+}
+
+export async function getDriverTotalAssignments(): Promise<DriverTotalAssignmentRow[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT
+         dv.id as driver_id,
+         dv.name as driver_name,
+         dv.phone as driver_phone,
+         COUNT(da.id) as assignment_count
+       FROM driver_volunteers dv
+       LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
+       GROUP BY dv.id
+       ORDER BY assignment_count DESC, dv.name ASC`
+    )
+    .all<DriverTotalAssignmentRow>();
+  return result.results || [];
+}
+
 export interface DashboardSummary {
   unassigned_count: number;
   upcoming_delivery_dates: number;
