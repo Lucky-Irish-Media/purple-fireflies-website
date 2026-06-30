@@ -1,4 +1,5 @@
 import { DataTable } from "@/app/admin/components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   getWeeklyAssignments,
   getUnassignedSignups,
@@ -10,7 +11,6 @@ import {
 import { createColumnHelper } from "@tanstack/react-table";
 
 const wch = createColumnHelper<any>();
-
 const weekCols = [
   wch.accessor("iso_week", { header: "Week", enableSorting: true }),
   wch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
@@ -18,10 +18,17 @@ const weekCols = [
   wch.accessor("driver_name", { header: "Driver", enableSorting: true }),
   wch.accessor("driver_phone", { header: "Driver Phone" }),
   wch.accessor("recipient_name", { header: "Recipient", enableSorting: true }),
-  wch.accessor("recipient_address", { header: "Address" }),
-  wch.accessor("recipient_city", { header: "City" }),
+  wch.accessor(
+    (row) =>
+      `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
+    {
+      id: "address",
+      header: "Address",
+      enableSorting: true,
+    },
+  ),
   wch.accessor("meal_type", { header: "Meal Type" }),
-];
+] as unknown as ColumnDef<any, unknown>[];
 
 const unsch = createColumnHelper<any>();
 const unsCols = [
@@ -29,10 +36,17 @@ const unsCols = [
   unsch.accessor("delivery_day", { header: "Day" }),
   unsch.accessor("name", { header: "Name", enableSorting: true }),
   unsch.accessor("phone", { header: "Phone" }),
-  unsch.accessor("address1", { header: "Address" }),
-  unsch.accessor("city", { header: "City" }),
+  unsch.accessor(
+    (row) =>
+      `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
+    {
+      id: "address",
+      header: "Address",
+      enableSorting: true,
+    },
+  ),
   unsch.accessor("meal_type", { header: "Meal Type" }),
-];
+] as unknown as ColumnDef<any, unknown>[];
 
 const dlch = createColumnHelper<any>();
 const dlCols = [

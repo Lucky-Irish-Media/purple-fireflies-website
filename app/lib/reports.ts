@@ -12,10 +12,11 @@ export interface WeeklyAssignmentRow {
   delivery_date: string;
   delivery_day: "wednesday" | "thursday";
   recipient_name: string;
-  recipient_address: string;
-  recipient_city: string;
-  recipient_state: string;
-  recipient_zip: string;
+  address1: string;
+  address2: string | null;
+  city: string;
+  state: string;
+  zip_code: string;
   meal_type: "regular" | "vegan";
   driver_name: string;
   driver_phone: string;
@@ -28,7 +29,7 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
     .prepare(
       `SELECT
          ms.name as recipient_name,
-         ms.address1, ms.city, ms.state, ms.zip_code,
+         ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
          ms.meal_type,
          ms.delivery_date, ms.delivery_day,
          dv.name as driver_name,
@@ -62,6 +63,7 @@ export interface UnassignedSignup {
   email: string;
   phone: string;
   address1: string;
+  address2: string | null;
   city: string;
   state: string;
   zip_code: string;
@@ -76,8 +78,8 @@ export async function getUnassignedSignups(): Promise<UnassignedSignup[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT ms.id, ms.name, ms.email, ms.phone, ms.address1, ms.city,
-              ms.state, ms.zip_code, ms.meal_type, ms.delivery_date,
+      `SELECT ms.id, ms.name, ms.email, ms.phone, ms.address1, ms.address2, ms.city,
+               ms.state, ms.zip_code, ms.meal_type, ms.delivery_date,
               ms.delivery_day, ms.comments, ms.created_at
        FROM meal_signups ms
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
