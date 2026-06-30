@@ -7,6 +7,8 @@ const navLinks = [
   { href: "/admin", label: "Dashboard", section: false },
   { type: "heading", label: "Programs" },
   { href: "/admin/programs/meal-delivery", label: "Meal Delivery", section: true },
+  { type: "heading", label: "Reports" },
+  { href: "/admin/reports", label: "Meal Delivery Reports", section: true },
   { type: "heading", label: "Administration" },
   { href: "/admin/users", label: "Users", section: true },
 ];
@@ -69,6 +71,18 @@ export function MobileSidebar() {
                 className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
               >
                 Meal Delivery
+              </Link>
+
+              <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                Reports
+              </span>
+
+              <Link
+                href="/admin/reports"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+              >
+                Meal Delivery Reports
               </Link>
 
               <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
