@@ -62,6 +62,13 @@ export default async function AdminLayout({
         </Link>
         <span className="text-text-secondary text-xs mx-1">|</span>
         <Link
+          href="/admin/reports"
+          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
+        >
+          Reports
+        </Link>
+        <span className="text-text-secondary text-xs mx-1">|</span>
+        <Link
           href="/admin/users"
           className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
         >
