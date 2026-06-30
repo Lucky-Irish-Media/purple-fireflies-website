@@ -53,6 +53,7 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
       iso_week: isoWeek,
       week_start: start,
       week_end: end,
+      _full_address: `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
     };
   });
 }
@@ -88,7 +89,10 @@ export async function getUnassignedSignups(): Promise<UnassignedSignup[]> {
        ORDER BY ms.delivery_date ASC, ms.name ASC`
     )
     .all<UnassignedSignup>();
-  return result.results || [];
+  return (result.results || []).map((row) => ({
+    ...row,
+    _full_address: `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
+  }));
 }
 
 export interface DriverLoadRow {

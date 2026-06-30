@@ -18,15 +18,7 @@ const weekCols = [
   wch.accessor("driver_name", { header: "Driver", enableSorting: true }),
   wch.accessor("driver_phone", { header: "Driver Phone" }),
   wch.accessor("recipient_name", { header: "Recipient", enableSorting: true }),
-  wch.accessor(
-    (row) =>
-      `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
-    {
-      id: "address",
-      header: "Address",
-      enableSorting: true,
-    },
-  ),
+  wch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
   wch.accessor("meal_type", { header: "Meal Type" }),
 ] as unknown as ColumnDef<any, unknown>[];
 
@@ -36,15 +28,7 @@ const unsCols = [
   unsch.accessor("delivery_day", { header: "Day" }),
   unsch.accessor("name", { header: "Name", enableSorting: true }),
   unsch.accessor("phone", { header: "Phone" }),
-  unsch.accessor(
-    (row) =>
-      `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
-    {
-      id: "address",
-      header: "Address",
-      enableSorting: true,
-    },
-  ),
+  unsch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
   unsch.accessor("meal_type", { header: "Meal Type" }),
 ] as unknown as ColumnDef<any, unknown>[];
 
