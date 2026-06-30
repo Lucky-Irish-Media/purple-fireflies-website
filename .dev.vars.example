@@ -1,2 +1,8 @@
 # Generate a secret key: openssl rand -base64 32
 SESSION_SECRET=your_secret_key_here
+
+# Email (Resend-compatible API — https://resend.com)
+# Get your API key from https://resend.com/api-keys
+EMAIL_API_KEY=re_your_api_key_here
+EMAIL_FROM=Mel <mel@purplefireflies.org>
+# EMAIL_API_URL=https://api.resend.com/emails

@@ -356,3 +356,89 @@ export async function deleteAssignmentByMealSignupId(mealSignupId: number): Prom
     .bind(mealSignupId)
     .run();
 }
+
+export interface TomorrowDelivery {
+  meal_name: string;
+  meal_phone: string;
+  address: string;
+  comments: string | null;
+  meal_type: string;
+}
+
+export interface TomorrowDriver {
+  driver_id: number;
+  driver_name: string;
+  driver_email: string;
+  driver_phone: string;
+  delivery_day: string;
+  delivery_date: string;
+  deliveries: TomorrowDelivery[];
+}
+
+export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
+  const db = await getDB();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+  const result = await db
+    .prepare(
+      `SELECT dv.id as driver_id, dv.name as driver_name, dv.email as driver_email, dv.phone as driver_phone,
+              ms.id as meal_id, ms.name as meal_name, ms.phone as meal_phone,
+              ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
+              ms.comments, ms.meal_type, ms.delivery_day, ms.delivery_date
+       FROM delivery_assignments da
+       JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
+       JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       WHERE ms.delivery_date = ?
+       ORDER BY dv.id, ms.name`
+    )
+    .bind(tomorrowStr)
+    .all<{
+      driver_id: number;
+      driver_name: string;
+      driver_email: string;
+      driver_phone: string;
+      meal_id: number;
+      meal_name: string;
+      meal_phone: string;
+      address1: string;
+      address2: string | null;
+      city: string;
+      state: string;
+      zip_code: string;
+      comments: string | null;
+      meal_type: string;
+      delivery_day: string;
+      delivery_date: string;
+    }>();
+
+  if (!result.results || result.results.length === 0) {
+    return [];
+  }
+
+  const driverMap = new Map<number, TomorrowDriver>();
+  for (const row of result.results) {
+    if (!driverMap.has(row.driver_id)) {
+      driverMap.set(row.driver_id, {
+        driver_id: row.driver_id,
+        driver_name: row.driver_name,
+        driver_email: row.driver_email,
+        driver_phone: row.driver_phone,
+        delivery_day: row.delivery_day,
+        delivery_date: row.delivery_date,
+        deliveries: [],
+      });
+    }
+    const address = `${row.address1}${row.address2 ? ", " + row.address2 : ""}, ${row.city}, ${row.state} ${row.zip_code}`;
+    driverMap.get(row.driver_id)!.deliveries.push({
+      meal_name: row.meal_name,
+      meal_phone: row.meal_phone,
+      address,
+      comments: row.comments,
+      meal_type: row.meal_type,
+    });
+  }
+
+  return Array.from(driverMap.values());
+}

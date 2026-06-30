@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardSummary, getUnassignedSignups, getCoverageGaps } from "@/app/lib/reports";
+import { SendRemindersButton } from "@/components/SendRemindersButton";
 
 async function StatCard({
   label,
@@ -124,6 +125,18 @@ export default async function AdminDashboard() {
           </div>
         </div>
       )}
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground">Driver Reminder Emails</h2>
+        <p className="text-sm text-text-secondary">
+          Send reminder emails to drivers with deliveries scheduled for tomorrow. Requires
+          <code className="mx-1 rounded bg-card px-1.5 py-0.5 text-xs font-mono">EMAIL_API_KEY</code>
+          and
+          <code className="mx-1 rounded bg-card px-1.5 py-0.5 text-xs font-mono">EMAIL_FROM</code>
+          to be configured.
+        </p>
+        <SendRemindersButton />
+      </section>
     </div>
   );
 }
