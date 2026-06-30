@@ -199,11 +199,12 @@ export interface DashboardSummary {
   upcoming_assigned_count: number | null;
   next_wednesday_drivers: number;
   next_thursday_drivers: number;
+  total_meals_delivered: number;
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const db = await getDB();
-  const [unassigned, totals, nextDate, wedDrivers, thuDrivers] = await Promise.all([
+  const [unassigned, totals, nextDate, wedDrivers, thuDrivers, totalDelivered] = await Promise.all([
     db
       .prepare(
         `SELECT COUNT(*) as count FROM meal_signups ms
@@ -247,6 +248,14 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
          GROUP BY delivery_date ORDER BY delivery_date ASC LIMIT 1`
       )
       .first<{ delivery_date: string; count: number }>(),
+    db
+      .prepare(
+        `SELECT COUNT(*) as count
+         FROM delivery_assignments da
+         JOIN meal_signups ms ON da.meal_signup_id = ms.id
+         WHERE ms.delivery_date < date('now')`
+      )
+      .first<{ count: number }>(),
   ]);
 
   return {
@@ -259,6 +268,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     upcoming_assigned_count: nextDate?.assigned_count ?? null,
     next_wednesday_drivers: wedDrivers?.count ?? 0,
     next_thursday_drivers: thuDrivers?.count ?? 0,
+    total_meals_delivered: totalDelivered?.count ?? 0,
   };
 }
 

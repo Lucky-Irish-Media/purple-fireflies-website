@@ -67,30 +67,39 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Meal Signups (30 days)"
-          value={summary.total_meal_signups_30d}
-          href="/admin/programs/meal-delivery"
-        />
-        <StatCard
-          label="Drivers Signed Up (30 days)"
-          value={summary.total_drivers_30d}
-          href="/admin/programs/meal-delivery"
-        />
-        <StatCard
-          label="Unassigned Signups"
-          value={unassigned.length}
-          variant={unassigned.length > 0 ? "warning" : "success"}
-          href="/admin/reports"
-        />
-        <StatCard
-          label="Dates with Gaps"
-          value={gapDates.length}
-          variant={gapDates.length > 0 ? "danger" : "success"}
-          href="/admin/reports"
-        />
-      </div>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground">Meal Delivery Program</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCard
+            label="Total Meals Delivered"
+            value={summary.total_meals_delivered}
+            href="/admin/reports"
+          />
+          <StatCard
+            label="Meal Signups (30 days)"
+            value={summary.total_meal_signups_30d}
+            href="/admin/programs/meal-delivery"
+          />
+          <StatCard
+            label="Drivers Signed Up (30 days)"
+            value={summary.total_drivers_30d}
+            href="/admin/programs/meal-delivery"
+          />
+          <StatCard
+            label="Unassigned Signups"
+            value={unassigned.length}
+            variant={unassigned.length > 0 ? "warning" : "success"}
+            href="/admin/reports"
+          />
+          <StatCard
+            label="Dates with Gaps"
+            value={gapDates.length}
+            variant={gapDates.length > 0 ? "danger" : "success"}
+            href="/admin/reports"
+          />
+        </div>
+      </section>
 
       {nextDateStr && (
         <div className="rounded-lg border border-primary/10 bg-card p-4">
