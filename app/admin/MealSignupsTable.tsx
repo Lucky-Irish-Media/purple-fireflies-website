@@ -336,7 +336,23 @@ export default function MealSignupsTable({
     formData.set("mealSignupId", String(mealSignupId));
     formData.set("driverVolunteerId", driverVolunteerId);
     startTransition(async () => {
-      await assignDriverAction(formData);
+      const result = await assignDriverAction(formData);
+      if (result.success) {
+        setSignups((prev) =>
+          prev.map((s) => {
+            if (s.id !== mealSignupId) return s;
+            const driverId = driverVolunteerId === "0" ? null : Number(driverVolunteerId);
+            const driver = driverId ? drivers.find((d) => d.id === driverId) : null;
+            return {
+              ...s,
+              driver_id: driverId,
+              driver_name: driver?.name ?? null,
+              driver_phone: driver?.phone ?? null,
+              assignment_id: driverId ? (s.assignment_id ?? 0) : null,
+            };
+          })
+        );
+      }
       router.refresh();
     });
   }
