@@ -3,6 +3,7 @@
 import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definitions";
 import { createMealSignup } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
+import { checkRateLimit } from "@/app/lib/rate-limit";
 
 function isFirstWednesday(dateStr: string): boolean {
   const date = new Date(dateStr + "T00:00:00");
@@ -18,6 +19,11 @@ export async function submitMealSignup(
   formData: FormData
 ): Promise<MealSignupFormState> {
   try {
+    const { allowed } = await checkRateLimit("signup:meal");
+    if (!allowed) {
+      return { message: "Too many signup attempts. Please try again in 15 minutes." };
+    }
+
     const deliveryDates = formData.getAll("deliveryDates") as string[];
 
     const validatedFields = MealSignupSchema.safeParse({

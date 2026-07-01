@@ -2,6 +2,7 @@
 
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
 import { createDriverVolunteer, getDriverVolunteersByEmailOrPhone } from "@/app/lib/db";
+import { checkRateLimit } from "@/app/lib/rate-limit";
 
 function getErrorMessage(): string {
   return "An unexpected error occurred. Please try again.";
@@ -12,6 +13,11 @@ export async function submitDriverVolunteer(
   formData: FormData
 ): Promise<DriverVolunteerFormState> {
   try {
+    const { allowed } = await checkRateLimit("signup:driver");
+    if (!allowed) {
+      return { message: "Too many signup attempts. Please try again in 15 minutes." };
+    }
+
     const deliveryDates = formData.getAll("deliveryDates") as string[];
     const regions = formData.getAll("regions") as string[];
 
