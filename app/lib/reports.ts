@@ -12,10 +12,11 @@ export interface WeeklyAssignmentRow {
   delivery_date: string;
   delivery_day: "wednesday" | "thursday";
   recipient_name: string;
-  recipient_address: string;
-  recipient_city: string;
-  recipient_state: string;
-  recipient_zip: string;
+  address1: string;
+  address2: string | null;
+  city: string;
+  state: string;
+  zip_code: string;
   meal_type: "regular" | "vegan";
   driver_name: string;
   driver_phone: string;
@@ -29,7 +30,7 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
     .prepare(
        `SELECT
          ms.name as recipient_name,
-         ms.address1, ms.city, ms.state, ms.zip_code,
+         ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
          ms.meal_type,
          ms.delivery_date, ms.delivery_day,
          dv.name as driver_name,
@@ -54,6 +55,7 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
       iso_week: isoWeek,
       week_start: start,
       week_end: end,
+      _full_address: `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
     };
   });
 }
@@ -64,6 +66,7 @@ export interface UnassignedSignup {
   email: string;
   phone: string;
   address1: string;
+  address2: string | null;
   city: string;
   state: string;
   zip_code: string;
@@ -78,8 +81,8 @@ export async function getUnassignedSignups(): Promise<UnassignedSignup[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT ms.id, ms.name, ms.email, ms.phone, ms.address1, ms.city,
-              ms.state, ms.zip_code, ms.meal_type, ms.delivery_date,
+      `SELECT ms.id, ms.name, ms.email, ms.phone, ms.address1, ms.address2, ms.city,
+               ms.state, ms.zip_code, ms.meal_type, ms.delivery_date,
               ms.delivery_day, ms.comments, ms.created_at
        FROM meal_signups ms
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
@@ -88,7 +91,10 @@ export async function getUnassignedSignups(): Promise<UnassignedSignup[]> {
        ORDER BY ms.delivery_date ASC, ms.name ASC`
     )
     .all<UnassignedSignup>();
-  return result.results || [];
+  return (result.results || []).map((row) => ({
+    ...row,
+    _full_address: `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
+  }));
 }
 
 export interface DriverLoadRow {
@@ -188,6 +194,31 @@ export async function getVolunteerAvailability(): Promise<VolunteerAvailabilityR
        ORDER BY delivery_date ASC, on_signal ASC`
     )
     .all<VolunteerAvailabilityRow>();
+  return result.results || [];
+}
+
+export interface DriverTotalAssignmentRow {
+  driver_id: number;
+  driver_name: string;
+  driver_phone: string;
+  assignment_count: number;
+}
+
+export async function getDriverTotalAssignments(): Promise<DriverTotalAssignmentRow[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT
+         dv.id as driver_id,
+         dv.name as driver_name,
+         dv.phone as driver_phone,
+         COUNT(da.id) as assignment_count
+       FROM driver_volunteers dv
+       LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
+       GROUP BY dv.id
+       ORDER BY assignment_count DESC, dv.name ASC`
+    )
+    .all<DriverTotalAssignmentRow>();
   return result.results || [];
 }
 
