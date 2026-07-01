@@ -202,7 +202,6 @@ export async function getVolunteerAvailability(): Promise<VolunteerAvailabilityR
 }
 
 export interface DriverTotalAssignmentRow {
-  driver_id: number;
   driver_name: string;
   driver_phone: string;
   assignment_count: number;
@@ -213,13 +212,12 @@ export async function getDriverTotalAssignments(): Promise<DriverTotalAssignment
   const result = await db
     .prepare(
       `SELECT
-         dv.id as driver_id,
          dv.name as driver_name,
          dv.phone as driver_phone,
          COUNT(da.id) as assignment_count
        FROM driver_volunteers dv
        LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
-       GROUP BY dv.id
+       GROUP BY dv.name, dv.phone
        ORDER BY assignment_count DESC, dv.name ASC`
     )
     .all<DriverTotalAssignmentRow>();
