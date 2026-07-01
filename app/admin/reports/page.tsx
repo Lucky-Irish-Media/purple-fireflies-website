@@ -7,21 +7,8 @@ import {
   getCoverageGaps,
   getVolunteerAvailability,
 } from "@/app/lib/reports";
+import { WeeklyAssignmentsSection } from "@/app/admin/reports/WeeklyAssignmentsSection";
 import { createColumnHelper } from "@tanstack/react-table";
-
-const wch = createColumnHelper<any>();
-
-const weekCols = [
-  wch.accessor("iso_week", { header: "Week", enableSorting: true }),
-  wch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
-  wch.accessor("delivery_day", { header: "Day", enableSorting: true }),
-  wch.accessor("driver_name", { header: "Driver", enableSorting: true }),
-  wch.accessor("driver_phone", { header: "Driver Phone" }),
-  wch.accessor("recipient_name", { header: "Recipient", enableSorting: true }),
-  wch.accessor("recipient_address", { header: "Address" }),
-  wch.accessor("recipient_city", { header: "City" }),
-  wch.accessor("meal_type", { header: "Meal Type" }),
-];
 
 const unsch = createColumnHelper<any>();
 const unsCols = [
@@ -84,43 +71,12 @@ export default async function AdminReportsPage() {
     getVolunteerAvailability(),
   ]);
 
-  const weeks = [...new Set(weeklyAssignments.map((r) => r.iso_week))].sort().reverse();
-
   return (
     <div className="space-y-12">
       <h1 className="text-2xl font-bold text-foreground">Meal Delivery Reports</h1>
 
       {/* Weekly Assignment Report */}
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Weekly Driver Assignments</h2>
-          <p className="text-sm text-text-secondary mt-1">
-            All driver-to-meal assignments grouped by ISO week.
-          </p>
-        </div>
-        {weeks.map((week) => {
-          const weekRows = weeklyAssignments.filter((r) => r.iso_week === week);
-          const { week_start, week_end } = weekRows[0];
-          return (
-            <details key={week} className="border border-primary/10 rounded-lg" open>
-              <summary className="px-4 py-3 bg-card cursor-pointer font-semibold text-foreground hover:bg-primary/5 rounded-lg">
-                {week} ({week_start} – {week_end}) — {weekRows.length} assignment{weekRows.length !== 1 ? "s" : ""}
-              </summary>
-              <div className="p-4">
-                <DataTable
-                  data={weekRows}
-                  columns={weekCols}
-                  enableFiltering={false}
-                  pageSize={50}
-                />
-              </div>
-            </details>
-          );
-        })}
-        {weeklyAssignments.length === 0 && (
-          <p className="text-text-secondary italic">No assignments found in the last 90 days.</p>
-        )}
-      </section>
+      <WeeklyAssignmentsSection weeklyAssignments={weeklyAssignments} />
 
       {/* Unassigned Signups */}
       <section className="space-y-4">
