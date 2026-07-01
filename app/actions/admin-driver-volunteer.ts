@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { verifySession } from "@/app/lib/dal";
 import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers } from "@/app/lib/db";
 import type { DriverVolunteer } from "@/app/lib/definitions";
 
@@ -39,6 +40,8 @@ export async function updateDriverVolunteerAction(
   formData: FormData,
 ): Promise<AdminDriverVolunteerActionState> {
   try {
+    await verifySession();
+
     const regions = formData.getAll("regions") as string[];
 
     const validated = AdminDriverVolunteerUpdateSchema.safeParse({
@@ -82,6 +85,8 @@ export async function createDriverVolunteerAction(
   formData: FormData,
 ): Promise<AdminDriverVolunteerActionState> {
   try {
+    await verifySession();
+
     const regions = formData.getAll("regions") as string[];
 
     const validated = AdminDriverVolunteerSchema.safeParse({

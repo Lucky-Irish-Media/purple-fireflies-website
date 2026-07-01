@@ -9,14 +9,7 @@ function isFirstWednesday(dateStr: string): boolean {
   return date.getDay() === 3 && date.getDate() <= 7;
 }
 
-function getErrorMessage(e: unknown): string {
-  if (e instanceof Error) {
-    console.error("Actual error:", e.message, e.stack);
-    if (e.message.includes("D1") || e.message.includes("database") || e.message.includes("getCloudflareContext")) {
-      return "Database connection error. Please try again later.";
-    }
-    return e.message;
-  }
+function getErrorMessage(): string {
   return "An unexpected error occurred. Please try again.";
 }
 
@@ -87,6 +80,6 @@ export async function submitMealSignup(
     return { message: "success", selectedDate: datesFormatted };
   } catch (e) {
     console.error("meal signup action error:", e);
-    return { message: getErrorMessage(e) };
+    return { message: getErrorMessage() };
   }
 }

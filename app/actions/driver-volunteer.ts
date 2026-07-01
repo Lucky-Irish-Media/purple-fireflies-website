@@ -3,14 +3,7 @@
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
 import { createDriverVolunteer, getDriverVolunteersByEmailOrPhone } from "@/app/lib/db";
 
-function getErrorMessage(e: unknown): string {
-  if (e instanceof Error) {
-    console.error("Actual error:", e.message, e.stack);
-    if (e.message.includes("D1") || e.message.includes("database") || e.message.includes("getCloudflareContext")) {
-      return "Database connection error. Please try again later.";
-    }
-    return e.message;
-  }
+function getErrorMessage(): string {
   return "An unexpected error occurred. Please try again.";
 }
 
@@ -80,6 +73,6 @@ export async function submitDriverVolunteer(
     return { message, selectedDates };
   } catch (e) {
     console.error("driver volunteer action error:", e);
-    return { message: getErrorMessage(e) };
+    return { message: getErrorMessage() };
   }
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { verifySession } from "@/app/lib/dal";
 import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, updateUserRecord, getUsers, type User } from "@/app/lib/db";
 
 const CreateUserSchema = z.object({
@@ -58,6 +59,11 @@ export async function updateUserAction(
   formData: FormData,
 ): Promise<UsersActionState> {
   try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { message: "Unauthorized. Only admins can manage users." };
+    }
+
     const validated = UpdateUserSchema.safeParse({
       id: formData.get("id"),
       name: formData.get("name"),
@@ -89,6 +95,11 @@ export async function createUserAction(
   formData: FormData,
 ): Promise<UsersActionState> {
   try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { message: "Unauthorized. Only admins can manage users." };
+    }
+
     const validated = CreateUserSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
@@ -132,6 +143,11 @@ export async function resetPasswordAction(
   formData: FormData,
 ): Promise<UsersActionState> {
   try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { message: "Unauthorized. Only admins can manage users." };
+    }
+
     const userId = Number(formData.get("userId"));
     if (!userId) {
       return { message: "Invalid user ID." };
@@ -160,6 +176,11 @@ export async function deleteUserAction(
   formData: FormData,
 ): Promise<UsersActionState> {
   try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { message: "Unauthorized. Only admins can manage users." };
+    }
+
     const userId = Number(formData.get("userId"));
     if (!userId) {
       return { message: "Invalid user ID." };

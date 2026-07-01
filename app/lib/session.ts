@@ -59,7 +59,7 @@ export async function createSession(
   cookieStore.set("session", session, {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    sameSite: "strict",
     expires: expiresAt,
     path: "/",
   });

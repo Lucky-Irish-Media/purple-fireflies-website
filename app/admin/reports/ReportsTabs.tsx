@@ -43,17 +43,10 @@ const tabs: Tab[] = [
 function EmailButton({ row }: { row: WeeklyAssignmentRow }) {
   const [state, formAction, isPending] = useActionState(sendAssignmentEmail, null);
 
-  const address = `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`;
-
   return (
     <form action={formAction}>
-      <input type="hidden" name="driver_email" value={row.driver_email} />
-      <input type="hidden" name="driver_name" value={row.driver_name} />
-      <input type="hidden" name="recipient_name" value={row.recipient_name} />
-      <input type="hidden" name="delivery_date" value={row.delivery_date} />
-      <input type="hidden" name="delivery_day" value={row.delivery_day} />
-      <input type="hidden" name="meal_type" value={row.meal_type} />
-      <input type="hidden" name="address" value={address} />
+      <input type="hidden" name="signup_id" value={row.signup_id} />
+      <input type="hidden" name="driver_id" value={row.driver_id} />
       <button
         type="submit"
         disabled={isPending || state?.success === true}
@@ -101,8 +94,7 @@ function DriverLoadEmailButton({ row }: { row: DriverLoadRow }) {
 
   return (
     <form action={formAction}>
-      <input type="hidden" name="driver_email" value={row.driver_email} />
-      <input type="hidden" name="driver_name" value={row.driver_name} />
+      <input type="hidden" name="driver_id" value={row.driver_id} />
       <input type="hidden" name="delivery_date" value={row.delivery_date} />
       <input type="hidden" name="delivery_day" value={row.delivery_day} />
       <button
