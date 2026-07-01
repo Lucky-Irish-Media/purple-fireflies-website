@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { verifySession } from "@/app/lib/dal";
 import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments } from "@/app/lib/db";
 import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
 
@@ -57,6 +58,8 @@ export async function updateMealSignupAction(
   formData: FormData,
 ): Promise<AdminMealSignupActionState> {
   try {
+    await verifySession();
+
     const validated = AdminMealSignupUpdateSchema.safeParse({
       id: formData.get("id"),
       name: formData.get("name"),
@@ -110,6 +113,8 @@ export async function createMealSignupAction(
   formData: FormData,
 ): Promise<AdminMealSignupActionState> {
   try {
+    await verifySession();
+
     const validated = AdminMealSignupSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),

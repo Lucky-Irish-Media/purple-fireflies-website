@@ -11,6 +11,7 @@ export interface WeeklyAssignmentRow {
   week_end: string;
   delivery_date: string;
   delivery_day: "wednesday" | "thursday";
+  signup_id: number;
   recipient_name: string;
   address1: string;
   address2: string | null;
@@ -29,8 +30,9 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
   const result = await db
     .prepare(
        `SELECT
-         ms.name as recipient_name,
-         ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
+          ms.id as signup_id,
+          ms.name as recipient_name,
+          ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
          ms.meal_type,
          ms.delivery_date, ms.delivery_day,
          dv.name as driver_name,

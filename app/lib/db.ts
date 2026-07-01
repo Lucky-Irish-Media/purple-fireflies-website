@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { DriverVolunteer, DeliveryAssignment } from "@/app/lib/definitions";
 
@@ -373,6 +375,24 @@ export interface TomorrowDriver {
   delivery_day: string;
   delivery_date: string;
   deliveries: TomorrowDelivery[];
+}
+
+export async function getMealSignupById(id: number): Promise<MealSignup | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM meal_signups WHERE id = ?")
+    .bind(id)
+    .first<MealSignup>();
+  return result || null;
+}
+
+export async function getDriverById(id: number): Promise<DriverVolunteer | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM driver_volunteers WHERE id = ?")
+    .bind(id)
+    .first<DriverVolunteer>();
+  return result || null;
 }
 
 export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {

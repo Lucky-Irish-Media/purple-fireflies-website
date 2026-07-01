@@ -1,5 +1,6 @@
 "use server";
 
+import { verifySession } from "@/app/lib/dal";
 import { getTomorrowsAssignments } from "@/app/lib/db";
 import { sendEmail } from "@/app/lib/email";
 
@@ -20,6 +21,8 @@ export async function sendDriverReminders(
   _formData: FormData,
 ): Promise<SendRemindersState> {
   try {
+    await verifySession();
+
     const drivers = await getTomorrowsAssignments();
 
     if (drivers.length === 0) {
@@ -68,12 +71,12 @@ export async function sendDriverReminders(
           deliveries: driver.deliveries.length,
           status: "sent",
         });
-      } catch (e) {
+      } catch {
         results.push({
           driver: driver.driver_name,
           email: driver.driver_email,
           deliveries: driver.deliveries.length,
-          status: `failed: ${e instanceof Error ? e.message : "unknown error"}`,
+          status: "failed: email send error",
         });
       }
     }
@@ -85,10 +88,11 @@ export async function sendDriverReminders(
       : `Sent ${sent} reminder email(s).`;
 
     return { success: failed === 0, message, sent, results };
-  } catch (e) {
+  } catch {
+    console.error("sendDriverReminders action error:");
     return {
       success: false,
-      message: `Failed to send reminders: ${e instanceof Error ? e.message : "unknown error"}`,
+      message: "Failed to send reminders. Please try again.",
       sent: 0,
     };
   }

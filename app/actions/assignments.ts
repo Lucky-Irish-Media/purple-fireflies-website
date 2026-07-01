@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { verifySession } from "@/app/lib/dal";
 import { createAssignment, deleteAssignmentByMealSignupId } from "@/app/lib/db";
 
 export async function assignDriverAction(formData: FormData): Promise<{ success: boolean; message: string }> {
   try {
+    await verifySession();
+
     const mealSignupId = Number(formData.get("mealSignupId"));
     const driverVolunteerId = formData.get("driverVolunteerId");
 

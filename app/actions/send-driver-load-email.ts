@@ -1,5 +1,7 @@
 "use server";
 
+import { verifySession } from "@/app/lib/dal";
+import { getDriverById } from "@/app/lib/db";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { sendEmail } from "@/app/lib/email";
 
@@ -13,13 +15,19 @@ export async function sendDriverLoadEmail(
   formData: FormData,
 ): Promise<SendDriverLoadEmailState> {
   try {
-    const driverEmail = formData.get("driver_email") as string;
-    const driverName = formData.get("driver_name") as string;
+    await verifySession();
+
+    const driverId = Number(formData.get("driver_id"));
     const deliveryDate = formData.get("delivery_date") as string;
     const deliveryDay = formData.get("delivery_day") as string;
 
-    if (!driverEmail || !driverName || !deliveryDate || !deliveryDay) {
+    if (!driverId || !deliveryDate || !deliveryDay) {
       return { success: false, message: "Missing required fields." };
+    }
+
+    const driver = await getDriverById(driverId);
+    if (!driver) {
+      return { success: false, message: "Driver not found." };
     }
 
     const { env } = await getCloudflareContext({ async: true });
@@ -33,7 +41,7 @@ export async function sendDriverLoadEmail(
          WHERE dv.email = ? AND ms.delivery_date = ?
          ORDER BY ms.name`
       )
-      .bind(driverEmail, deliveryDate)
+      .bind(driver.email, deliveryDate)
       .all<{
         name: string;
         phone: string;
@@ -66,7 +74,7 @@ export async function sendDriverLoadEmail(
     });
     const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
 
-    let body = `Hi ${driverName},\n\n`;
+    let body = `Hi ${driver.name},\n\n`;
     body += `Please arrive at the ${location} at ${time} to pickup the meals.\n\n`;
     body += `Persons you are delivering to:\n`;
 
@@ -82,16 +90,17 @@ export async function sendDriverLoadEmail(
     body += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;
 
     await sendEmail({
-      to: driverEmail,
+      to: driver.email,
       subject,
       text: body,
     });
 
-    return { success: true, message: `Load email sent to ${driverName}.` };
-  } catch (e) {
+    return { success: true, message: `Load email sent to ${driver.name}.` };
+  } catch {
+    console.error("sendDriverLoadEmail action error:");
     return {
       success: false,
-      message: `Failed to send email: ${e instanceof Error ? e.message : "unknown error"}`,
+      message: "Failed to send email. Please try again.",
     };
   }
 }
