@@ -54,7 +54,7 @@ export async function sendDriverReminders(
         body += `Meal Type: ${delivery.meal_type}\n\n`;
       }
 
-      body += `Take care,\nMel\nPurple Fireflies\nMeal Delivery Coordinator`;
+      body += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;
 
       try {
         await sendEmail({

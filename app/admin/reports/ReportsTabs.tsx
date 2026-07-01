@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import { DataTable } from "@/app/admin/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import type {
@@ -13,6 +13,8 @@ import type {
   DriverTotalAssignmentRow,
 } from "@/app/lib/reports";
 import { createColumnHelper } from "@tanstack/react-table";
+import { sendAssignmentEmail } from "@/app/actions/send-assignment-email";
+import { sendDriverLoadEmail } from "@/app/actions/send-driver-load-email";
 
 type TabKey =
   | "weekly"
@@ -38,6 +40,34 @@ const tabs: Tab[] = [
   { key: "total-assignments", label: "Total Assignments" },
 ];
 
+function EmailButton({ row }: { row: WeeklyAssignmentRow }) {
+  const [state, formAction, isPending] = useActionState(sendAssignmentEmail, null);
+
+  const address = `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`;
+
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="driver_email" value={row.driver_email} />
+      <input type="hidden" name="driver_name" value={row.driver_name} />
+      <input type="hidden" name="recipient_name" value={row.recipient_name} />
+      <input type="hidden" name="delivery_date" value={row.delivery_date} />
+      <input type="hidden" name="delivery_day" value={row.delivery_day} />
+      <input type="hidden" name="meal_type" value={row.meal_type} />
+      <input type="hidden" name="address" value={address} />
+      <button
+        type="submit"
+        disabled={isPending || state?.success === true}
+        className="rounded bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isPending ? "Sending..." : state?.success ? "Sent" : "Send Email"}
+      </button>
+      {state && !state.success && (
+        <p className="text-red-600 text-xs mt-1">{state.message}</p>
+      )}
+    </form>
+  );
+}
+
 const wch = createColumnHelper<any>();
 const weekCols = [
   wch.accessor("iso_week", { header: "Week", enableSorting: true }),
@@ -48,6 +78,12 @@ const weekCols = [
   wch.accessor("recipient_name", { header: "Recipient", enableSorting: true }),
   wch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
   wch.accessor("meal_type", { header: "Meal Type" }),
+  wch.display({
+    id: "send_email",
+    header: "Send Email",
+    enableSorting: false,
+    cell: ({ row }) => <EmailButton row={row.original} />,
+  }),
 ] as unknown as ColumnDef<any, unknown>[];
 
 const unsch = createColumnHelper<any>();
@@ -60,13 +96,42 @@ const unsCols = [
   unsch.accessor("meal_type", { header: "Meal Type" }),
 ] as unknown as ColumnDef<any, unknown>[];
 
+function DriverLoadEmailButton({ row }: { row: DriverLoadRow }) {
+  const [state, formAction, isPending] = useActionState(sendDriverLoadEmail, null);
+
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="driver_email" value={row.driver_email} />
+      <input type="hidden" name="driver_name" value={row.driver_name} />
+      <input type="hidden" name="delivery_date" value={row.delivery_date} />
+      <input type="hidden" name="delivery_day" value={row.delivery_day} />
+      <button
+        type="submit"
+        disabled={isPending || state?.success === true}
+        className="rounded bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isPending ? "Sending..." : state?.success ? "Sent" : "Send Email"}
+      </button>
+      {state && !state.success && (
+        <p className="text-red-600 text-xs mt-1">{state.message}</p>
+      )}
+    </form>
+  );
+}
+
 const dlch = createColumnHelper<any>();
 const dlCols = [
   dlch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
   dlch.accessor("driver_name", { header: "Driver", enableSorting: true }),
   dlch.accessor("driver_phone", { header: "Phone" }),
   dlch.accessor("assignment_count", { header: "Assignments", enableSorting: true }),
-];
+  dlch.display({
+    id: "send_email",
+    header: "Send Email",
+    enableSorting: false,
+    cell: ({ row }) => <DriverLoadEmailButton row={row.original} />,
+  }),
+] as unknown as ColumnDef<any, unknown>[];
 
 const mtch = createColumnHelper<any>();
 const mtCols = [

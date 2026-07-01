@@ -20,6 +20,7 @@ export interface WeeklyAssignmentRow {
   meal_type: "regular" | "vegan";
   driver_name: string;
   driver_phone: string;
+  driver_email: string;
   driver_id: number;
 }
 
@@ -27,13 +28,14 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT
+       `SELECT
          ms.name as recipient_name,
          ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
          ms.meal_type,
          ms.delivery_date, ms.delivery_day,
          dv.name as driver_name,
          dv.phone as driver_phone,
+         dv.email as driver_email,
          dv.id as driver_id
        FROM delivery_assignments da
        JOIN meal_signups ms ON da.meal_signup_id = ms.id
@@ -99,7 +101,9 @@ export interface DriverLoadRow {
   driver_id: number;
   driver_name: string;
   driver_phone: string;
+  driver_email: string;
   delivery_date: string;
+  delivery_day: "wednesday" | "thursday";
   assignment_count: number;
 }
 
@@ -111,7 +115,9 @@ export async function getDriverLoad(): Promise<DriverLoadRow[]> {
          dv.id as driver_id,
          dv.name as driver_name,
          dv.phone as driver_phone,
+         dv.email as driver_email,
          ms.delivery_date,
+         ms.delivery_day,
          COUNT(da.id) as assignment_count
        FROM driver_volunteers dv
        LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
