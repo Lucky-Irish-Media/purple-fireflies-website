@@ -31,8 +31,14 @@ export async function sendAssignmentEmail(
       year: "numeric",
     });
 
-    const dayLabel = deliveryDay === "wednesday" ? "Wednesday" : "Thursday";
-    const subject = `Meal Delivery Assignment — ${formattedDate}`;
+    const isWednesday = deliveryDay === "wednesday";
+    const location = isWednesday
+      ? "Episcopal Church of the Good Shepherd, 64 University Terrace, Athens, OH 45701"
+      : "United Campus Ministries, 18 N College St, Athens, OH 45701";
+    const time = isWednesday ? "12:00pm" : "5:00pm";
+    const shortLocation = isWednesday ? "Episcopal Church" : "UCM";
+    const dayLabel = isWednesday ? "Wednesday" : "Thursday";
+    const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
     const text = `Hi ${driverName},
 
 You have been assigned a meal delivery.
@@ -42,10 +48,10 @@ Recipient: ${recipientName}
 Address: ${address}
 Meal Type: ${mealType}
 
-Please arrive at the pickup location on time.
+Please arrive at the ${location} at ${time} to pickup the meals.
 
 Take care,
-Mel
+Meal Delivery Coordinator
 Purple Fireflies`;
 
     await sendEmail({

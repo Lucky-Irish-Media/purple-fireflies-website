@@ -14,6 +14,7 @@ import type {
 } from "@/app/lib/reports";
 import { createColumnHelper } from "@tanstack/react-table";
 import { sendAssignmentEmail } from "@/app/actions/send-assignment-email";
+import { sendDriverLoadEmail } from "@/app/actions/send-driver-load-email";
 
 type TabKey =
   | "weekly"
@@ -95,13 +96,42 @@ const unsCols = [
   unsch.accessor("meal_type", { header: "Meal Type" }),
 ] as unknown as ColumnDef<any, unknown>[];
 
+function DriverLoadEmailButton({ row }: { row: DriverLoadRow }) {
+  const [state, formAction, isPending] = useActionState(sendDriverLoadEmail, null);
+
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="driver_email" value={row.driver_email} />
+      <input type="hidden" name="driver_name" value={row.driver_name} />
+      <input type="hidden" name="delivery_date" value={row.delivery_date} />
+      <input type="hidden" name="delivery_day" value={row.delivery_day} />
+      <button
+        type="submit"
+        disabled={isPending || state?.success === true}
+        className="rounded bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isPending ? "Sending..." : state?.success ? "Sent" : "Send Email"}
+      </button>
+      {state && !state.success && (
+        <p className="text-red-600 text-xs mt-1">{state.message}</p>
+      )}
+    </form>
+  );
+}
+
 const dlch = createColumnHelper<any>();
 const dlCols = [
   dlch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
   dlch.accessor("driver_name", { header: "Driver", enableSorting: true }),
   dlch.accessor("driver_phone", { header: "Phone" }),
   dlch.accessor("assignment_count", { header: "Assignments", enableSorting: true }),
-];
+  dlch.display({
+    id: "send_email",
+    header: "Send Email",
+    enableSorting: false,
+    cell: ({ row }) => <DriverLoadEmailButton row={row.original} />,
+  }),
+] as unknown as ColumnDef<any, unknown>[];
 
 const mtch = createColumnHelper<any>();
 const mtCols = [

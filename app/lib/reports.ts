@@ -101,7 +101,9 @@ export interface DriverLoadRow {
   driver_id: number;
   driver_name: string;
   driver_phone: string;
+  driver_email: string;
   delivery_date: string;
+  delivery_day: "wednesday" | "thursday";
   assignment_count: number;
 }
 
@@ -113,7 +115,9 @@ export async function getDriverLoad(): Promise<DriverLoadRow[]> {
          dv.id as driver_id,
          dv.name as driver_name,
          dv.phone as driver_phone,
+         dv.email as driver_email,
          ms.delivery_date,
+         ms.delivery_day,
          COUNT(da.id) as assignment_count
        FROM driver_volunteers dv
        LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
