@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { LoginFormSchema, type LoginFormState } from "@/app/lib/definitions";
 import { createSession, deleteSession } from "@/app/lib/session";
 import { getUserByEmail } from "@/app/lib/db";
+import { checkRateLimit } from "@/app/lib/rate-limit";
 
 function getErrorMessage(e: unknown): string {
   if (e instanceof Error) {
@@ -37,6 +38,11 @@ export async function login(
     }
 
     const { email, password } = validatedFields.data;
+
+    const { allowed } = await checkRateLimit(`login:${email}`);
+    if (!allowed) {
+      return { message: "Too many login attempts. Please try again in 15 minutes." };
+    }
 
     const user = await getUserByEmail(email);
     if (!user || !user.password_hash) {

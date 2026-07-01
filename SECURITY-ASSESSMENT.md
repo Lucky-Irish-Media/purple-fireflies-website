@@ -1,76 +1,78 @@
 # Security Assessment — Purple Fireflies Website
 
-## CRITICAL: No Authorization on Admin Server Actions
+## DONE: No Authorization on Admin Server Actions
 
-**Every admin server action is completely unauthenticated.** The middleware only protects page routes (`/admin/*`), but Server Actions are POST endpoints that the middleware matcher doesn't catch. Anyone who discovers the endpoint URLs can call them directly:
+**RESOLVED.** All admin server actions now call `verifySession()` at the top of their handler, which redirects unauthenticated users to `/login`.
 
-| Action | File | What's Exposed |
+| Action | File | Status |
 |---|---|---|
-| `createUserAction` / `updateUserAction` / `deleteUserAction` / `resetPasswordAction` | `app/actions/users.ts:56-179` | Create/edit/delete admin users, reset passwords (returns new password in response) |
-| `createMealSignupAction` / `updateMealSignupAction` | `app/actions/admin-meal-signup.ts:55-158` | Full PII: name, email, phone, full address, comments |
-| `createDriverVolunteerAction` / `updateDriverVolunteerAction` | `app/actions/admin-driver-volunteer.ts:37-120` | Driver name, email, phone |
-| `assignDriverAction` | `app/actions/assignments.ts:6-28` | Link recipients to drivers (exposes who gets what) |
-| `sendDriverReminders` | `app/actions/send-reminders.ts:18-95` | Reads all recipient PII + sends emails with full addresses |
-| `sendAssignmentEmail` | `app/actions/send-assignment-email.ts:10-70` | Sends emails with recipient address to any driver |
-| `sendDriverLoadEmail` | `app/actions/send-driver-load-email.ts:11-97` | Reads all PII from DB + sends via email |
+| `createUserAction` / `updateUserAction` / `deleteUserAction` / `resetPasswordAction` | `app/actions/users.ts` | ✅ `verifySession()` + role check |
+| `createMealSignupAction` / `updateMealSignupAction` | `app/actions/admin-meal-signup.ts` | ✅ `verifySession()` |
+| `createDriverVolunteerAction` / `updateDriverVolunteerAction` | `app/actions/admin-driver-volunteer.ts` | ✅ `verifySession()` |
+| `assignDriverAction` | `app/actions/assignments.ts` | ✅ `verifySession()` |
+| `sendDriverReminders` | `app/actions/send-reminders.ts` | ✅ `verifySession()` |
+| `sendAssignmentEmail` | `app/actions/send-assignment-email.ts` | ✅ `verifySession()` |
+| `sendDriverLoadEmail` | `app/actions/send-driver-load-email.ts` | ✅ `verifySession()` |
 
-None of these call `verifySession()` or any auth check. They use `"use server"` which makes them callable as POST endpoints.
+## DONE: No Role-Based Access Control
 
-## MEDIUM: No Role-Based Access Control
-
-The `role` field (admin/member) exists in the JWT session payload (`app/lib/definitions.ts:65-69`) but is **never checked anywhere**. Any authenticated user (including a `member`) has full access to all admin functionality, including user management, password resets, and all PII.
+**RESOLVED.** User management actions (`createUserAction`, `updateUserAction`, `deleteUserAction`, `resetPasswordAction`) check `session.role !== "admin"` and return an unauthorized error for non-admin users. See `app/actions/users.ts:63-65, 98-100, 146-148, 179-181`.
 
 ## MEDIUM: PII Exposed in Reports Client Components
 
-The reports page (`app/admin/reports/page.tsx` → `ReportsTabs.tsx`) loads **all PII into client components**:
-- Weekly assignments tab: recipient name, full address, driver name, phone, email — all rendered in `<form>` hidden fields (lines 50-56, 104-107)
-- Unassigned tab: recipient name, phone, full address
-- Driver load tab: driver name, phone
+**PARTIALLY RESOLVED.** Hidden form fields in `EmailButton` and `DriverLoadEmailButton` (`app/admin/reports/ReportsTabs.tsx`) now only pass record IDs (`signup_id`, `driver_id`), not PII. The server actions look up the actual data server-side.
 
-The hidden form fields in `EmailButton` (lines 50-56) contain PII in client-side HTML that anyone with a browser's devtools can inspect.
+Still open: The DataTable columns in the Weekly Assignments, Unassigned, and Driver Load tabs display recipient/driver PII (name, phone, full address) in the browser. Since this is an admin-only page behind authentication, this is a conscious trade-off for usability. Consider using React's `taint` API (`experimental_taintObjectValue`) to prevent accidental PII leakage across the server-client boundary.
 
-## MEDIUM: Error Messages Leak Internal Details
+## DONE: Error Messages Leak Internal Details
 
-Several server actions return raw error messages to the client:
-- `meal-signup.ts:18`: returns `e.message` for non-D1 errors
-- `driver-volunteer.ts:18`: same pattern
-- `send-reminders.ts:89-93`: returns `e instanceof Error ? e.message : "unknown error"`
-- `send-assignment-email.ts:67-68`: same
-- `send-driver-load-email.ts:92-93`: same
+**RESOLVED.** All server actions now return generic error messages to the client (e.g., "Failed to update user.", "Failed to send email. Please try again."). Raw `e.message` is never returned. Internal details are logged server-side via `console.error`.
 
-## MEDIUM: No Rate Limiting on Auth/Signup Endpoints
+- `meal-signup.ts`: ✅ Returns generic `getErrorMessage()`
+- `driver-volunteer.ts`: ✅ Returns generic `getErrorMessage()`
+- `send-reminders.ts`: ✅ Generic message
+- `send-assignment-email.ts`: ✅ Generic message
+- `send-driver-load-email.ts`: ✅ Generic message
 
-No rate limiting exists on:
-- `login` action — enables brute-force password attacks (bcrypt cost 12 helps but doesn't prevent unbounded attempts)
-- Signup submission — enables form flooding
-- Email lookup — enables enumeration
+## DONE: No Rate Limiting on Auth/Signup Endpoints
+
+**RESOLVED.** Rate limiting added via the `CACHE` KV namespace:
+
+- `login` action (`app/actions/auth.ts`): 5 attempts per email per 15-minute window blocked with "Too many login attempts."
+- `submitMealSignup` (`app/actions/meal-signup.ts`): 5 submissions per 15-minute window
+- `submitDriverVolunteer` (`app/actions/driver-volunteer.ts`): 5 submissions per 15-minute window
+
+See `app/lib/rate-limit.ts` for implementation.
 
 ## MEDIUM-LOW: `SESSION_SECRET` in Repo Files
 
-The JWT signing key is stored in `.env.local` and `.dev.vars` committed to the repo. If the repository is compromised, session tokens can be forged.
+**ACKNOWLEDGED.** The JWT signing key is stored in `.env.local` and `.dev.vars` committed to the repo. Recommended action:
+- Rotate the secret
+- Remove `.env.local` and `.dev.vars` from version control (add to `.gitignore`)
+- Set `SESSION_SECRET` as a Cloudflare Workers secret via `wrangler secret put SESSION_SECRET`
 
-## MEDIUM-LOW: No CSP Headers
+## DONE: No CSP Headers
 
-No Content Security Policy is set anywhere. If an XSS vulnerability exists (e.g., in comments displayed in admin DataTable), PII can be exfiltrated.
+**RESOLVED.** Content Security Policy headers added in `next.config.ts`:
 
-## LOW: `sameSite: "lax"` Cookie
+```
+default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'
+```
 
-Session cookie uses `sameSite: "lax"` (`app/lib/session.ts:62`). `"strict"` would prevent the session cookie from being sent on CSRF-initiated navigations.
+Additional security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`.
 
-## LOW: No `server-only` Guard on DB Layer
+## DONE: `sameSite: "lax"` Cookie
 
-The DB functions in `app/lib/db.ts` are not wrapped with `import "server-only"`, meaning they could theoretically be imported from client code (though the `getCloudflareContext` call would fail at runtime).
+**RESOLVED.** Session cookie now uses `sameSite: "strict"` in `app/lib/session.ts:62`.
 
----
+## DONE: No `server-only` Guard on DB Layer
+
+**RESOLVED.** `app/lib/db.ts` line 1 includes `import "server-only"`, which prevents client-side imports.
 
 ## Recommendations
 
-1. **Add auth to all admin server actions** — call `verifySession()` at the top of every action in `app/actions/`.
-2. **Check role for sensitive operations** — restrict user management actions to `role === "admin"`.
-3. **Add rate limiting** — implement via D1 or KV-based rate limiter.
-4. **Strip PII from client component hidden forms** — pass IDs only, look up data server-side.
-5. **Sanitize error messages** — never return `e.message` to the client.
-6. **Add CSP headers** — configure in `next.config.ts` or Cloudflare.
-7. **Set `sameSite: "strict"`** on session cookie.
-8. **Consider React `taint` API** — prevent PII from crossing server-client boundary.
-9. **Rotate `SESSION_SECRET`** and add only to Cloudflare secrets.
+Remaining open items:
+
+1. **Use React `taint` API** — Use `experimental_taintObjectValue()` to prevent PII from crossing the server-client boundary in report data passed as props to `ReportsTabs`.
+2. **Rotate `SESSION_SECRET`** — Add only to Cloudflare secrets, remove from repo files.
+3. **Restrict email lookup endpoint** — The `getUserByEmail` path (email lookup) in login could theoretically be used for enumeration if the error message differs for existing vs. non-existing users. The current code returns a uniform "Invalid email or password." for both cases, mitigating this.
