@@ -36,7 +36,7 @@ Still open: The DataTable columns in the Weekly Assignments, Unassigned, and Dri
 
 ## DONE: No Rate Limiting on Auth/Signup Endpoints
 
-**RESOLVED.** Rate limiting added via the `CACHE` KV namespace:
+**RESOLVED.** Rate limiting added via the `PURPLE_FIREFLIES_KV` KV namespace:
 
 - `login` action (`app/actions/auth.ts`): 5 attempts per email per 15-minute window blocked with "Too many login attempts."
 - `submitMealSignup` (`app/actions/meal-signup.ts`): 5 submissions per 15-minute window

@@ -5,7 +5,7 @@ const MAX_ATTEMPTS = 5;
 
 async function getKV(): Promise<KVNamespace> {
   const { env } = await getCloudflareContext({ async: true });
-  return (env as unknown as Record<string, unknown>).CACHE as KVNamespace;
+  return (env as unknown as Record<string, unknown>).PURPLE_FIREFLIES_KV as KVNamespace;
 }
 
 export async function checkRateLimit(key: string): Promise<{ allowed: boolean; remaining: number }> {
