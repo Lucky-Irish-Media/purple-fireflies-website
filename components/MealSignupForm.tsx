@@ -304,39 +304,47 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
             <div>
               <p className="text-sm text-text-secondary mb-2">Regular meals:</p>
               <div className="flex gap-4">
-                {[0, 1, 2].map((n) => (
-                  <label key={`reg-${n}`} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="regularQuantity"
-                      value={n}
-                      required
-                      defaultChecked={n === 1}
-                      onChange={(e) => setRegularQty(Number(e.target.value))}
-                      className="h-4 w-4 text-primary border-input focus:ring-primary"
-                    />
-                    <span className="text-foreground">{n}</span>
-                  </label>
-                ))}
+                {[0, 1, 2].map((n) => {
+                  const disabled = n > 0 && veganQty >= 2;
+                  return (
+                    <label key={`reg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                      <input
+                        type="radio"
+                        name="regularQuantity"
+                        value={n}
+                        required
+                        defaultChecked={n === 1}
+                        disabled={disabled}
+                        onChange={(e) => setRegularQty(Number(e.target.value))}
+                        className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
+                      />
+                      <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
             <div>
               <p className="text-sm text-text-secondary mb-2">Vegan / GF meals:</p>
               <div className="flex gap-4">
-                {[0, 1, 2].map((n) => (
-                  <label key={`vg-${n}`} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="veganQuantity"
-                      value={n}
-                      required
-                      defaultChecked={n === 0}
-                      onChange={(e) => setVeganQty(Number(e.target.value))}
-                      className="h-4 w-4 text-primary border-input focus:ring-primary"
-                    />
-                    <span className="text-foreground">{n}</span>
-                  </label>
-                ))}
+                {[0, 1, 2].map((n) => {
+                  const disabled = n > 0 && regularQty >= 2;
+                  return (
+                    <label key={`vg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                      <input
+                        type="radio"
+                        name="veganQuantity"
+                        value={n}
+                        required
+                        defaultChecked={n === 0}
+                        disabled={disabled}
+                        onChange={(e) => setVeganQty(Number(e.target.value))}
+                        className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
+                      />
+                      <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>
