@@ -5,52 +5,10 @@ import type { DriverVolunteer } from "@/app/lib/definitions";
 import { createDriverVolunteerAction, updateDriverVolunteerAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
+import { formatDate, formatPhone, formatDateTime, getSignalBadge, getDeliveryDayBadge, todayLocal, deliveryDateFilterFn } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const REGION_OPTIONS = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"] as const;
-
-function formatDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-");
-  return `${month}/${day}/${year}`;
-}
-
-function formatPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  if (digits.length === 11 && digits.startsWith("1")) {
-    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-  }
-  return phone;
-}
-
-function getSignalBadge(signal: string) {
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-        signal === "yes"
-          ? "bg-green-100 text-green-800"
-          : signal === "willing"
-          ? "bg-yellow-100 text-yellow-800"
-          : "bg-gray-100 text-gray-800"
-      }`}
-    >
-      {signal}
-    </span>
-  );
-}
-
-function getDeliveryDayBadge(day: string) {
-  return (
-    <span className="capitalize text-text-secondary">{day}</span>
-  );
-}
-
-function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 function SignalFilter({ column }: { column: any }) {
   const value = column.getFilterValue() as string | undefined;
@@ -89,21 +47,6 @@ function DeliveryDateFilter({ column }: { column: any }) {
       <option value="today">Today</option>
     </select>
   );
-}
-
-function deliveryDateFilterFn(row: any, columnId: string, value: string): boolean {
-  const date = row.getValue(columnId);
-  const today = todayLocal();
-  switch (value) {
-    case "future":
-      return date >= today;
-    case "past":
-      return date < today;
-    case "today":
-      return date === today;
-    default:
-      return true;
-  }
 }
 
 const columnHelper = createColumnHelper<DriverVolunteer>();
@@ -219,7 +162,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
     columnHelper.accessor((row) => row.name, {
       id: "name",
       header: "Name",
-      cell: (info) => <span className="text-foreground">{info.getValue()}</span>,
+      cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
       filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.email, {
@@ -264,7 +207,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
       id: "created_at",
       header: "Submitted",
       cell: (info) => (
-        <span className="text-text-secondary">{new Date(info.getValue()).toLocaleString()}</span>
+        <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>
       ),
       filterFn: filterFns.includesString,
     }),
