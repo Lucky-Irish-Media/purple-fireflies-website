@@ -71,4 +71,4 @@ Additional security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options
 Remaining open items:
 
 1. **Use React `taint` API** — Use `experimental_taintObjectValue()` to prevent PII from crossing the server-client boundary in report data passed as props to `ReportsTabs`.
-2. **Restrict email lookup endpoint** — The `getUserByEmail` path (email lookup) in login could theoretically be used for enumeration if the error message differs for existing vs. non-existing users. The current code returns a uniform "Invalid email or password." for both cases, mitigating this.
+2. **Restrict email lookup endpoint** — **RESOLVED.** The login action now always performs `bcrypt.compare()` using a dummy hash when the user doesn't exist (or has no password hash), preventing timing-based email enumeration. The error message remains uniform in all failure cases. See `app/actions/auth.ts:49-55`.
