@@ -19,6 +19,50 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - BEFORE pushing any changes, run `npm run build` to type-check and compile. `npx tsc --noEmit` is unreliable in this project (it fails on `@cloudflare/workers-types`).
 - `npm run build` uses Turbopack which includes its own type checker and catches the same errors the CI build will catch.
 
+<!-- BEGIN:admin-table-style-rules -->
+# Admin Table Style Rules
+
+All admin tables use the shared `<DataTable>` component from `app/admin/components/DataTable.tsx`.
+
+## Formatting Conventions
+
+Import shared formatters and badge components from `app/admin/lib/utils.tsx` — do NOT define them locally.
+
+| Data Type | Formatter | Example |
+|---|---|---|
+| Phone number | `formatPhone(info.getValue())` | `(740) 555-1234` |
+| Delivery date (`delivery_date`) | `formatDate(info.getValue())` | `07/02/2026` |
+| Timestamp (`created_at`) | `formatDateTime(info.getValue())` | `7/2/2026, 3:45:00 PM` |
+| Date only (`created_at` in Users) | `formatDateOnly(info.getValue())` | `7/2/2026` |
+| Role (user) | `getRoleBadge(info.getValue())` | Colored pill ✔ |
+| On Signal status | `getSignalBadge(info.getValue())` | Colored pill ✔ |
+| Meal type | `getMealTypeBadge(info.getValue())` | Colored pill ✔ |
+| Delivery day | `getDeliveryDayBadge(info.getValue())` | Capitalized secondary text |
+| Contact method | `getContactMethodBadge(info.getValue())` | Capitalized secondary text |
+
+## Column Styling Rules
+
+- **Name / Driver columns**: `<span className="text-foreground font-medium">`
+- **Email, phone, date, address columns**: `<span className="text-text-secondary">`
+- **Editable action buttons**: `rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors`
+
+## Heading Hierarchy
+
+- **Page `<h1>`**: `text-2xl font-bold text-foreground`
+- **Section `<h2>`**: `text-xl font-bold text-foreground`
+
+## Filter Components
+
+- Stick to the existing select/dropdown pattern for enum filters: `w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary`
+- Define filter components locally in the table file when their option values are table-specific.
+
+## Do NOT
+
+- Do not call `new Date().toLocaleString()` directly in cell renderers — use `formatDateTime()` from utils.
+- Do not duplicate `formatPhone`, `formatDate`, `todayLocal`, or `deliveryDateFilterFn` — they live in `app/admin/lib/utils.tsx`.
+- Do not create per-table badge components — use the shared ones from `app/admin/lib/utils.tsx`.
+<!-- END:admin-table-style-rules -->
+
 <!-- BEGIN:skills -->
 # Local Skills
 

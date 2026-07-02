@@ -11,21 +11,8 @@ import {
 } from "@/app/actions/users";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
+import { formatDateOnly, getRoleBadge } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
-
-function getRoleBadge(role: string) {
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        role === "admin"
-          ? "bg-purple-100 text-purple-800"
-          : "bg-blue-100 text-blue-800"
-      }`}
-    >
-      {role}
-    </span>
-  );
-}
 
 const columnHelper = createColumnHelper<User>();
 
@@ -182,7 +169,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",
       header: "Created",
-      cell: (info) => <span className="text-text-secondary">{new Date(info.getValue()).toLocaleDateString()}</span>,
+      cell: (info) => <span className="text-text-secondary">{formatDateOnly(info.getValue())}</span>,
       filterFn: filterFns.includesString,
     }),
     columnHelper.display({
@@ -257,7 +244,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   return (
     <section className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-2xl font-bold text-foreground">Users</h2>
+        <h2 className="text-xl font-bold text-foreground">Users</h2>
         <button
           onClick={handleCreateAddForm}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"

@@ -15,6 +15,7 @@ import type {
 import { createColumnHelper } from "@tanstack/react-table";
 import { sendAssignmentEmail } from "@/app/actions/send-assignment-email";
 import { sendDriverLoadEmail } from "@/app/actions/send-driver-load-email";
+import { formatDate, formatPhone, getMealTypeBadge, getSignalBadge } from "@/app/admin/lib/utils";
 
 type TabKey =
   | "weekly"
@@ -64,13 +65,27 @@ function EmailButton({ row }: { row: WeeklyAssignmentRow }) {
 const wch = createColumnHelper<any>();
 const weekCols = [
   wch.accessor("iso_week", { header: "Week", enableSorting: true }),
-  wch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
+  wch.accessor("delivery_date", {
+    header: "Delivery Date",
+    enableSorting: true,
+    cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+  }),
   wch.accessor("delivery_day", { header: "Day", enableSorting: true }),
-  wch.accessor("driver_name", { header: "Driver", enableSorting: true }),
-  wch.accessor("driver_phone", { header: "Driver Phone" }),
+  wch.accessor("driver_name", {
+    header: "Driver",
+    enableSorting: true,
+    cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+  }),
+  wch.accessor("driver_phone", {
+    header: "Driver Phone",
+    cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue() || "")}</span>,
+  }),
   wch.accessor("recipient_name", { header: "Recipient", enableSorting: true }),
   wch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
-  wch.accessor("meal_type", { header: "Meal Type" }),
+  wch.accessor("meal_type", {
+    header: "Meal Type",
+    cell: (info) => getMealTypeBadge(info.getValue()),
+  }),
   wch.display({
     id: "send_email",
     header: "Send Email",
@@ -81,12 +96,26 @@ const weekCols = [
 
 const unsch = createColumnHelper<any>();
 const unsCols = [
-  unsch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
+  unsch.accessor("delivery_date", {
+    header: "Delivery Date",
+    enableSorting: true,
+    cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+  }),
   unsch.accessor("delivery_day", { header: "Day" }),
-  unsch.accessor("name", { header: "Name", enableSorting: true }),
-  unsch.accessor("phone", { header: "Phone" }),
+  unsch.accessor("name", {
+    header: "Name",
+    enableSorting: true,
+    cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+  }),
+  unsch.accessor("phone", {
+    header: "Phone",
+    cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue() || "")}</span>,
+  }),
   unsch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
-  unsch.accessor("meal_type", { header: "Meal Type" }),
+  unsch.accessor("meal_type", {
+    header: "Meal Type",
+    cell: (info) => getMealTypeBadge(info.getValue()),
+  }),
 ] as unknown as ColumnDef<any, unknown>[];
 
 function DriverLoadEmailButton({ row }: { row: DriverLoadRow }) {
@@ -113,9 +142,20 @@ function DriverLoadEmailButton({ row }: { row: DriverLoadRow }) {
 
 const dlch = createColumnHelper<any>();
 const dlCols = [
-  dlch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
-  dlch.accessor("driver_name", { header: "Driver", enableSorting: true }),
-  dlch.accessor("driver_phone", { header: "Phone" }),
+  dlch.accessor("delivery_date", {
+    header: "Delivery Date",
+    enableSorting: true,
+    cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+  }),
+  dlch.accessor("driver_name", {
+    header: "Driver",
+    enableSorting: true,
+    cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+  }),
+  dlch.accessor("driver_phone", {
+    header: "Phone",
+    cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue() || "")}</span>,
+  }),
   dlch.accessor("assignment_count", { header: "Assignments", enableSorting: true }),
   dlch.display({
     id: "send_email",
@@ -127,14 +167,25 @@ const dlCols = [
 
 const mtch = createColumnHelper<any>();
 const mtCols = [
-  mtch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
-  mtch.accessor("meal_type", { header: "Meal Type" }),
+  mtch.accessor("delivery_date", {
+    header: "Delivery Date",
+    enableSorting: true,
+    cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+  }),
+  mtch.accessor("meal_type", {
+    header: "Meal Type",
+    cell: (info) => getMealTypeBadge(info.getValue()),
+  }),
   mtch.accessor("count", { header: "Count", enableSorting: true }),
 ];
 
 const cgch = createColumnHelper<any>();
 const cgCols = [
-  cgch.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
+  cgch.accessor("delivery_date", {
+    header: "Delivery Date",
+    enableSorting: true,
+    cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+  }),
   cgch.accessor("delivery_day", { header: "Day" }),
   cgch.accessor("signup_count", { header: "Signups", enableSorting: true }),
   cgch.accessor("assigned_count", { header: "Assigned", enableSorting: true }),
@@ -144,16 +195,31 @@ const cgCols = [
 
 const dtach = createColumnHelper<any>();
 const dtaCols = [
-  dtach.accessor("driver_name", { header: "Driver", enableSorting: true }),
-  dtach.accessor("driver_phone", { header: "Phone" }),
+  dtach.accessor("driver_name", {
+    header: "Driver",
+    enableSorting: true,
+    cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+  }),
+  dtach.accessor("driver_phone", {
+    header: "Phone",
+    cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue() || "")}</span>,
+  }),
   dtach.accessor("assignment_count", { header: "Total Assignments", enableSorting: true }),
 ];
 
 const vach = createColumnHelper<any>();
 const vaCols = [
-  vach.accessor("delivery_date", { header: "Delivery Date", enableSorting: true }),
+  vach.accessor("delivery_date", {
+    header: "Delivery Date",
+    enableSorting: true,
+    cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+  }),
   vach.accessor("delivery_day", { header: "Day" }),
-  vach.accessor("on_signal", { header: "Status", enableSorting: true }),
+  vach.accessor("on_signal", {
+    header: "Status",
+    enableSorting: true,
+    cell: (info) => getSignalBadge(info.getValue()),
+  }),
   vach.accessor("count", { header: "Count", enableSorting: true }),
 ];
 
@@ -204,7 +270,7 @@ export default function ReportsTabs({
       {activeTab === "weekly" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Weekly Driver Assignments</h2>
+            <h2 className="text-xl font-bold text-foreground">Weekly Driver Assignments</h2>
             <p className="text-sm text-text-secondary mt-1">
               All driver-to-meal assignments grouped by ISO week.
             </p>
@@ -239,7 +305,7 @@ export default function ReportsTabs({
       {activeTab === "unassigned" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Unassigned Meal Requests</h2>
+            <h2 className="text-xl font-bold text-foreground">Unassigned Meal Requests</h2>
             <p className="text-sm text-text-secondary mt-1">
               Upcoming meal requests that still need a driver assigned.
             </p>
@@ -264,7 +330,7 @@ export default function ReportsTabs({
       {activeTab === "driver-load" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Driver Load</h2>
+            <h2 className="text-xl font-bold text-foreground">Driver Load</h2>
             <p className="text-sm text-text-secondary mt-1">
               Number of assignments per driver per delivery date.
             </p>
@@ -286,7 +352,7 @@ export default function ReportsTabs({
       {activeTab === "meal-breakdown" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Meal Type Breakdown</h2>
+            <h2 className="text-xl font-bold text-foreground">Meal Type Breakdown</h2>
             <p className="text-sm text-text-secondary mt-1">
               Regular vs vegan meal counts by delivery date.
             </p>
@@ -308,7 +374,7 @@ export default function ReportsTabs({
       {activeTab === "coverage-gaps" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Coverage Gaps</h2>
+            <h2 className="text-xl font-bold text-foreground">Coverage Gaps</h2>
             <p className="text-sm text-text-secondary mt-1">
               Signup vs assignment counts by delivery date.
             </p>
@@ -338,7 +404,7 @@ export default function ReportsTabs({
       {activeTab === "availability" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Volunteer Availability</h2>
+            <h2 className="text-xl font-bold text-foreground">Volunteer Availability</h2>
             <p className="text-sm text-text-secondary mt-1">
               Driver availability by status (On Signal / Willing / Not Available) and delivery date.
             </p>
@@ -360,7 +426,7 @@ export default function ReportsTabs({
       {activeTab === "total-assignments" && (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Driver Total Assignments</h2>
+            <h2 className="text-xl font-bold text-foreground">Driver Total Assignments</h2>
             <p className="text-sm text-text-secondary mt-1">
               All-time assignment count per driver.
             </p>
