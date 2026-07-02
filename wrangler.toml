@@ -27,7 +27,7 @@ database_id = "dcb6e0de-2d20-40bc-82c3-1ccd96f0a540"
 
 [[env.preview.kv_namespaces]]
 binding = "PURPLE_FIREFLIES_KV"
-id = "daaa882613904099a98253c927a86f08"
+id = "88406a0a7e974df5a9203b64977bab25"
 
 [observability]
 [observability.logs]
