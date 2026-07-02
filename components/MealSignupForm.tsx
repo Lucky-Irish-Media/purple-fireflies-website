@@ -305,7 +305,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               <p className="text-sm text-text-secondary mb-2">Regular meals:</p>
               <div className="flex gap-4">
                 {[0, 1, 2].map((n) => {
-                  const disabled = n > 0 && veganQty >= 2;
+                  const disabled = n + veganQty > 2;
                   return (
                     <label key={`reg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
                       <input
@@ -328,7 +328,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               <p className="text-sm text-text-secondary mb-2">Vegan / GF meals:</p>
               <div className="flex gap-4">
                 {[0, 1, 2].map((n) => {
-                  const disabled = n > 0 && regularQty >= 2;
+                  const disabled = n + regularQty > 2;
                   return (
                     <label key={`vg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
                       <input
