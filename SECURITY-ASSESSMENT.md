@@ -36,7 +36,7 @@ Still open: The DataTable columns in the Weekly Assignments, Unassigned, and Dri
 
 ## DONE: No Rate Limiting on Auth/Signup Endpoints
 
-**RESOLVED.** Rate limiting added via the `CACHE` KV namespace:
+**RESOLVED.** Rate limiting added via the `PURPLE_FIREFLIES_KV` KV namespace:
 
 - `login` action (`app/actions/auth.ts`): 5 attempts per email per 15-minute window blocked with "Too many login attempts."
 - `submitMealSignup` (`app/actions/meal-signup.ts`): 5 submissions per 15-minute window
@@ -44,12 +44,9 @@ Still open: The DataTable columns in the Weekly Assignments, Unassigned, and Dri
 
 See `app/lib/rate-limit.ts` for implementation.
 
-## MEDIUM-LOW: `SESSION_SECRET` in Repo Files
+## DONE: `SESSION_SECRET` in Repo Files
 
-**ACKNOWLEDGED.** The JWT signing key is stored in `.env.local` and `.dev.vars` committed to the repo. Recommended action:
-- Rotate the secret
-- Remove `.env.local` and `.dev.vars` from version control (add to `.gitignore`)
-- Set `SESSION_SECRET` as a Cloudflare Workers secret via `wrangler secret put SESSION_SECRET`
+**RESOLVED.** Secret rotated, `.dev.vars` added to `.gitignore` and removed from git tracking, `.env.local` already gitignored. Secret set as Cloudflare Workers secret via `wrangler secret put SESSION_SECRET`.
 
 ## DONE: No CSP Headers
 
@@ -74,5 +71,4 @@ Additional security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options
 Remaining open items:
 
 1. **Use React `taint` API** — Use `experimental_taintObjectValue()` to prevent PII from crossing the server-client boundary in report data passed as props to `ReportsTabs`.
-2. **Rotate `SESSION_SECRET`** — Add only to Cloudflare secrets, remove from repo files.
-3. **Restrict email lookup endpoint** — The `getUserByEmail` path (email lookup) in login could theoretically be used for enumeration if the error message differs for existing vs. non-existing users. The current code returns a uniform "Invalid email or password." for both cases, mitigating this.
+2. **Restrict email lookup endpoint** — The `getUserByEmail` path (email lookup) in login could theoretically be used for enumeration if the error message differs for existing vs. non-existing users. The current code returns a uniform "Invalid email or password." for both cases, mitigating this.
