@@ -35,10 +35,10 @@ export async function submitMealSignup(
       city: formData.get("city"),
       state: formData.get("state"),
       zipCode: formData.get("zipCode"),
-      mealType: formData.get("mealType"),
+      regularQuantity: formData.get("regularQuantity"),
+      veganQuantity: formData.get("veganQuantity"),
       contactMethod: formData.get("contactMethod"),
       deliveryDates,
-      quantity: formData.get("quantity"),
       comments: formData.get("comments"),
     });
 
@@ -48,40 +48,60 @@ export async function submitMealSignup(
 
     const data = validatedFields.data;
 
-    const invalidDates = data.deliveryDates.filter(
-      (d) => data.mealType === "vegan" && isFirstWednesday(d)
-    );
-    if (invalidDates.length > 0) {
-      return {
-        errors: {
-          deliveryDates: [
-            `Vegan / GF meals are not available on ${invalidDates.length === 1 ? "the first Wednesday" : "the first Wednesdays"} of the month. Please select a different date or choose the Regular meal type.`,
-          ],
-        },
-      };
+    if (data.veganQuantity > 0) {
+      const invalidDates = data.deliveryDates.filter((d) => isFirstWednesday(d));
+      if (invalidDates.length > 0) {
+        return {
+          errors: {
+            veganQuantity: [
+              `Vegan / GF meals are not available on ${invalidDates.length === 1 ? "the first Wednesday" : "the first Wednesdays"} of the month. Please select a different date or choose the Regular meal type.`,
+            ],
+          },
+        };
+      }
     }
 
     const signups = [];
     for (const deliveryDate of data.deliveryDates) {
-      const signup = await createMealSignup({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        address1: data.address1,
-        address2: data.address2,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-        mealType: data.mealType,
-        contactMethod: data.contactMethod,
-        deliveryDate,
-        quantity: data.quantity,
-        comments: data.comments,
-      });
-      signups.push(signup);
+      if (data.regularQuantity > 0) {
+        const signup = await createMealSignup({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address1: data.address1,
+          address2: data.address2,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          mealType: "regular",
+          contactMethod: data.contactMethod,
+          deliveryDate,
+          quantity: data.regularQuantity,
+          comments: data.comments,
+        });
+        signups.push(signup);
+      }
+      if (data.veganQuantity > 0) {
+        const signup = await createMealSignup({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address1: data.address1,
+          address2: data.address2,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          mealType: "vegan",
+          contactMethod: data.contactMethod,
+          deliveryDate,
+          quantity: data.veganQuantity,
+          comments: data.comments,
+        });
+        signups.push(signup);
+      }
     }
 
-    await sendMealSignupConfirmation(signups[0]);
+    await sendMealSignupConfirmation(signups);
 
     const datesFormatted = data.deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
 

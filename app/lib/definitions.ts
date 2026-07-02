@@ -33,12 +33,15 @@ export const MealSignupSchema = z.object({
   city: z.string().min(1, { message: "City is required." }).trim(),
   state: z.enum(stateAbbreviations, { message: "Please select a valid state." }),
   zipCode: z.string().min(5, { message: "ZIP code is required." }).max(10).trim(),
-  mealType: z.enum(["regular", "vegan"], { message: "Please select a meal type." }),
+  regularQuantity: z.coerce.number().int().min(0).max(2),
+  veganQuantity: z.coerce.number().int().min(0).max(2),
   contactMethod: z.enum(["call", "text", "email"], { message: "Please select a contact method." }),
   deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
-  quantity: z.coerce.number().int().min(1, { message: "Quantity must be 1 or 2." }).max(2, { message: "Quantity must be 1 or 2." }),
   comments: z.string().optional(),
-});
+}).refine((data) => {
+  const total = data.regularQuantity + data.veganQuantity;
+  return total >= 1 && total <= 2;
+}, { message: "Total meals must be 1 or 2.", path: ["regularQuantity"] });
 
 const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"] as const;
 
@@ -52,7 +55,7 @@ export const DriverVolunteerSchema = z.object({
 });
 
 export type MealSignupFormState =
-  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; mealType?: string[]; contactMethod?: string[]; deliveryDates?: string[]; quantity?: string[]; comments?: string[] }; message?: string; selectedDate?: string }
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; regularQuantity?: string[]; veganQuantity?: string[]; contactMethod?: string[]; deliveryDates?: string[]; comments?: string[] }; message?: string; selectedDate?: string }
   | undefined;
 
 export type DriverVolunteerFormState =

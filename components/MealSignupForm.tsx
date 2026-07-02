@@ -62,14 +62,9 @@ const MAX_SIGNUPS_PER_DATE = 15;
 export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string, number> }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
   const [showLookup, setShowLookup] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState("");
+  const [veganQty, setVeganQty] = useState(0);
 
   const deliveryDateOptions = useMemo(() => generateDeliveryDateOptions(), []);
-
-  const mealTypeOptions = [
-    { value: "regular", label: "Regular" },
-    { value: "vegan", label: "Vegan / GF" },
-  ];
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -299,57 +294,56 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
-            Meal Type <span className="text-red-500">*</span>
+            Meals Requested <span className="text-red-500">*</span>
           </legend>
-          <div className="flex gap-6">
-            {mealTypeOptions.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="mealType"
-                  value={option.value}
-                  required
-                  onChange={(e) => setSelectedMealType(e.target.value)}
-                  className="h-4 w-4 text-primary border-input focus:ring-primary"
-                />
-                <span className="text-foreground">{option.label}</span>
-              </label>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-text-secondary mb-2">Regular meals:</p>
+              <div className="flex gap-4">
+                {[0, 1, 2].map((n) => (
+                  <label key={`reg-${n}`} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="regularQuantity"
+                      value={n}
+                      required
+                      defaultChecked={n === 1}
+                      onChange={() => {}}
+                      className="h-4 w-4 text-primary border-input focus:ring-primary"
+                    />
+                    <span className="text-foreground">{n}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-text-secondary mb-2">Vegan / GF meals:</p>
+              <div className="flex gap-4">
+                {[0, 1, 2].map((n) => (
+                  <label key={`vg-${n}`} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="veganQuantity"
+                      value={n}
+                      required
+                      defaultChecked={n === 0}
+                      onChange={(e) => setVeganQty(Number(e.target.value))}
+                      className="h-4 w-4 text-primary border-input focus:ring-primary"
+                    />
+                    <span className="text-foreground">{n}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
-          {selectedMealType === "vegan" && (
+          {veganQty > 0 && (
             <p className="text-sm text-amber-600" role="note">
               Note: Vegan / GF meals are not available on the first Wednesday of each month.
             </p>
           )}
-          {state?.errors?.mealType && (
+          {state?.errors?.regularQuantity && (
             <p className="text-sm text-red-500" role="alert">
-              {state.errors.mealType[0]}
-            </p>
-          )}
-        </fieldset>
-
-        <fieldset className="space-y-2">
-          <legend className="block text-sm font-medium text-foreground">
-            Number of Meals <span className="text-red-500">*</span>
-          </legend>
-          <div className="flex gap-6">
-            {[1, 2].map((n) => (
-              <label key={n} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="quantity"
-                  value={n}
-                  required
-                  defaultChecked={n === 1}
-                  className="h-4 w-4 text-primary border-input focus:ring-primary"
-                />
-                <span className="text-foreground">{n} {n === 1 ? "Meal" : "Meals"}</span>
-              </label>
-            ))}
-          </div>
-          {state?.errors?.quantity && (
-            <p className="text-sm text-red-500" role="alert">
-              {state.errors.quantity[0]}
+              {state.errors.regularQuantity[0]}
             </p>
           )}
         </fieldset>
@@ -365,7 +359,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               const spacesLeft = MAX_SIGNUPS_PER_DATE - count;
               const isFull = spacesLeft <= 0;
               const isFirstWed = isFirstWednesday(option.value);
-              const veganRestricted = selectedMealType === "vegan" && isFirstWed;
+              const veganRestricted = veganQty > 0 && isFirstWed;
               const disabled = isFull || veganRestricted;
               return (
                 <label key={option.value} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"} block`}>
