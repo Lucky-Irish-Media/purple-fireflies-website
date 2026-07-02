@@ -7,6 +7,8 @@ import { createSession, deleteSession } from "@/app/lib/session";
 import { getUserByEmail } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 
+const DUMMY_HASH = "$2b$10$EbPYDqi57Pm.r1vTRkNGmu5yC2oKp628cFhQjtV/nsRKWBfobjo4q";
+
 function getErrorMessage(e: unknown): string {
   if (e instanceof Error) {
     if (e.message.includes("SESSION_SECRET")) {
@@ -45,12 +47,10 @@ export async function login(
     }
 
     const user = await getUserByEmail(email);
-    if (!user || !user.password_hash) {
-      return { message: "Invalid email or password." };
-    }
+    const passwordHash = user?.password_hash || DUMMY_HASH;
 
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    if (!passwordMatch) {
+    const passwordMatch = await bcrypt.compare(password, passwordHash);
+    if (!user || !user.password_hash || !passwordMatch) {
       return { message: "Invalid email or password." };
     }
 
