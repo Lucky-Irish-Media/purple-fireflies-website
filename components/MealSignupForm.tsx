@@ -62,7 +62,11 @@ const MAX_SIGNUPS_PER_DATE = 15;
 export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string, number> }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
   const [showLookup, setShowLookup] = useState(false);
+  const [regularQty, setRegularQty] = useState(1);
   const [veganQty, setVeganQty] = useState(0);
+
+  const totalMeals = regularQty + veganQty;
+  const totalInvalid = totalMeals < 1 || totalMeals > 2;
 
   const deliveryDateOptions = useMemo(() => generateDeliveryDateOptions(), []);
 
@@ -308,7 +312,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
                       value={n}
                       required
                       defaultChecked={n === 1}
-                      onChange={() => {}}
+                      onChange={(e) => setRegularQty(Number(e.target.value))}
                       className="h-4 w-4 text-primary border-input focus:ring-primary"
                     />
                     <span className="text-foreground">{n}</span>
@@ -336,7 +340,12 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               </div>
             </div>
           </div>
-          {veganQty > 0 && (
+          {totalInvalid && (
+            <p className="text-sm text-red-500" role="alert">
+              Total meals must be 1 or 2.
+            </p>
+          )}
+          {veganQty > 0 && !totalInvalid && (
             <p className="text-sm text-amber-600" role="note">
               Note: Vegan / GF meals are not available on the first Wednesday of each month.
             </p>
@@ -414,7 +423,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || totalInvalid}
           className="w-full rounded-lg bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? "Submitting..." : "Submit Signup"}
