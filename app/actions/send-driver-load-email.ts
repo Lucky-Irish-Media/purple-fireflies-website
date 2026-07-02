@@ -34,7 +34,7 @@ export async function sendDriverLoadEmail(
 
     const result = await env.purple_fireflies_db
       .prepare(
-        `SELECT ms.name, ms.phone, ms.address1, ms.address2, ms.city, ms.state, ms.zip_code, ms.comments, ms.meal_type
+        `SELECT ms.name, ms.phone, ms.address1, ms.address2, ms.city, ms.state, ms.zip_code, ms.comments, ms.meal_type, ms.quantity
          FROM delivery_assignments da
          JOIN meal_signups ms ON da.meal_signup_id = ms.id
          JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
@@ -52,6 +52,7 @@ export async function sendDriverLoadEmail(
         zip_code: string;
         comments: string | null;
         meal_type: string;
+        quantity: number;
       }>();
 
     const deliveries = result.results || [];
@@ -84,7 +85,8 @@ export async function sendDriverLoadEmail(
       body += `Phone: ${delivery.phone}\n`;
       body += `Address: ${address}\n`;
       body += `Comments: ${delivery.comments || "None"}\n`;
-      body += `Meal Type: ${delivery.meal_type}\n\n`;
+      body += `Meal Type: ${delivery.meal_type}\n`;
+      body += `Quantity: ${delivery.quantity}\n\n`;
     }
 
     body += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;

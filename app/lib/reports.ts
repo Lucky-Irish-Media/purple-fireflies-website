@@ -142,7 +142,7 @@ export async function getMealTypeBreakdown(): Promise<MealTypeBreakdownRow[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT delivery_date, meal_type, COUNT(*) as count
+      `SELECT delivery_date, meal_type, SUM(quantity) as count
        FROM meal_signups
        WHERE delivery_date >= date('now', '-60 days')
        GROUP BY delivery_date, meal_type
@@ -168,10 +168,10 @@ export async function getCoverageGaps(): Promise<CoverageGapRow[]> {
       `SELECT
          ms.delivery_date,
          ms.delivery_day,
-         COUNT(DISTINCT ms.id) as signup_count,
-         COUNT(DISTINCT da.id) as assigned_count,
+         SUM(ms.quantity) as signup_count,
+         SUM(CASE WHEN da.id IS NOT NULL THEN ms.quantity ELSE 0 END) as assigned_count,
          COUNT(DISTINCT da.driver_volunteer_id) as driver_count,
-         SUM(CASE WHEN da.id IS NULL THEN 1 ELSE 0 END) as unassigned_count
+         SUM(CASE WHEN da.id IS NULL THEN ms.quantity ELSE 0 END) as unassigned_count
        FROM meal_signups ms
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
        WHERE ms.delivery_date >= date('now')
@@ -244,7 +244,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const [unassigned, totals, nextDate, wedDrivers, thuDrivers, totalDelivered] = await Promise.all([
     db
       .prepare(
-        `SELECT COUNT(*) as count FROM meal_signups ms
+        `SELECT COALESCE(SUM(ms.quantity), 0) as count FROM meal_signups ms
          LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
          WHERE da.id IS NULL AND ms.delivery_date >= date('now')`
       )
@@ -252,15 +252,15 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     db
       .prepare(
         `SELECT
-           (SELECT COUNT(*) FROM meal_signups WHERE delivery_date >= date('now', '-30 days')) as signups,
+           (SELECT COALESCE(SUM(quantity), 0) FROM meal_signups WHERE delivery_date >= date('now', '-30 days')) as signups,
            (SELECT COUNT(*) FROM driver_volunteers WHERE delivery_date >= date('now', '-30 days')) as drivers`
       )
       .first<{ signups: number; drivers: number }>(),
     db
       .prepare(
         `SELECT delivery_date,
-                COUNT(*) as signup_count,
-                SUM(CASE WHEN da.id IS NOT NULL THEN 1 ELSE 0 END) as assigned_count
+                SUM(ms.quantity) as signup_count,
+                SUM(CASE WHEN da.id IS NOT NULL THEN ms.quantity ELSE 0 END) as assigned_count
          FROM meal_signups ms
          LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
          WHERE ms.delivery_date >= date('now')
@@ -287,7 +287,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       .first<{ delivery_date: string; count: number }>(),
     db
       .prepare(
-        `SELECT COUNT(*) as count
+        `SELECT COALESCE(SUM(ms.quantity), 0) as count
          FROM delivery_assignments da
          JOIN meal_signups ms ON da.meal_signup_id = ms.id
          WHERE ms.delivery_date < date('now')`

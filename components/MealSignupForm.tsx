@@ -62,14 +62,13 @@ const MAX_SIGNUPS_PER_DATE = 15;
 export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string, number> }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
   const [showLookup, setShowLookup] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState("");
+  const [regularQty, setRegularQty] = useState(1);
+  const [veganQty, setVeganQty] = useState(0);
+
+  const totalMeals = regularQty + veganQty;
+  const totalInvalid = totalMeals < 1 || totalMeals > 2;
 
   const deliveryDateOptions = useMemo(() => generateDeliveryDateOptions(), []);
-
-  const mealTypeOptions = [
-    { value: "regular", label: "Regular" },
-    { value: "vegan", label: "Vegan / GF" },
-  ];
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -299,31 +298,69 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
-            Meal Type <span className="text-red-500">*</span>
+            Meals Requested <span className="text-red-500">*</span>
           </legend>
-          <div className="flex gap-6">
-            {mealTypeOptions.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="mealType"
-                  value={option.value}
-                  required
-                  onChange={(e) => setSelectedMealType(e.target.value)}
-                  className="h-4 w-4 text-primary border-input focus:ring-primary"
-                />
-                <span className="text-foreground">{option.label}</span>
-              </label>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-text-secondary mb-2">Regular meals:</p>
+              <div className="flex gap-4">
+                {[0, 1, 2].map((n) => {
+                  const disabled = n + veganQty > 2;
+                  return (
+                    <label key={`reg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                      <input
+                        type="radio"
+                        name="regularQuantity"
+                        value={n}
+                        required
+                        defaultChecked={n === 1}
+                        disabled={disabled}
+                        onChange={(e) => setRegularQty(Number(e.target.value))}
+                        className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
+                      />
+                      <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-text-secondary mb-2">Vegan / GF meals:</p>
+              <div className="flex gap-4">
+                {[0, 1, 2].map((n) => {
+                  const disabled = n + regularQty > 2;
+                  return (
+                    <label key={`vg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                      <input
+                        type="radio"
+                        name="veganQuantity"
+                        value={n}
+                        required
+                        defaultChecked={n === 0}
+                        disabled={disabled}
+                        onChange={(e) => setVeganQty(Number(e.target.value))}
+                        className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
+                      />
+                      <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          {selectedMealType === "vegan" && (
+          {totalInvalid && (
+            <p className="text-sm text-red-500" role="alert">
+              Total meals must be 1 or 2.
+            </p>
+          )}
+          {veganQty > 0 && !totalInvalid && (
             <p className="text-sm text-amber-600" role="note">
               Note: Vegan / GF meals are not available on the first Wednesday of each month.
             </p>
           )}
-          {state?.errors?.mealType && (
+          {state?.errors?.regularQuantity && (
             <p className="text-sm text-red-500" role="alert">
-              {state.errors.mealType[0]}
+              {state.errors.regularQuantity[0]}
             </p>
           )}
         </fieldset>
@@ -339,7 +376,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               const spacesLeft = MAX_SIGNUPS_PER_DATE - count;
               const isFull = spacesLeft <= 0;
               const isFirstWed = isFirstWednesday(option.value);
-              const veganRestricted = selectedMealType === "vegan" && isFirstWed;
+              const veganRestricted = veganQty > 0 && isFirstWed;
               const disabled = isFull || veganRestricted;
               return (
                 <label key={option.value} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"} block`}>
@@ -394,7 +431,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || totalInvalid}
           className="w-full rounded-lg bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? "Submitting..." : "Submit Signup"}

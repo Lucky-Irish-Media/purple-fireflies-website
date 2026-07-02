@@ -45,6 +45,7 @@ export async function sendAssignmentEmail(
     const time = isWednesday ? "12:00pm" : "5:00pm";
     const shortLocation = isWednesday ? "Episcopal Church" : "UCM";
     const dayLabel = isWednesday ? "Wednesday" : "Thursday";
+    const quantityLabel = signup.quantity === 2 ? "2 meals" : "1 meal";
     const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
     const text = `Hi ${driver.name},
 
@@ -54,6 +55,7 @@ Delivery: ${formattedDate} (${dayLabel})
 Recipient: ${signup.name}
 Address: ${address}
 Meal Type: ${signup.meal_type}
+Quantity: ${quantityLabel}
 
 Please arrive at the ${location} at ${time} to pickup the meals.
 
