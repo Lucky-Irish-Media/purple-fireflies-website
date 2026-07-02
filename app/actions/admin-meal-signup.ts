@@ -28,6 +28,7 @@ const AdminMealSignupSchema = z.object({
   mealType: z.enum(["regular", "vegan"], "Please select a meal type."),
   contactMethod: z.enum(["call", "text", "email"], "Please select a contact method."),
   deliveryDate: z.string().min(1, "Delivery date is required."),
+  quantity: z.coerce.number().int().min(1, "Quantity must be 1 or 2.").max(2, "Quantity must be 1 or 2."),
   comments: z.string().optional(),
 });
 
@@ -50,6 +51,7 @@ const AdminMealSignupUpdateSchema = z.object({
   mealType: z.enum(["regular", "vegan"], "Please select a meal type."),
   contactMethod: z.enum(["call", "text", "email"], "Please select a contact method."),
   deliveryDate: z.string().min(1, "Delivery date is required."),
+  quantity: z.coerce.number().int().min(1, "Quantity must be 1 or 2.").max(2, "Quantity must be 1 or 2."),
   comments: z.string().optional(),
 });
 
@@ -73,6 +75,7 @@ export async function updateMealSignupAction(
       mealType: formData.get("mealType"),
       contactMethod: formData.get("contactMethod"),
       deliveryDate: formData.get("deliveryDate"),
+      quantity: formData.get("quantity"),
       comments: formData.get("comments"),
     });
 
@@ -94,6 +97,7 @@ export async function updateMealSignupAction(
       mealType: data.mealType,
       contactMethod: data.contactMethod,
       deliveryDate: data.deliveryDate,
+      quantity: data.quantity,
       comments: data.comments,
     });
 
@@ -127,6 +131,7 @@ export async function createMealSignupAction(
       mealType: formData.get("mealType"),
       contactMethod: formData.get("contactMethod"),
       deliveryDate: formData.get("deliveryDate"),
+      quantity: formData.get("quantity"),
       comments: formData.get("comments"),
     });
 
@@ -148,6 +153,7 @@ export async function createMealSignupAction(
       mealType: data.mealType,
       contactMethod: data.contactMethod,
       deliveryDate: data.deliveryDate,
+      quantity: data.quantity,
       comments: data.comments,
     });
 

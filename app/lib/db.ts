@@ -19,6 +19,7 @@ export interface MealSignup {
   state: string;
   zip_code: string;
   meal_type: "regular" | "vegan";
+  quantity: number;
   contact_method: "call" | "text" | "email";
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
@@ -39,15 +40,16 @@ export async function createMealSignup(data: {
   contactMethod: "call" | "text" | "email";
   deliveryDate: string;
   comments?: string;
+  quantity?: number;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO meal_signups (name, email, phone, address1, address2, city, state, zip_code, meal_type, contact_method, delivery_day, delivery_date, comments)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO meal_signups (name, email, phone, address1, address2, city, state, zip_code, meal_type, quantity, contact_method, delivery_day, delivery_date, comments)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.quantity ?? 1, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to create meal signup");
@@ -102,6 +104,7 @@ export async function updateMealSignup(id: number, data: {
   contactMethod: "call" | "text" | "email";
   deliveryDate: string;
   comments?: string;
+  quantity?: number;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
@@ -109,11 +112,11 @@ export async function updateMealSignup(id: number, data: {
       `UPDATE meal_signups
        SET name = ?, email = ?, phone = ?, address1 = ?, address2 = ?,
            city = ?, state = ?, zip_code = ?, meal_type = ?,
-           contact_method = ?, delivery_day = ?, delivery_date = ?, comments = ?
+           quantity = ?, contact_method = ?, delivery_day = ?, delivery_date = ?, comments = ?
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, id)
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.quantity ?? 1, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, id)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to update meal signup");
@@ -172,7 +175,7 @@ export async function getMealSignupCountsByDate(): Promise<Record<string, number
   const db = await getDB();
   const today = new Date().toISOString().split("T")[0];
   const result = await db
-    .prepare("SELECT delivery_date, COUNT(*) as count FROM meal_signups WHERE delivery_date >= ? GROUP BY delivery_date")
+    .prepare("SELECT delivery_date, SUM(quantity) as count FROM meal_signups WHERE delivery_date >= ? GROUP BY delivery_date")
     .bind(today)
     .all<{ delivery_date: string; count: number }>();
   const counts: Record<string, number> = {};
@@ -297,6 +300,7 @@ export interface MealSignupWithAssignmentDb {
   state: string;
   zip_code: string;
   meal_type: "regular" | "vegan";
+  quantity: number;
   contact_method: "call" | "text" | "email";
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
@@ -365,6 +369,7 @@ export interface TomorrowDelivery {
   address: string;
   comments: string | null;
   meal_type: string;
+  quantity: number;
 }
 
 export interface TomorrowDriver {
@@ -404,9 +409,9 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
   const result = await db
     .prepare(
       `SELECT dv.id as driver_id, dv.name as driver_name, dv.email as driver_email, dv.phone as driver_phone,
-              ms.id as meal_id, ms.name as meal_name, ms.phone as meal_phone,
-              ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
-              ms.comments, ms.meal_type, ms.delivery_day, ms.delivery_date
+               ms.id as meal_id, ms.name as meal_name, ms.phone as meal_phone,
+               ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
+               ms.comments, ms.meal_type, ms.quantity, ms.delivery_day, ms.delivery_date
        FROM delivery_assignments da
        JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
        JOIN meal_signups ms ON da.meal_signup_id = ms.id
@@ -429,6 +434,7 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
       zip_code: string;
       comments: string | null;
       meal_type: string;
+      quantity: number;
       delivery_day: string;
       delivery_date: string;
     }>();
@@ -457,6 +463,7 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
       address,
       comments: row.comments,
       meal_type: row.meal_type,
+      quantity: row.quantity,
     });
   }
 

@@ -7,8 +7,9 @@ export async function sendMealSignupConfirmation(signup: MealSignup): Promise<vo
     month: "short",
     day: "numeric",
   });
+  const quantityLabel = signup.quantity === 2 ? "2 meals" : "1 meal";
   const subject = `Meal Signup Confirmed — ${formattedDate}`;
-  const text = `Hi ${signup.name},\n\nYour meal delivery signup has been received.\n\nDelivery: ${formattedDate} (${signup.delivery_day === "wednesday" ? "Wednesday" : "Thursday"})\nMeal Type: ${signup.meal_type}\nAddress: ${address}\nContact Method: ${signup.contact_method}\n\nWe'll reach out if anything changes.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
+  const text = `Hi ${signup.name},\n\nYour meal delivery signup has been received.\n\nDelivery: ${formattedDate} (${signup.delivery_day === "wednesday" ? "Wednesday" : "Thursday"})\nMeal Type: ${signup.meal_type}\nQuantity: ${quantityLabel}\nAddress: ${address}\nContact Method: ${signup.contact_method}\n\nWe'll reach out if anything changes.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
 
   await sendEmail({ to: signup.email, subject, text });
 }

@@ -330,6 +330,32 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
+            Number of Meals <span className="text-red-500">*</span>
+          </legend>
+          <div className="flex gap-6">
+            {[1, 2].map((n) => (
+              <label key={n} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="quantity"
+                  value={n}
+                  required
+                  defaultChecked={n === 1}
+                  className="h-4 w-4 text-primary border-input focus:ring-primary"
+                />
+                <span className="text-foreground">{n} {n === 1 ? "Meal" : "Meals"}</span>
+              </label>
+            ))}
+          </div>
+          {state?.errors?.quantity && (
+            <p className="text-sm text-red-500" role="alert">
+              {state.errors.quantity[0]}
+            </p>
+          )}
+        </fieldset>
+
+        <fieldset className="space-y-2">
+          <legend className="block text-sm font-medium text-foreground">
             Delivery Dates <span className="text-red-500">*</span>
           </legend>
           <p className="text-sm text-text-secondary">Select one or more delivery dates</p>

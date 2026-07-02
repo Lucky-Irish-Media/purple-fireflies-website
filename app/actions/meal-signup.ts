@@ -38,6 +38,7 @@ export async function submitMealSignup(
       mealType: formData.get("mealType"),
       contactMethod: formData.get("contactMethod"),
       deliveryDates,
+      quantity: formData.get("quantity"),
       comments: formData.get("comments"),
     });
 
@@ -74,6 +75,7 @@ export async function submitMealSignup(
         mealType: data.mealType,
         contactMethod: data.contactMethod,
         deliveryDate,
+        quantity: data.quantity,
         comments: data.comments,
       });
       signups.push(signup);

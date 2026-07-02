@@ -256,7 +256,7 @@ function SignupFormFields({ state, signup }: {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
           <label htmlFor="ms-mealType" className="block text-sm font-medium text-foreground mb-1">Meal Type</label>
           <select id="ms-mealType" name="mealType" required defaultValue={signup?.meal_type || "regular"}
@@ -266,6 +266,16 @@ function SignupFormFields({ state, signup }: {
             <option value="vegan">Vegan / GF</option>
           </select>
           {state?.errors?.mealType && <p className="mt-1 text-sm text-red-500">{state.errors.mealType[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="ms-quantity" className="block text-sm font-medium text-foreground mb-1">Quantity</label>
+          <select id="ms-quantity" name="quantity" required defaultValue={String(signup?.quantity ?? 1)}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+          {state?.errors?.quantity && <p className="mt-1 text-sm text-red-500">{state.errors.quantity[0]}</p>}
         </div>
         <div>
           <label htmlFor="ms-contactMethod" className="block text-sm font-medium text-foreground mb-1">Contact Method</label>
@@ -397,6 +407,12 @@ export default function MealSignupsTable({
       cell: (info) => getMealTypeBadge(info.getValue()),
       filterFn: filterFns.equals,
       meta: { filterComponent: MealTypeFilter },
+    }),
+    columnHelper.accessor((row) => row.quantity, {
+      id: "quantity",
+      header: "Qty",
+      cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.contact_method, {
       id: "contact_method",
