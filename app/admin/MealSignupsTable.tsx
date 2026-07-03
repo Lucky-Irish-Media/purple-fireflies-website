@@ -376,7 +376,25 @@ export default function MealSignupsTable({
     columnHelper.accessor((row) => row.comments, {
       id: "comments",
       header: "Comments",
-      cell: (info) => <span className="text-text-secondary max-w-xs truncate block">{info.getValue() || "—"}</span>,
+      cell: (info) => {
+        const value = info.getValue();
+        if (!value) return <span className="text-text-secondary">—</span>;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              info.row.toggleExpanded();
+            }}
+            className="text-left w-full cursor-pointer"
+          >
+            {info.row.getIsExpanded() ? (
+              <span className="text-text-secondary whitespace-pre-wrap max-w-md">{value}</span>
+            ) : (
+              <span className="text-text-secondary max-w-xs truncate block">{value} <span className="text-xs text-text-secondary/50">▶</span></span>
+            )}
+          </button>
+        );
+      },
       filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.created_at, {
@@ -469,6 +487,7 @@ export default function MealSignupsTable({
         enableSorting
         enableFiltering
         enablePagination
+        enableExpanding
         enableColumnVisibility
         initialVisibility={{ created_at: false }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
