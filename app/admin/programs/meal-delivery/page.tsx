@@ -1,5 +1,4 @@
-import MealSignupsTable from "../../MealSignupsTable";
-import DriverVolunteersTable from "../../DriverVolunteersTable";
+import MealDeliveryTabs from "./MealDeliveryTabs";
 import { getMealSignupsWithAssignments, getDriverVolunteers } from "@/app/lib/db";
 
 export default async function AdminMealDeliveryPage() {
@@ -11,10 +10,9 @@ export default async function AdminMealDeliveryPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold text-foreground">
-        Meal Delivery — Signups
+        Meal Delivery
       </h1>
-      <MealSignupsTable initialData={mealSignups} drivers={driverVolunteers} />
-      <DriverVolunteersTable initialData={driverVolunteers} />
+      <MealDeliveryTabs mealSignups={mealSignups} driverVolunteers={driverVolunteers} />
     </div>
   );
 }
