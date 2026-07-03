@@ -2,6 +2,7 @@ import Link from "next/link";
 import { verifySession } from "@/app/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { MobileSidebar } from "@/app/admin/components/MobileSidebar";
+import { DesktopNav } from "@/app/admin/components/DesktopNav";
 
 export default async function AdminLayout({
   children,
@@ -46,35 +47,7 @@ export default async function AdminLayout({
         </div>
       </header>
 
-      <nav className="hidden sm:flex items-center gap-1 px-4 sm:px-6 lg:px-8 py-2 bg-card border-b border-primary/10">
-        <Link
-          href="/admin"
-          className="rounded-lg px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
-        >
-          Dashboard
-        </Link>
-        <span className="text-text-secondary text-xs mx-1">|</span>
-        <Link
-          href="/admin/programs/meal-delivery"
-          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-        >
-          Meal Delivery
-        </Link>
-        <span className="text-text-secondary text-xs mx-1">|</span>
-        <Link
-          href="/admin/reports"
-          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-        >
-          Reports
-        </Link>
-        <span className="text-text-secondary text-xs mx-1">|</span>
-        <Link
-          href="/admin/users"
-          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-        >
-          Users
-        </Link>
-      </nav>
+      <DesktopNav />
 
       <main className="flex-1 p-4 sm:p-6">{children}</main>
     </div>

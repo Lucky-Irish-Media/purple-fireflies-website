@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
   { href: "/admin", label: "Dashboard", section: false },
@@ -15,6 +16,7 @@ const navLinks = [
 
 export function MobileSidebar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <>
@@ -53,49 +55,31 @@ export function MobileSidebar() {
             </div>
 
             <nav className="flex flex-col gap-1">
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
-              >
-                Dashboard
-              </Link>
-
-              <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                Programs
-              </span>
-
-              <Link
-                href="/admin/programs/meal-delivery"
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-              >
-                Meal Delivery
-              </Link>
-
-              <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                Reports
-              </span>
-
-              <Link
-                href="/admin/reports"
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-              >
-                Meal Delivery Reports
-              </Link>
-
-              <span className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                Administration
-              </span>
-
-              <Link
-                href="/admin/users"
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/10 transition-colors"
-              >
-                Users
-              </Link>
+              {navLinks.map((link) => {
+                if ("type" in link && link.type === "heading") {
+                  return (
+                    <span key={link.label} className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                      {link.label}
+                    </span>
+                  );
+                }
+                const href = "href" in link ? (link.href ?? "") : "";
+                const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setOpen(false)}
+                    className={`rounded-lg px-3 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "bg-primary text-white font-semibold"
+                        : "font-medium text-foreground hover:bg-primary/10"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
         </div>
