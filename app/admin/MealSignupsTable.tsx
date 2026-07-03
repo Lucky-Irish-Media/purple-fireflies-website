@@ -473,6 +473,7 @@ export default function MealSignupsTable({
         initialVisibility={{ created_at: false }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
+        storageKey="meal-signups-column-visibility"
       />
     </section>
   );

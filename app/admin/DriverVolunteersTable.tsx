@@ -285,6 +285,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
         initialVisibility={{ created_at: false }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
+        storageKey="driver-volunteers-column-visibility"
       />
     </section>
   );

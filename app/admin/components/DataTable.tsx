@@ -40,6 +40,7 @@ type DataTableProps<TData extends RowData> = {
   pageSize?: number;
   onRowClick?: (row: TData) => void;
   className?: string;
+  storageKey?: string;
 };
 
 export function DataTable<TData extends RowData>({
@@ -56,6 +57,7 @@ export function DataTable<TData extends RowData>({
   pageSize = 10,
   onRowClick,
   className = "",
+  storageKey,
 }: DataTableProps<TData>) {
   const [showFilters, setShowFilters] = useState(false);
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
@@ -66,9 +68,11 @@ export function DataTable<TData extends RowData>({
   });
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    enableColumnVisibility ? initialVisibility : {}
-  );
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    if (!enableColumnVisibility) return {};
+    const saved = storageKey ? sessionStorage.getItem(storageKey) : null;
+    return saved ? { ...initialVisibility, ...JSON.parse(saved) } : initialVisibility;
+  });
   const [columnVisibilityOpen, setColumnVisibilityOpen] = useState(false);
   const columnVisibilityRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +85,12 @@ export function DataTable<TData extends RowData>({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (enableColumnVisibility && storageKey) {
+      sessionStorage.setItem(storageKey, JSON.stringify(columnVisibility));
+    }
+  }, [enableColumnVisibility, storageKey, columnVisibility]);
 
   const table = useReactTable({
     data,
@@ -355,10 +365,30 @@ export function DataTable<TData extends RowData>({
 
       {enablePagination && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-text-secondary">
-          <div className="order-2 sm:order-1">
+          <div className="order-3 sm:order-1 flex items-center gap-2">
+            <span>Rows:</span>
+            <select
+              value={pagination.pageSize >= data.length ? data.length : pagination.pageSize}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                table.setPageSize(val);
+              }}
+              className="rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              {[5, 10, 15, 20].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+              <option value={data.length}>All</option>
+            </select>
+          </div>
+          <div className="order-2 sm:order-2">
             Showing{" "}
             <strong>
-              {pagination.pageIndex * pagination.pageSize + 1}{" "}
+              {getRowModel().rows.length === 0
+                ? 0
+                : pagination.pageIndex * pagination.pageSize + 1}{" "}
               to{" "}
               {Math.min(
                 (pagination.pageIndex + 1) * pagination.pageSize,
@@ -368,7 +398,7 @@ export function DataTable<TData extends RowData>({
               {getRowModel().rows.length} results
             </strong>
           </div>
-          <div className="order-1 sm:order-2 flex items-center gap-2 w-full sm:w-auto">
+          <div className="order-1 sm:order-3 flex items-center gap-2 w-full sm:w-auto">
             <div className="flex-1 sm:flex-initial" />
             <button
               onClick={() => table.previousPage()}
