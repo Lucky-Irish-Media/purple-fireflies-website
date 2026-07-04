@@ -288,7 +288,7 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
         enableColumnResizing
         enableFacetedFilters
         initialVisibility={{ created_at: false }}
-        initialColumnPinning={{ left: ["name", "edit"] }}
+        initialColumnPinning={{ left: ["name"], right: ["edit"] }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
         storageKey="driver-volunteers-column-visibility"
