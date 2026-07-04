@@ -7,6 +7,8 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getExpandedRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   flexRender,
   createColumnHelper,
   type ColumnDef,
@@ -17,6 +19,8 @@ import {
   type RowData,
   type HeaderContext,
   type VisibilityState,
+  type ColumnPinningState,
+  type ColumnResizeMode,
 } from "@tanstack/react-table";
 import { useState, useMemo, useRef, useEffect } from "react";
 
@@ -35,8 +39,14 @@ type DataTableProps<TData extends RowData> = {
   enableRowSelection?: boolean;
   enableExpanding?: boolean;
   enableColumnVisibility?: boolean;
+  enableGlobalFilter?: boolean;
+  enableColumnPinning?: boolean;
+  enableColumnResizing?: boolean;
+  enableFacetedFilters?: boolean;
   initialVisibility?: VisibilityState;
   initialSorting?: SortingState;
+  initialColumnPinning?: ColumnPinningState;
+  columnResizeMode?: ColumnResizeMode;
   pageSize?: number;
   onRowClick?: (row: TData) => void;
   className?: string;
@@ -52,8 +62,14 @@ export function DataTable<TData extends RowData>({
   enableRowSelection = false,
   enableExpanding = false,
   enableColumnVisibility = false,
+  enableGlobalFilter = true,
+  enableColumnPinning = false,
+  enableColumnResizing = false,
+  enableFacetedFilters = false,
   initialVisibility = {},
   initialSorting = [],
+  initialColumnPinning = {},
+  columnResizeMode = "onChange",
   pageSize = 10,
   onRowClick,
   className = "",
@@ -62,12 +78,14 @@ export function DataTable<TData extends RowData>({
   const [showFilters, setShowFilters] = useState(false);
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState<any>(undefined);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize,
   });
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(initialColumnPinning);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     if (!enableColumnVisibility) return {};
     const saved = storageKey ? sessionStorage.getItem(storageKey) : null;
@@ -92,36 +110,104 @@ export function DataTable<TData extends RowData>({
     }
   }, [enableColumnVisibility, storageKey, columnVisibility]);
 
+  const hasPinning = enableColumnPinning && Object.values(columnPinning).some(arr => arr && arr.length > 0);
+
   const table = useReactTable({
     data,
     columns,
     state: {
       sorting,
       columnFilters,
+      globalFilter,
       pagination,
       expanded,
       rowSelection,
       columnVisibility,
+      columnPinning,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
     onExpandedChange: setExpanded,
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnPinningChange: setColumnPinning,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
     getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
     getExpandedRowModel: enableExpanding ? getExpandedRowModel() : undefined,
+    getFacetedRowModel: enableFacetedFilters ? getFacetedRowModel() : undefined,
+    getFacetedUniqueValues: enableFacetedFilters ? getFacetedUniqueValues() : undefined,
+    enableColumnPinning,
+    enableColumnResizing,
+    columnResizeMode,
+    globalFilterFn: "auto",
   });
 
   const { getHeaderGroups, getRowModel, getFooterGroups, getState } = table;
 
+  function getColumnStyle(column: any) {
+    const isPinned = column.getIsPinned();
+    if (!isPinned) return undefined;
+    if (isPinned === 'left') {
+      return {
+        position: 'sticky' as const,
+        left: column.getStart('left'),
+        zIndex: 2,
+      };
+    }
+    return {
+      position: 'sticky' as const,
+      right: column.getAfter('right'),
+      zIndex: 2,
+    };
+  }
+
+  function FacetedFilter({ column }: { column: any }) {
+    const value = column.getFilterValue() as string | undefined;
+    const uniqueValues = column.getFacetedUniqueValues();
+    const sortedValues = useMemo(() => {
+      if (!uniqueValues) return [];
+      const entries = Array.from(uniqueValues.entries()) as [string, number][];
+      return entries.sort((a, b) => a[0].localeCompare(b[0]));
+    }, [uniqueValues]);
+    return (
+      <select
+        value={value || ""}
+        onChange={(e) => {
+          e.stopPropagation();
+          column.setFilterValue(e.target.value || undefined);
+        }}
+        className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        <option value="">All</option>
+        {sortedValues.map(([val, count]) => (
+          <option key={String(val)} value={String(val)}>
+            {String(val)} ({count})
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <div className={`space-y-4 ${className}`}>
-      {(enableFiltering || enableColumnVisibility) && (
+      {(enableFiltering || enableColumnVisibility || enableGlobalFilter) && (
         <div className="flex items-center gap-2 flex-wrap">
+          {enableGlobalFilter && (
+            <input
+              type="text"
+              placeholder="Search all columns..."
+              value={(globalFilter as string) || ""}
+              onChange={(e) => {
+                setGlobalFilter(e.target.value || undefined);
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              }}
+              className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
+            />
+          )}
           {enableFiltering && (
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -140,20 +226,53 @@ export function DataTable<TData extends RowData>({
                 Columns ▾
               </button>
               {columnVisibilityOpen && (
-                <div className="absolute right-0 mt-1 w-48 rounded-lg border border-primary/10 bg-background shadow-lg z-50">
+                <div className="absolute right-0 mt-1 w-56 rounded-lg border border-primary/10 bg-background shadow-lg z-50">
                   {table.getAllLeafColumns().filter((col) => col.getCanHide()).map((col) => (
-                    <label
-                      key={col.id}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-primary/5 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={col.getIsVisible()}
-                        onChange={col.getToggleVisibilityHandler()}
-                        className="rounded border-primary/30 text-primary focus:ring-primary"
-                      />
-                      {typeof col.columnDef.header === "string" ? col.columnDef.header : col.id}
-                    </label>
+                    <div key={col.id} className="px-3 py-2 border-b border-primary/5 last:border-b-0">
+                      <label className="flex items-center gap-2 text-sm text-foreground hover:bg-primary/5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={col.getIsVisible()}
+                          onChange={col.getToggleVisibilityHandler()}
+                          className="rounded border-primary/30 text-primary focus:ring-primary"
+                        />
+                        {typeof col.columnDef.header === "string" ? col.columnDef.header : col.id}
+                      </label>
+                      {enableColumnPinning && col.getCanPin() && (
+                        <div className="flex gap-1 mt-1 ml-5">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); col.pin('left'); }}
+                            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                              col.getIsPinned() === 'left'
+                                ? 'bg-primary/20 text-foreground font-semibold'
+                                : 'text-text-secondary hover:text-foreground'
+                            }`}
+                          >
+                            ◀ Pin
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); col.pin(false); }}
+                            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                              !col.getIsPinned()
+                                ? 'bg-primary/20 text-foreground font-semibold'
+                                : 'text-text-secondary hover:text-foreground'
+                            }`}
+                          >
+                            ↕
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); col.pin('right'); }}
+                            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                              col.getIsPinned() === 'right'
+                                ? 'bg-primary/20 text-foreground font-semibold'
+                                : 'text-text-secondary hover:text-foreground'
+                            }`}
+                          >
+                            Pin ▶
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
@@ -164,74 +283,101 @@ export function DataTable<TData extends RowData>({
 
       {/* Desktop table */}
       <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full text-sm text-left" role="grid">
+        <table className="w-full text-sm text-left" role="grid" style={{ minWidth: hasPinning ? table.getTotalSize() : undefined }}>
           <thead>
             {getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-primary/10">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="pb-3 pr-3 font-semibold text-foreground"
-                    style={{
-                      cursor: header.column.getCanSort() ? "pointer" : "default",
-                      userSelect: "none",
-                    }}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    {{
-                      asc: " ▲",
-                      desc: " ▼",
-                    }[header.column.getIsSorted() as string] ?? null}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const column = header.column;
+                  const isPinned = column.getIsPinned();
+                  return (
+                    <th
+                      key={header.id}
+                      className="pb-3 pr-3 font-semibold text-foreground relative"
+                      style={{
+                        cursor: column.getCanSort() ? "pointer" : "default",
+                        userSelect: "none",
+                        width: enableColumnResizing ? column.getSize() : undefined,
+                        ...(hasPinning ? getColumnStyle(column) : {}),
+                        ...(hasPinning && isPinned ? { backgroundColor: 'var(--color-background, #fff)' } : {}),
+                      }}
+                      onClick={column.getToggleSortingHandler()}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="truncate">
+                          {header.isPlaceholder ? null : flexRender(column.columnDef.header, header.getContext())}
+                        </span>
+                        {{
+                          asc: " ▲",
+                          desc: " ▼",
+                        }[column.getIsSorted() as string] ?? null}
+                      </div>
+                      {enableColumnResizing && column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 transition-colors"
+                          style={{ touchAction: 'none' }}
+                        />
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
             {enableFiltering && showFilters && (
               <tr className="border-b border-primary/10">
-                {getHeaderGroups()[0]?.headers.map((header) => (
-                  <th key={header.id} className="pb-2 pr-3">
-                    {header.column.getCanFilter() && (
-                      <div className="w-full relative">
-                        {(header.column.columnDef.meta as any)?.filterComponent ? (
-                          flexRender(
-                            (header.column.columnDef.meta as any).filterComponent,
-                            {
-                              column: header.column,
-                              table: table,
-                              header: header.getContext(),
-                            } as any
-                          )
-                        ) : (
-                          <>
-                            {header.column.getFilterValue() !== undefined && (
-                              <button
-                                onClick={(e) => {
+                {getHeaderGroups()[0]?.headers.map((header) => {
+                  const column = header.column;
+                  return (
+                    <th key={header.id} className="pb-2 pr-3" style={{
+                      ...(hasPinning ? getColumnStyle(column) : {}),
+                      ...(hasPinning && column.getIsPinned() ? { backgroundColor: 'var(--color-background, #fff)' } : {}),
+                    }}>
+                      {column.getCanFilter() && (
+                        <div className="w-full relative">
+                          {(column.columnDef.meta as any)?.filterComponent ? (
+                            flexRender(
+                              (column.columnDef.meta as any).filterComponent,
+                              {
+                                column: column,
+                                table: table,
+                                header: header.getContext(),
+                              } as any
+                            )
+                          ) : enableFacetedFilters ? (
+                            <FacetedFilter column={column} />
+                          ) : (
+                            <>
+                              {column.getFilterValue() !== undefined && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    column.setFilterValue(undefined);
+                                  }}
+                                  className="absolute mt-1 mr-1 right-0 text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                              <input
+                                type="text"
+                                placeholder={`Filter ${column.id}...`}
+                                value={(column.getFilterValue() as string) || ""}
+                                onChange={(e) => {
                                   e.stopPropagation();
-                                  header.column.setFilterValue(undefined);
+                                  column.setFilterValue(e.target.value);
                                 }}
-                                className="absolute mt-1 mr-1 right-0 text-red-500 hover:text-red-700 text-xs"
-                              >
-                                ✕
-                              </button>
-                            )}
-                            <input
-                              type="text"
-                              placeholder={`Filter ${header.column.id}...`}
-                              value={(header.column.getFilterValue() as string) || ""}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                header.column.setFilterValue(e.target.value);
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                            />
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </th>
-                ))}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                              />
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             )}
           </thead>
@@ -251,11 +397,19 @@ export function DataTable<TData extends RowData>({
                   }`}
                   onClick={() => onRowClick?.(row.original)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="py-3 pr-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const col = cell.column;
+                    const isPinned = col.getIsPinned();
+                    return (
+                      <td key={cell.id} className="py-3 pr-3" style={{
+                        width: enableColumnResizing ? col.getSize() : undefined,
+                        ...(hasPinning ? getColumnStyle(col) : {}),
+                        ...(hasPinning && isPinned ? { backgroundColor: 'var(--color-background, #fff)' } : {}),
+                      }}>
+                        {flexRender(col.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}
