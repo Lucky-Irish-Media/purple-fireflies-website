@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+import path from "path";
 
 initOpenNextCloudflareForDev();
 
@@ -15,6 +16,9 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(import.meta.dirname ?? process.cwd()),
+  },
   async headers() {
     return [
       {
