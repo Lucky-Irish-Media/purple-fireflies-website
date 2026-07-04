@@ -186,8 +186,8 @@ export function DataTable<TData extends RowData>({
     }
     const sortedValues = useMemo(() => {
       if (!uniqueValues) return [];
-      const entries = Array.from(uniqueValues.entries()) as [string, number][];
-      return entries.sort((a, b) => a[0].localeCompare(b[0]));
+      const entries = Array.from(uniqueValues.entries());
+      return entries.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
     }, [uniqueValues]);
     if (!uniqueValues || error) {
       return (
