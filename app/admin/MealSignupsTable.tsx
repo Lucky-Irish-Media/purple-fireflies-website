@@ -30,7 +30,7 @@ function MealTypeFilter({ column }: { column: any }) {
       }}
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
-      <option value="">All Meal Types</option>
+      <option value="">All</option>
       <option value="regular">Regular</option>
       <option value="vegan">Vegan</option>
     </select>
@@ -48,7 +48,7 @@ function ContactMethodFilter({ column }: { column: any }) {
       }}
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
-      <option value="">All Methods</option>
+      <option value="">All</option>
       <option value="call">Call</option>
       <option value="text">Text</option>
       <option value="email">Email</option>
@@ -68,10 +68,11 @@ function DeliveryDateFilter({ column }: { column: any }) {
       }}
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
-      <option value="">All Dates</option>
+      <option value="">All</option>
       <option value="future">Future Dates Only</option>
       <option value="past">Past Dates Only</option>
       <option value="today">Today</option>
+      <option value="nextWeek">Next Week</option>
     </select>
   );
 }
@@ -376,6 +377,7 @@ export default function MealSignupsTable({
     columnHelper.accessor((row) => row.comments, {
       id: "comments",
       header: "Comments",
+      enableColumnFilter: false,
       cell: (info) => {
         const value = info.getValue();
         if (!value) return <span className="text-text-secondary">—</span>;
@@ -395,7 +397,6 @@ export default function MealSignupsTable({
           </button>
         );
       },
-      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",
@@ -489,7 +490,12 @@ export default function MealSignupsTable({
         enablePagination
         enableExpanding
         enableColumnVisibility
+        enableGlobalFilter
+        enableColumnPinning
+        enableColumnResizing
+        enableFacetedFilters
         initialVisibility={{ created_at: false }}
+        initialColumnPinning={{ left: ["name"] }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
         storageKey="meal-signups-column-visibility"

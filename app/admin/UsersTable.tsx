@@ -316,6 +316,11 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
         enableSorting
         enableFiltering
         enablePagination
+        enableGlobalFilter
+        enableColumnPinning
+        enableColumnResizing
+        enableFacetedFilters
+        initialColumnPinning={{ left: ["name", "actions"] }}
         pageSize={15}
       />
     </section>
