@@ -282,7 +282,12 @@ export default function DriverVolunteersTable({ initialData }: { initialData: Dr
         enableFiltering
         enablePagination
         enableColumnVisibility
+        enableGlobalFilter
+        enableColumnPinning
+        enableColumnResizing
+        enableFacetedFilters
         initialVisibility={{ created_at: false }}
+        initialColumnPinning={{ left: ["name", "edit"] }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
         storageKey="driver-volunteers-column-visibility"

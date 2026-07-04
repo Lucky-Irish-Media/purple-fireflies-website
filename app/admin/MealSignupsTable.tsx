@@ -489,7 +489,12 @@ export default function MealSignupsTable({
         enablePagination
         enableExpanding
         enableColumnVisibility
+        enableGlobalFilter
+        enableColumnPinning
+        enableColumnResizing
+        enableFacetedFilters
         initialVisibility={{ created_at: false }}
+        initialColumnPinning={{ left: ["name"] }}
         initialSorting={[{ id: "delivery_date", desc: true }]}
         pageSize={15}
         storageKey="meal-signups-column-visibility"
