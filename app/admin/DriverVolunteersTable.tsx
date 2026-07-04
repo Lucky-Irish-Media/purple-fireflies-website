@@ -21,7 +21,7 @@ function SignalFilter({ column }: { column: any }) {
       }}
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
-      <option value="">All Signals</option>
+      <option value="">All</option>
       <option value="yes">Yes</option>
       <option value="willing">Willing</option>
       <option value="no">No</option>
@@ -41,10 +41,11 @@ function DeliveryDateFilter({ column }: { column: any }) {
       }}
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
-      <option value="">All Dates</option>
+      <option value="">All</option>
       <option value="future">Future Dates Only</option>
       <option value="past">Past Dates Only</option>
       <option value="today">Today</option>
+      <option value="nextWeek">Next Week</option>
     </select>
   );
 }

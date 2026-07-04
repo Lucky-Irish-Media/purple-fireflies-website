@@ -30,6 +30,18 @@ export function deliveryDateFilterFn(row: any, columnId: string, value: string):
       return date < today;
     case "today":
       return date === today;
+    case "nextWeek": {
+      const now = new Date();
+      const day = now.getDay();
+      const diffToMonday = day === 0 ? 1 : 8 - day;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diffToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const mondayStr = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+      const sundayStr = `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, "0")}-${String(sunday.getDate()).padStart(2, "0")}`;
+      return date >= mondayStr && date <= sundayStr;
+    }
     default:
       return true;
   }
