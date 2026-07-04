@@ -167,12 +167,33 @@ export function DataTable<TData extends RowData>({
 
   function FacetedFilter({ column }: { column: any }) {
     const value = column.getFilterValue() as string | undefined;
-    const uniqueValues = column.getFacetedUniqueValues();
+    const [error, setError] = useState(false);
+    let uniqueValues: Map<any, number> | undefined;
+    try {
+      uniqueValues = column.getFacetedUniqueValues();
+    } catch {
+      uniqueValues = undefined;
+    }
     const sortedValues = useMemo(() => {
       if (!uniqueValues) return [];
       const entries = Array.from(uniqueValues.entries()) as [string, number][];
       return entries.sort((a, b) => a[0].localeCompare(b[0]));
     }, [uniqueValues]);
+    if (!uniqueValues || error) {
+      return (
+        <input
+          type="text"
+          placeholder={`Filter ${column.id}...`}
+          value={value || ""}
+          onChange={(e) => {
+            e.stopPropagation();
+            column.setFilterValue(e.target.value);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      );
+    }
     return (
       <select
         value={value || ""}
