@@ -88,13 +88,19 @@ export function DataTable<TData extends RowData>({
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(initialColumnPinning);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     if (!enableColumnVisibility) return {};
-    const saved = storageKey ? sessionStorage.getItem(storageKey) : null;
+    let saved = null;
+    try {
+      saved = typeof sessionStorage !== 'undefined' && storageKey ? sessionStorage.getItem(storageKey) : null;
+    } catch {
+      saved = null;
+    }
     return saved ? { ...initialVisibility, ...JSON.parse(saved) } : initialVisibility;
   });
   const [columnVisibilityOpen, setColumnVisibilityOpen] = useState(false);
   const columnVisibilityRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
     function handleClickOutside(event: MouseEvent) {
       if (columnVisibilityRef.current && !columnVisibilityRef.current.contains(event.target as Node)) {
         setColumnVisibilityOpen(false);
@@ -105,8 +111,12 @@ export function DataTable<TData extends RowData>({
   }, []);
 
   useEffect(() => {
-    if (enableColumnVisibility && storageKey) {
-      sessionStorage.setItem(storageKey, JSON.stringify(columnVisibility));
+    if (enableColumnVisibility && storageKey && typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(columnVisibility));
+      } catch {
+        // sessionStorage not available (e.g., SSR or private browsing)
+      }
     }
   }, [enableColumnVisibility, storageKey, columnVisibility]);
 
