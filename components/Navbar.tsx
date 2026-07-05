@@ -14,10 +14,10 @@ export default function Navbar() {
   }
 
   const linkClass = (path: string) =>
-    `text-base font-semibold transition-colors duration-200 ${
+    `text-base font-semibold transition-colors duration-200 border-b-2 pb-0.5 ${
       pathname === path
-        ? "text-white"
-        : "text-white/70 hover:text-white"
+        ? "text-white border-accent"
+        : "text-white/70 hover:text-white border-transparent"
     }`;
 
   return (
@@ -39,10 +39,10 @@ export default function Navbar() {
               onMouseLeave={() => setIsProgramsOpen(false)}
             >
               <button
-                className={`text-base font-semibold transition-colors duration-200 ${
+                className={`text-base font-semibold transition-colors duration-200 border-b-2 pb-0.5 ${
                   pathname.startsWith("/programs")
-                    ? "text-white"
-                    : "text-white/70 hover:text-white"
+                    ? "text-white border-accent"
+                    : "text-white/70 hover:text-white border-transparent"
                 }`}
               >
                 Programs
