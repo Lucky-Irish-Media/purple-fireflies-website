@@ -1,51 +1,145 @@
+import Link from "next/link";
+
+const stats = [
+  { num: "500+", label: "Meals delivered" },
+  { num: "12", label: "Neighborhoods served" },
+  { num: "80+", label: "Volunteers" },
+];
+
+const programs = [
+  {
+    icon: "🍲",
+    title: "Meal Delivery",
+    desc: "Hot, nutritious meals delivered to neighbors in need every week.",
+    href: "/programs/meal-delivery",
+    cta: "Sign up",
+  },
+  {
+    icon: "🤝",
+    title: "Community",
+    desc: "Events and resources that connect neighbors and build shared purpose.",
+    href: "/programs",
+    cta: "Learn more",
+  },
+  {
+    icon: "🙌",
+    title: "Volunteer",
+    desc: "Join our driver and volunteer network and make a direct difference.",
+    href: "/programs/meal-delivery/volunteer-signup",
+    cta: "Volunteer",
+  },
+];
+
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 bg-background font-sans">
+    <div className="flex flex-col flex-1 font-sans">
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-        <div className="flex flex-col items-center gap-6 px-4 pt-24 pb-16 text-center max-w-2xl mx-auto animate-fade-in-up">
-          <span className="rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
+      <section
+        style={{ background: "linear-gradient(160deg, #3b0764 0%, #5B21B6 45%, #7C3AED 100%)" }}
+      >
+        <div className="px-4 pt-20 pb-0 text-center">
+        <div className="max-w-2xl mx-auto animate-fade-in-up">
+          <span
+            className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white mb-5"
+            style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
+          >
             Community First
           </span>
-          <h1 className="text-5xl font-bold tracking-tight text-foreground">
-            Our Mission
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
+            Empowering neighbors,<br className="hidden sm:block" /> building lasting change
           </h1>
-          <p className="text-lg leading-8 text-text-secondary">
-            To foster an inclusive community where everyone feels safe, respected, and empowered to thrive. We embrace the diversity that strengthens us and work collaboratively with grassroots leaders to inspire action, inform our neighbors, and create meaningful, lasting change.
+          <p className="text-lg leading-8 mb-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 480, margin: "0 auto 2rem" }}>
+            Fostering an inclusive community where everyone feels safe, respected, and empowered to thrive.
           </p>
+          <div className="flex flex-wrap gap-3 justify-center pb-12">
+            <Link
+              href="/contact"
+              className="rounded-full px-7 py-3 text-sm font-bold text-white shadow-lg transition-all duration-200 hover:opacity-90"
+              style={{ background: "#F59E0B" }}
+            >
+              Get Involved
+            </Link>
+            <Link
+              href="/programs"
+              className="rounded-full px-7 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20"
+              style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)" }}
+            >
+              Learn more
+            </Link>
+          </div>
+        </div>
+        </div>
+
+        {/* Stats strip */}
+        <div style={{ background: "rgba(0,0,0,0.25)", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+          <div className="max-w-7xl mx-auto px-4 grid grid-cols-3">
+          {stats.map((s, i) => (
+            <div
+              key={s.label}
+              className="py-5 text-center"
+              style={{ borderRight: i < stats.length - 1 ? "1px solid rgba(255,255,255,0.12)" : "none" }}
+            >
+              <div className="text-2xl font-bold" style={{ color: "#F59E0B" }}>{s.num}</div>
+              <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>{s.label}</div>
+            </div>
+          ))}
+          </div>
         </div>
       </section>
 
-      {/* Values */}
-      <section className="px-4 pb-24">
-        <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-3">
-          {[
-            {
-              title: "Community",
-              desc: "Building connections that uplift everyone through shared purpose and mutual support.",
-            },
-            {
-              title: "Empowerment",
-              desc: "Providing resources and opportunities for individuals to reach their full potential.",
-            },
-            {
-              title: "Change",
-              desc: "Working with grassroots leaders to create meaningful, lasting impact in our neighborhoods.",
-            },
-          ].map((item, i) => (
-            <div
-              key={item.title}
-              className="rounded-xl border border-primary/10 bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-              style={{ animationDelay: `${i * 0.15}s` }}
-            >
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-lg">
-                {["🤝", "✨", "🌱"][i]}
+      {/* Programs */}
+      <section className="px-4 py-16 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">What we do</h2>
+          <div className="grid gap-6 md:grid-cols-3">
+            {programs.map((p, i) => (
+              <div
+                key={p.title}
+                className="rounded-xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                style={{
+                  background: "#fff",
+                  border: "1px solid rgba(124,58,237,0.12)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                  animationDelay: `${i * 0.15}s`,
+                }}
+              >
+                <div
+                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
+                  style={{ background: "rgba(124,58,237,0.08)" }}
+                >
+                  {p.icon}
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{p.title}</h3>
+                <p className="text-text-secondary leading-relaxed flex-1 text-sm">{p.desc}</p>
+                <Link
+                  href={p.href}
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-colors"
+                  style={{ color: "#7C3AED" }}
+                >
+                  {p.cta} →
+                </Link>
               </div>
-              <h2 className="text-xl font-bold text-foreground mb-2">{item.title}</h2>
-              <p className="text-text-secondary leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Donate CTA */}
+      <section className="px-4 py-12" style={{ background: "#F59E0B" }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Support our mission</h2>
+            <p className="text-base mt-1" style={{ color: "rgba(255,255,255,0.85)" }}>
+              Every dollar goes directly to our community programs.
+            </p>
+          </div>
+          <Link
+            href="/donate"
+            className="shrink-0 rounded-full px-7 py-3 text-base font-bold shadow-md transition-all duration-200 hover:shadow-lg"
+            style={{ background: "#fff", color: "#92400E" }}
+          >
+            Donate today
+          </Link>
         </div>
       </section>
     </div>

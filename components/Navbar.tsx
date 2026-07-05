@@ -21,7 +21,7 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="bg-gradient-to-r from-primary-dark to-primary shadow-lg">
+    <nav style={{ background: "#3b0764" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="text-2xl font-bold text-white tracking-tight">
