@@ -31,9 +31,9 @@ export default async function Home() {
   const stats = await getHomePageStats();
 
   const statDisplays = [
-    { num: `${stats.total_meals_delivered}+`, label: "Meals delivered" },
+    { num: `${stats.total_meals_delivered}`, label: "Meals delivered" },
     { num: `${stats.delivery_days}`, label: "Delivery days" },
-    { num: `${stats.total_volunteers}+`, label: "Volunteers" },
+    { num: `${stats.total_volunteers}`, label: "Volunteers" },
   ];
 
   return (
