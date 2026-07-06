@@ -1,10 +1,7 @@
 import Link from "next/link";
+import { getHomePageStats } from "@/app/lib/reports";
 
-const stats = [
-  { num: "500+", label: "Meals delivered" },
-  { num: "12", label: "Neighborhoods served" },
-  { num: "80+", label: "Volunteers" },
-];
+export const dynamic = "force-dynamic";
 
 const programs = [
   {
@@ -30,7 +27,15 @@ const programs = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const stats = await getHomePageStats();
+
+  const statDisplays = [
+    { num: `${stats.total_meals_delivered}+`, label: "Meals delivered" },
+    { num: `${stats.delivery_days}`, label: "Delivery days" },
+    { num: `${stats.total_volunteers}+`, label: "Volunteers" },
+  ];
+
   return (
     <div className="flex flex-col flex-1 font-sans">
       {/* Hero */}
@@ -73,11 +78,11 @@ export default function Home() {
         {/* Stats strip */}
         <div style={{ background: "rgba(0,0,0,0.25)", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
           <div className="max-w-7xl mx-auto px-4 grid grid-cols-3">
-          {stats.map((s, i) => (
+          {statDisplays.map((s, i) => (
             <div
               key={s.label}
               className="py-5 text-center"
-              style={{ borderRight: i < stats.length - 1 ? "1px solid rgba(255,255,255,0.12)" : "none" }}
+              style={{ borderRight: i < statDisplays.length - 1 ? "1px solid rgba(255,255,255,0.12)" : "none" }}
             >
               <div className="text-2xl font-bold" style={{ color: "#F59E0B" }}>{s.num}</div>
               <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>{s.label}</div>
