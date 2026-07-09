@@ -9,7 +9,7 @@ import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge } from "./lib/utils";
+import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const STATE_OPTIONS = [
@@ -35,6 +35,40 @@ function ContactMethodFilter({ column }: { column: any }) {
       <option value="call">Call</option>
       <option value="text">Text</option>
       <option value="email">Email</option>
+    </select>
+  );
+}
+
+function RequesterFilter({ column }: { column: any }) {
+  return (
+    <input
+      type="text"
+      placeholder="Filter name, email..."
+      value={(column.getFilterValue() as string) || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value);
+      }}
+      onClick={(e) => e.stopPropagation()}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    />
+  );
+}
+
+function MealsFilter({ column }: { column: any }) {
+  return (
+    <select
+      value={(column.getFilterValue() as string) || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All</option>
+      <option value="regular">Regular Only</option>
+      <option value="vegan">Vegan Only</option>
+      <option value="both">Both</option>
     </select>
   );
 }
@@ -391,7 +425,8 @@ export default function MealSignupsTable({
     columnHelper.display({
       id: "requester",
       header: "Requester",
-      enableColumnFilter: false,
+      filterFn: requesterFilterFn,
+      meta: { filterComponent: RequesterFilter },
       cell: (info) => {
         const r = info.row.original;
         return (
@@ -411,7 +446,8 @@ export default function MealSignupsTable({
     columnHelper.display({
       id: "meals",
       header: "Meals",
-      enableColumnFilter: false,
+      filterFn: mealsFilterFn,
+      meta: { filterComponent: MealsFilter },
       cell: (info) => {
         const r = info.row.original;
         const parts: string[] = [];
@@ -432,7 +468,8 @@ export default function MealSignupsTable({
     columnHelper.accessor((row) => row.delivery_date, {
       id: "delivery",
       header: "Delivery",
-      enableColumnFilter: false,
+      filterFn: deliveryDateFilterFn,
+      meta: { filterComponent: DeliveryDateFilter },
       cell: (info) => {
         const r = info.row.original;
         return (
