@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, updateAssignmentDetails } from "@/app/lib/db";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -53,6 +53,8 @@ const AdminMealSignupUpdateSchema = z.object({
   deliveryDate: z.string().min(1, "Delivery date is required."),
   quantity: z.coerce.number().int().min(1, "Quantity must be 1 or 2.").max(2, "Quantity must be 1 or 2."),
   comments: z.string().optional(),
+  assignmentNotes: z.string().optional(),
+  bagNumber: z.string().optional(),
 });
 
 export async function updateMealSignupAction(
@@ -77,6 +79,8 @@ export async function updateMealSignupAction(
       deliveryDate: formData.get("deliveryDate"),
       quantity: formData.get("quantity"),
       comments: formData.get("comments"),
+      assignmentNotes: formData.get("assignmentNotes"),
+      bagNumber: formData.get("bagNumber"),
     });
 
     if (!validated.success) {
@@ -118,6 +122,11 @@ export async function updateMealSignupAction(
       deliveryDate: data.deliveryDate,
       quantity: data.quantity,
       comments: data.comments,
+    });
+
+    await updateAssignmentDetails(data.id, {
+      notes: data.assignmentNotes ?? null,
+      bag_number: data.bagNumber ?? null,
     });
 
     const signups = await getMealSignupsWithAssignments();

@@ -276,6 +276,23 @@ function SignupFormFields({ state, signup }: {
         </div>
       </div>
 
+      {signup && signup.assignment_id && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-primary/10">
+          <div>
+            <label htmlFor="ms-bagNumber" className="block text-sm font-medium text-foreground mb-1">Bag #</label>
+            <input id="ms-bagNumber" name="bagNumber" type="text" defaultValue={signup.bag_number || ""}
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="ms-assignmentNotes" className="block text-sm font-medium text-foreground mb-1">Internal Notes</label>
+            <input id="ms-assignmentNotes" name="assignmentNotes" type="text" defaultValue={signup.assignment_notes || ""}
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+      )}
+
       {state?.message && !state?.errors && (
         <p className="text-sm text-green-600">{state.message}</p>
       )}
