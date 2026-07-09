@@ -90,26 +90,14 @@ export async function submitMealSignup(
 
     const signups = [];
     for (const deliveryDate of data.deliveryDates) {
-      if (data.regularQuantity > 0) {
-        const signup = await createMealSignup({
-          participantId: participant.id,
-          mealType: "regular",
-          deliveryDate,
-          quantity: data.regularQuantity,
-          comments: data.comments,
-        });
-        signups.push(signup);
-      }
-      if (data.veganQuantity > 0) {
-        const signup = await createMealSignup({
-          participantId: participant.id,
-          mealType: "vegan",
-          deliveryDate,
-          quantity: data.veganQuantity,
-          comments: data.comments,
-        });
-        signups.push(signup);
-      }
+      const signup = await createMealSignup({
+        participantId: participant.id,
+        regularQuantity: data.regularQuantity,
+        veganQuantity: data.veganQuantity,
+        deliveryDate,
+        comments: data.comments,
+      });
+      signups.push(signup);
     }
 
     await sendMealSignupConfirmation(signups, participant);

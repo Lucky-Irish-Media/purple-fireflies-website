@@ -9,7 +9,7 @@ import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, getMealTypeBadge, getContactMethodBadge, getDeliveryDayBadge, todayLocal, deliveryDateFilterFn } from "./lib/utils";
+import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const STATE_OPTIONS = [
@@ -19,24 +19,6 @@ const STATE_OPTIONS = [
   "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ];
-
-function MealTypeFilter({ column }: { column: any }) {
-  const value = column.getFilterValue() as string | undefined;
-  return (
-    <select
-      value={value || ""}
-      onChange={(e) => {
-        e.stopPropagation();
-        column.setFilterValue(e.target.value || undefined);
-      }}
-      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-    >
-      <option value="">All</option>
-      <option value="regular">Regular</option>
-      <option value="vegan">Vegan</option>
-    </select>
-  );
-}
 
 function ContactMethodFilter({ column }: { column: any }) {
   const value = column.getFilterValue() as string | undefined;
@@ -53,27 +35,6 @@ function ContactMethodFilter({ column }: { column: any }) {
       <option value="call">Call</option>
       <option value="text">Text</option>
       <option value="email">Email</option>
-    </select>
-  );
-}
-
-function DeliveryDateFilter({ column }: { column: any }) {
-  const value = column.getFilterValue() as string | undefined;
-  const today = todayLocal();
-  return (
-    <select
-      value={value || ""}
-      onChange={(e) => {
-        e.stopPropagation();
-        column.setFilterValue(e.target.value || undefined);
-      }}
-      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-    >
-      <option value="">All</option>
-      <option value="future">Future Dates Only</option>
-      <option value="past">Past Dates Only</option>
-      <option value="today">Today</option>
-      <option value="nextWeek">Next Week</option>
     </select>
   );
 }
@@ -161,12 +122,8 @@ function SignupFormFields({ state, signup, formPending, editing }: {
   formPending: boolean;
   editing: boolean;
 }) {
-  const [regularQty, setRegularQty] = useState(
-    signup?.meal_type === "regular" ? signup.quantity : 1
-  );
-  const [veganQty, setVeganQty] = useState(
-    signup?.meal_type === "vegan" ? signup.quantity : 0
-  );
+  const [regularQty, setRegularQty] = useState(signup?.regular_quantity ?? 1);
+  const [veganQty, setVeganQty] = useState(signup?.vegan_quantity ?? 0);
   const totalMeals = regularQty + veganQty;
   const totalInvalid = totalMeals < 1 || totalMeals > 2;
 
@@ -431,51 +388,39 @@ export default function MealSignupsTable({
   }
 
   const columns = useMemo(() => [
-    columnHelper.accessor((row) => row.participant_name, {
-      id: "name",
-      header: "Name",
-      cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
-      filterFn: filterFns.includesString,
-    }),
-    columnHelper.accessor((row) => row.participant_email, {
-      id: "email",
-      header: "Email",
-      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
-      filterFn: filterFns.includesString,
-    }),
-    columnHelper.accessor((row) => row.participant_phone, {
-      id: "phone",
-      header: "Phone",
-      cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
-      filterFn: filterFns.includesString,
-    }),
-    columnHelper.accessor((row) => row.participant_address1, {
-      id: "address1",
-      header: "Address",
+    columnHelper.display({
+      id: "requester",
+      header: "Requester",
+      enableColumnFilter: false,
       cell: (info) => {
-        const row = info.row.original;
+        const r = info.row.original;
         return (
-          <span className="text-text-secondary max-w-xs truncate block">
-            {row.participant_address1}
-            {row.participant_address2 && `, ${row.participant_address2}`}
-            {`, ${row.participant_city}, ${row.participant_state} ${row.participant_zip_code}`}
-          </span>
+          <div className="space-y-0.5 max-w-[220px]">
+            <div className="text-foreground font-medium text-sm">{r.participant_name}</div>
+            <div className="text-text-secondary text-xs truncate">{r.participant_email}</div>
+            <div className="text-text-secondary text-xs">{formatPhone(r.participant_phone)}</div>
+            <div className="text-text-secondary text-xs truncate">
+              {r.participant_address1}
+              {r.participant_address2 && `, ${r.participant_address2}`}
+              {`, ${r.participant_city}, ${r.participant_state} ${r.participant_zip_code}`}
+            </div>
+          </div>
         );
       },
-      filterFn: filterFns.includesString,
     }),
-    columnHelper.accessor((row) => row.meal_type, {
-      id: "meal_type",
-      header: "Meal Type",
-      cell: (info) => getMealTypeBadge(info.getValue()),
-      filterFn: filterFns.equals,
-      meta: { filterComponent: MealTypeFilter },
-    }),
-    columnHelper.accessor((row) => row.quantity, {
-      id: "quantity",
-      header: "Qty",
-      cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
-      filterFn: filterFns.equals,
+    columnHelper.display({
+      id: "meals",
+      header: "Meals",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const r = info.row.original;
+        const parts: string[] = [];
+        if (r.regular_quantity > 0) parts.push(`${r.regular_quantity} Regular`);
+        if (r.vegan_quantity > 0) parts.push(`${r.vegan_quantity} Vegan`);
+        return (
+          <span className="text-foreground font-medium">{parts.join(" / ") || "—"}</span>
+        );
+      },
     }),
     columnHelper.accessor((row) => row.participant_contact_method, {
       id: "contact_method",
@@ -484,18 +429,19 @@ export default function MealSignupsTable({
       filterFn: filterFns.equals,
       meta: { filterComponent: ContactMethodFilter },
     }),
-    columnHelper.accessor((row) => row.delivery_day, {
-      id: "delivery_day",
-      header: "Delivery Day",
-      cell: (info) => getDeliveryDayBadge(info.getValue()),
-      filterFn: filterFns.equals,
-    }),
     columnHelper.accessor((row) => row.delivery_date, {
-      id: "delivery_date",
-      header: "Delivery Date",
-      cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
-      filterFn: deliveryDateFilterFn,
-      meta: { filterComponent: DeliveryDateFilter },
+      id: "delivery",
+      header: "Delivery",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const r = info.row.original;
+        return (
+          <div className="space-y-0.5">
+            <div className="text-text-secondary text-sm">{formatDate(r.delivery_date)}</div>
+            <div className="text-xs">{getDeliveryDayBadge(r.delivery_day)}</div>
+          </div>
+        );
+      },
     }),
     columnHelper.display({
       id: "comments",
@@ -520,14 +466,6 @@ export default function MealSignupsTable({
           </button>
         );
       },
-    }),
-    columnHelper.accessor((row) => row.created_at, {
-      id: "created_at",
-      header: "Submitted",
-      cell: (info) => (
-        <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>
-      ),
-      filterFn: filterFns.includesString,
     }),
     columnHelper.display({
       id: "assigned_driver",
@@ -564,6 +502,14 @@ export default function MealSignupsTable({
           placeholder="Internal notes"
         />
       ),
+    }),
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
+      header: "Submitted",
+      cell: (info) => (
+        <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>
+      ),
+      filterFn: filterFns.includesString,
     }),
     columnHelper.display({
       id: "edit",
@@ -631,9 +577,9 @@ export default function MealSignupsTable({
         enableColumnPinning
         enableColumnResizing
         enableFacetedFilters
-        initialVisibility={{ created_at: false }}
-        initialColumnPinning={{ left: ["name"] }}
-        initialSorting={[{ id: "delivery_date", desc: true }]}
+        initialVisibility={{ created_at: false, contact_method: false, bag_number: false, internal_notes: false }}
+        initialColumnPinning={{ left: ["requester"] }}
+        initialSorting={[{ id: "delivery", desc: true }]}
         pageSize={15}
         storageKey="meal-signups-column-visibility"
       />

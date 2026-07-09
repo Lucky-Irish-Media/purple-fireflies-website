@@ -54,7 +54,10 @@ export async function sendDriverReminders(
         body += `Phone: ${delivery.meal_phone}\n`;
         body += `Address: ${delivery.address}\n`;
         body += `Comments: ${delivery.comments || "None"}\n`;
-        body += `Meal Type: ${delivery.meal_type}\n\n`;
+        const mealParts: string[] = [];
+        if (delivery.regular_quantity > 0) mealParts.push(`${delivery.regular_quantity} Regular`);
+        if (delivery.vegan_quantity > 0) mealParts.push(`${delivery.vegan_quantity} Vegan/GF`);
+        body += `Meals: ${mealParts.join(" + ") || "None"}\n\n`;
       }
 
       body += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;

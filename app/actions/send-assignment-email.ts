@@ -45,7 +45,9 @@ export async function sendAssignmentEmail(
     const time = isWednesday ? "12:00pm" : "5:00pm";
     const shortLocation = isWednesday ? "Episcopal Church" : "UCM";
     const dayLabel = isWednesday ? "Wednesday" : "Thursday";
-    const quantityLabel = signup.quantity === 2 ? "2 meals" : "1 meal";
+    const mealParts: string[] = [];
+    if (signup.regular_quantity > 0) mealParts.push(`${signup.regular_quantity} Regular`);
+    if (signup.vegan_quantity > 0) mealParts.push(`${signup.vegan_quantity} Vegan/GF`);
     const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
     const text = `Hi ${driver.participant_name},
 
@@ -54,8 +56,7 @@ You have been assigned a meal delivery.
 Delivery: ${formattedDate} (${dayLabel})
 Recipient: ${signup.participant_name}
 Address: ${address}
-Meal Type: ${signup.meal_type}
-Quantity: ${quantityLabel}
+Meals: ${mealParts.join(" + ")}
 
 Please arrive at the ${location} at ${time} to pickup the meals.
 

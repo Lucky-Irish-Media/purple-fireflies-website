@@ -34,7 +34,7 @@ export async function sendDriverLoadEmail(
 
     const result = await env.purple_fireflies_db
       .prepare(
-        `SELECT mp.name, mp.phone, mp.address1, mp.address2, mp.city, mp.state, mp.zip_code, ms.comments, ms.meal_type, ms.quantity
+        `SELECT mp.name, mp.phone, mp.address1, mp.address2, mp.city, mp.state, mp.zip_code, ms.comments, ms.regular_quantity, ms.vegan_quantity
          FROM delivery_assignments da
          JOIN meal_signups ms ON da.meal_signup_id = ms.id
          JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
@@ -52,8 +52,8 @@ export async function sendDriverLoadEmail(
         state: string;
         zip_code: string;
         comments: string | null;
-        meal_type: string;
-        quantity: number;
+        regular_quantity: number;
+        vegan_quantity: number;
       }>();
 
     const deliveries = result.results || [];
@@ -86,8 +86,10 @@ export async function sendDriverLoadEmail(
       body += `Phone: ${delivery.phone}\n`;
       body += `Address: ${address}\n`;
       body += `Comments: ${delivery.comments || "None"}\n`;
-      body += `Meal Type: ${delivery.meal_type}\n`;
-      body += `Quantity: ${delivery.quantity}\n\n`;
+      const mealParts: string[] = [];
+      if (delivery.regular_quantity > 0) mealParts.push(`${delivery.regular_quantity} Regular`);
+      if (delivery.vegan_quantity > 0) mealParts.push(`${delivery.vegan_quantity} Vegan/GF`);
+      body += `Meals: ${mealParts.join(" + ") || "None"}\n\n`;
     }
 
     body += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;

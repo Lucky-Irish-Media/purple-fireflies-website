@@ -97,7 +97,11 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
                       day: "numeric",
                     })}
                   </p>
-                  <p className="text-sm text-text-secondary capitalize">{signup.meal_type} meal</p>
+                  <p className="text-sm text-text-secondary">
+                    {signup.regular_quantity > 0 && `${signup.regular_quantity} Regular`}
+                    {signup.regular_quantity > 0 && signup.vegan_quantity > 0 && " + "}
+                    {signup.vegan_quantity > 0 && `${signup.vegan_quantity} Vegan`}
+                  </p>
                 </div>
               ))}
             {type === "driver" &&

@@ -18,7 +18,8 @@ export interface WeeklyAssignmentRow {
   city: string;
   state: string;
   zip_code: string;
-  meal_type: "regular" | "vegan";
+  regular_quantity: number;
+  vegan_quantity: number;
   driver_name: string;
   driver_phone: string;
   driver_email: string;
@@ -33,7 +34,7 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
           ms.id as signup_id,
           p.name as recipient_name,
           p.address1, p.address2, p.city, p.state, p.zip_code,
-         ms.meal_type,
+         ms.regular_quantity, ms.vegan_quantity,
          ms.delivery_date, ms.delivery_day,
          dp.name as driver_name,
          dp.phone as driver_phone,
@@ -74,7 +75,8 @@ export interface UnassignedSignup {
   city: string;
   state: string;
   zip_code: string;
-  meal_type: "regular" | "vegan";
+  regular_quantity: number;
+  vegan_quantity: number;
   delivery_date: string;
   delivery_day: "wednesday" | "thursday";
   comments: string | null;
@@ -86,7 +88,7 @@ export async function getUnassignedSignups(): Promise<UnassignedSignup[]> {
   const result = await db
     .prepare(
       `SELECT ms.id, p.name, p.email, p.phone, p.address1, p.address2, p.city,
-               p.state, p.zip_code, ms.meal_type, ms.delivery_date,
+               p.state, p.zip_code, ms.regular_quantity, ms.vegan_quantity, ms.delivery_date,
                ms.delivery_day, ms.comments, ms.created_at
        FROM meal_signups ms
        JOIN participants p ON ms.participant_id = p.id
@@ -138,19 +140,23 @@ export async function getDriverLoad(): Promise<DriverLoadRow[]> {
 
 export interface MealTypeBreakdownRow {
   delivery_date: string;
-  meal_type: "regular" | "vegan";
-  count: number;
+  regular_count: number;
+  vegan_count: number;
+  total_count: number;
 }
 
 export async function getMealTypeBreakdown(): Promise<MealTypeBreakdownRow[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT delivery_date, meal_type, SUM(quantity) as count
+      `SELECT delivery_date,
+              SUM(regular_quantity) as regular_count,
+              SUM(vegan_quantity) as vegan_count,
+              SUM(regular_quantity + vegan_quantity) as total_count
        FROM meal_signups
        WHERE delivery_date >= date('now', '-60 days')
-       GROUP BY delivery_date, meal_type
-       ORDER BY delivery_date DESC, meal_type ASC`
+       GROUP BY delivery_date
+       ORDER BY delivery_date DESC`
     )
     .all<MealTypeBreakdownRow>();
   return result.results || [];
@@ -172,10 +178,10 @@ export async function getCoverageGaps(): Promise<CoverageGapRow[]> {
       `SELECT
          ms.delivery_date,
          ms.delivery_day,
-         SUM(ms.quantity) as signup_count,
-         SUM(CASE WHEN da.id IS NOT NULL THEN ms.quantity ELSE 0 END) as assigned_count,
+         SUM(ms.regular_quantity + ms.vegan_quantity) as signup_count,
+         SUM(CASE WHEN da.id IS NOT NULL THEN ms.regular_quantity + ms.vegan_quantity ELSE 0 END) as assigned_count,
          COUNT(DISTINCT da.driver_volunteer_id) as driver_count,
-         SUM(CASE WHEN da.id IS NULL THEN ms.quantity ELSE 0 END) as unassigned_count
+         SUM(CASE WHEN da.id IS NULL THEN ms.regular_quantity + ms.vegan_quantity ELSE 0 END) as unassigned_count
        FROM meal_signups ms
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
        WHERE ms.delivery_date >= date('now')
@@ -249,7 +255,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const [unassigned, totals, nextDate, wedDrivers, thuDrivers, totalDelivered] = await Promise.all([
     db
       .prepare(
-        `SELECT COALESCE(SUM(ms.quantity), 0) as count FROM meal_signups ms
+        `SELECT COALESCE(SUM(ms.regular_quantity + ms.vegan_quantity), 0) as count FROM meal_signups ms
          LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
          WHERE da.id IS NULL AND ms.delivery_date >= date('now')`
       )
@@ -257,15 +263,15 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     db
       .prepare(
         `SELECT
-           (SELECT COALESCE(SUM(quantity), 0) FROM meal_signups WHERE delivery_date >= date('now', '-30 days')) as signups,
+           (SELECT COALESCE(SUM(regular_quantity + vegan_quantity), 0) FROM meal_signups WHERE delivery_date >= date('now', '-30 days')) as signups,
            (SELECT COUNT(*) FROM driver_volunteers WHERE delivery_date >= date('now', '-30 days')) as drivers`
       )
       .first<{ signups: number; drivers: number }>(),
     db
       .prepare(
         `SELECT delivery_date,
-                SUM(ms.quantity) as signup_count,
-                SUM(CASE WHEN da.id IS NOT NULL THEN ms.quantity ELSE 0 END) as assigned_count
+                SUM(ms.regular_quantity + ms.vegan_quantity) as signup_count,
+                SUM(CASE WHEN da.id IS NOT NULL THEN ms.regular_quantity + ms.vegan_quantity ELSE 0 END) as assigned_count
          FROM meal_signups ms
          LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
          WHERE ms.delivery_date >= date('now')
@@ -325,10 +331,10 @@ export async function getHomePageStats(): Promise<HomePageStats> {
   const [meals, days, volunteers] = await Promise.all([
     db
       .prepare(
-        `SELECT COALESCE(SUM(ms.quantity), 0) as count
-         FROM delivery_assignments da
-         JOIN meal_signups ms ON da.meal_signup_id = ms.id
-         WHERE ms.delivery_date < date('now')`
+       `SELECT COALESCE(SUM(ms.regular_quantity + ms.vegan_quantity), 0) as count
+        FROM delivery_assignments da
+        JOIN meal_signups ms ON da.meal_signup_id = ms.id
+        WHERE ms.delivery_date < date('now')`
       )
       .first<{ count: number }>(),
     db

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupsByParticipantAndDate, deleteMealSignup, getMealSignupById } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById } from "@/app/lib/db";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -126,62 +126,16 @@ export async function updateMealSignupAction(
 
     const existingSignup = await getMealSignupById(data.id);
     const existingParticipantId = existingSignup?.participant_id ?? participant.id;
-    const existingRows = await getMealSignupsByParticipantAndDate(existingParticipantId, data.deliveryDate);
 
-    const existingRegular = existingRows.find((r) => r.meal_type === "regular");
-    const existingVegan = existingRows.find((r) => r.meal_type === "vegan");
-
-    if (data.regularQuantity > 0) {
-      if (existingRegular) {
-        await updateMealSignup(existingRegular.id, {
-          participantId: participant.id,
-          mealType: "regular",
-          deliveryDate: data.deliveryDate,
-          quantity: data.regularQuantity,
-          comments: data.comments,
-          bagNumber: data.bagNumber,
-          internalNotes: data.internalNotes,
-        });
-      } else {
-        await createMealSignup({
-          participantId: participant.id,
-          mealType: "regular",
-          deliveryDate: data.deliveryDate,
-          quantity: data.regularQuantity,
-          comments: data.comments,
-          bagNumber: data.bagNumber,
-          internalNotes: data.internalNotes,
-        });
-      }
-    } else if (existingRegular) {
-      await deleteMealSignup(existingRegular.id);
-    }
-
-    if (data.veganQuantity > 0) {
-      if (existingVegan) {
-        await updateMealSignup(existingVegan.id, {
-          participantId: participant.id,
-          mealType: "vegan",
-          deliveryDate: data.deliveryDate,
-          quantity: data.veganQuantity,
-          comments: data.comments,
-          bagNumber: data.bagNumber,
-          internalNotes: data.internalNotes,
-        });
-      } else {
-        await createMealSignup({
-          participantId: participant.id,
-          mealType: "vegan",
-          deliveryDate: data.deliveryDate,
-          quantity: data.veganQuantity,
-          comments: data.comments,
-          bagNumber: data.bagNumber,
-          internalNotes: data.internalNotes,
-        });
-      }
-    } else if (existingVegan) {
-      await deleteMealSignup(existingVegan.id);
-    }
+    await updateMealSignup(data.id, {
+      participantId: participant.id,
+      regularQuantity: data.regularQuantity,
+      veganQuantity: data.veganQuantity,
+      deliveryDate: data.deliveryDate,
+      comments: data.comments,
+      bagNumber: data.bagNumber,
+      internalNotes: data.internalNotes,
+    });
 
     const signups = await getMealSignupsWithAssignments();
 
@@ -252,29 +206,15 @@ export async function createMealSignupAction(
       });
     }
 
-    if (data.regularQuantity > 0) {
-      await createMealSignup({
-        participantId: participant.id,
-        mealType: "regular",
-        deliveryDate: data.deliveryDate,
-        quantity: data.regularQuantity,
-        comments: data.comments,
-        bagNumber: data.bagNumber,
-        internalNotes: data.internalNotes,
-      });
-    }
-
-    if (data.veganQuantity > 0) {
-      await createMealSignup({
-        participantId: participant.id,
-        mealType: "vegan",
-        deliveryDate: data.deliveryDate,
-        quantity: data.veganQuantity,
-        comments: data.comments,
-        bagNumber: data.bagNumber,
-        internalNotes: data.internalNotes,
-      });
-    }
+    await createMealSignup({
+      participantId: participant.id,
+      regularQuantity: data.regularQuantity,
+      veganQuantity: data.veganQuantity,
+      deliveryDate: data.deliveryDate,
+      comments: data.comments,
+      bagNumber: data.bagNumber,
+      internalNotes: data.internalNotes,
+    });
 
     const signups = await getMealSignupsWithAssignments();
 
