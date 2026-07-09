@@ -1,7 +1,7 @@
 "use server";
 
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
-import { createDriverVolunteer, getDriverVolunteersByEmailOrPhone } from "@/app/lib/db";
+import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 
 function getErrorMessage(): string {
@@ -36,6 +36,31 @@ export async function submitDriverVolunteer(
 
     const data = validatedFields.data;
 
+    let participant = await getParticipantByEmail(data.email);
+    if (participant) {
+      participant = await updateParticipant(participant.id, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: "",
+        city: "",
+        state: "OH",
+        zipCode: "",
+        contactMethod: "call",
+      });
+    } else {
+      participant = await createParticipant({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: "",
+        city: "",
+        state: "OH",
+        zipCode: "",
+        contactMethod: "call",
+      });
+    }
+
     const existingVolunteers = await getDriverVolunteersByEmailOrPhone(data.email, data.phone);
     const existingDates = new Set(
       existingVolunteers.map((v) => v.delivery_date)
@@ -47,9 +72,7 @@ export async function submitDriverVolunteer(
     const signups = [];
     for (const deliveryDate of newDates) {
       const signup = await createDriverVolunteer({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
+        participantId: participant.id,
         onSignal: data.onSignal,
         regions: data.regions.join(", "),
         deliveryDate,

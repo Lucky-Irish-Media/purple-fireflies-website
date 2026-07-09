@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
-import type { DriverVolunteer } from "@/app/lib/definitions";
+import type { MealSignupWithAssignment } from "@/app/lib/definitions";
+import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import MealSignupsTable from "../../MealSignupsTable";
 import DriverVolunteersTable from "../../DriverVolunteersTable";
 
@@ -19,8 +19,8 @@ const tabs: Tab[] = [
 ];
 
 interface Props {
-  mealSignups: MealSignupWithAssignmentDb[];
-  driverVolunteers: DriverVolunteer[];
+  mealSignups: MealSignupWithAssignment[];
+  driverVolunteers: DriverVolunteerWithParticipant[];
 }
 
 export default function MealDeliveryTabs({ mealSignups, driverVolunteers }: Props) {

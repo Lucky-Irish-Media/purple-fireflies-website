@@ -1,60 +1,19 @@
 import "server-only";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { DriverVolunteer, DeliveryAssignment } from "@/app/lib/definitions";
+import type {
+  Participant,
+  MealSignup,
+  DriverVolunteer,
+  DeliveryAssignment,
+  MealSignupWithParticipant,
+  DriverVolunteerWithParticipant,
+  MealSignupWithAssignment,
+} from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
   return env.purple_fireflies_db;
-}
-
-export interface MealSignup {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address1: string;
-  address2: string | null;
-  city: string;
-  state: string;
-  zip_code: string;
-  meal_type: "regular" | "vegan";
-  quantity: number;
-  contact_method: "call" | "text" | "email";
-  delivery_day: "wednesday" | "thursday";
-  delivery_date: string;
-  comments: string | null;
-  created_at: string;
-}
-
-export async function createMealSignup(data: {
-  name: string;
-  email: string;
-  phone: string;
-  address1: string;
-  address2?: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  mealType: "regular" | "vegan";
-  contactMethod: "call" | "text" | "email";
-  deliveryDate: string;
-  comments?: string;
-  quantity?: number;
-}): Promise<MealSignup> {
-  const db = await getDB();
-  const result = await db
-    .prepare(
-      `INSERT INTO meal_signups (name, email, phone, address1, address2, city, state, zip_code, meal_type, quantity, contact_method, delivery_day, delivery_date, comments)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       RETURNING *`
-    )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.quantity ?? 1, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
-    .first<MealSignup>();
-  if (!result) {
-    throw new Error("Failed to create meal signup");
-  }
-  return result;
 }
 
 function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
@@ -63,35 +22,30 @@ function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
   return day === 3 ? "wednesday" : "thursday";
 }
 
-export async function getMealSignups(): Promise<MealSignup[]> {
+const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.meal_type, ms.quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.created_at`;
+const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
+const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method`;
+const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone`;
+
+export async function getParticipantByEmail(email: string): Promise<Participant | null> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT * FROM meal_signups WHERE delivery_date >= date('now', '-90 days') ORDER BY created_at DESC LIMIT 500")
-    .all<MealSignup>();
-  return result.results || [];
+    .prepare("SELECT * FROM participants WHERE LOWER(email) = LOWER(?)")
+    .bind(email)
+    .first<Participant>();
+  return result || null;
 }
 
-export async function getMealSignupsByEmail(email: string): Promise<MealSignup[]> {
+export async function getParticipantById(id: number): Promise<Participant | null> {
   const db = await getDB();
-  const today = new Date().toISOString().split("T")[0];
   const result = await db
-    .prepare("SELECT * FROM meal_signups WHERE email = ? AND delivery_date >= ? ORDER BY delivery_date ASC")
-    .bind(email.toLowerCase(), today)
-    .all<MealSignup>();
-  return result.results || [];
+    .prepare("SELECT * FROM participants WHERE id = ?")
+    .bind(id)
+    .first<Participant>();
+  return result || null;
 }
 
-export async function getDriverVolunteersByEmail(email: string): Promise<DriverVolunteer[]> {
-  const db = await getDB();
-  const today = new Date().toISOString().split("T")[0];
-  const result = await db
-    .prepare("SELECT * FROM driver_volunteers WHERE email = ? AND delivery_date >= ? ORDER BY delivery_date ASC")
-    .bind(email.toLowerCase(), today)
-    .all<DriverVolunteer>();
-  return result.results || [];
-}
-
-export async function updateMealSignup(id: number, data: {
+export async function createParticipant(data: {
   name: string;
   email: string;
   phone: string;
@@ -100,8 +54,123 @@ export async function updateMealSignup(id: number, data: {
   city: string;
   state: string;
   zipCode: string;
-  mealType: "regular" | "vegan";
   contactMethod: "call" | "text" | "email";
+}): Promise<Participant> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO participants (name, email, phone, address1, address2, city, state, zip_code, contact_method, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod)
+    .first<Participant>();
+  if (!result) {
+    throw new Error("Failed to create participant");
+  }
+  return result;
+}
+
+export async function updateParticipant(id: number, data: {
+  name: string;
+  email: string;
+  phone: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  contactMethod: "call" | "text" | "email";
+}): Promise<Participant> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE participants
+       SET name = ?, email = ?, phone = ?, address1 = ?, address2 = ?,
+           city = ?, state = ?, zip_code = ?, contact_method = ?, updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod, id)
+    .first<Participant>();
+  if (!result) {
+    throw new Error("Failed to update participant");
+  }
+  return result;
+}
+
+export async function createMealSignup(data: {
+  participantId: number;
+  mealType: "regular" | "vegan";
+  deliveryDate: string;
+  comments?: string;
+  quantity?: number;
+}): Promise<MealSignup> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO meal_signups (participant_id, meal_type, quantity, delivery_day, delivery_date, comments)
+       VALUES (?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.participantId, data.mealType, data.quantity ?? 1, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
+    .first<MealSignup>();
+  if (!result) {
+    throw new Error("Failed to create meal signup");
+  }
+  return result;
+}
+
+export async function getMealSignups(): Promise<MealSignupWithParticipant[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT}
+       FROM meal_signups ms
+       JOIN participants p ON ms.participant_id = p.id
+       WHERE ms.delivery_date >= date('now', '-90 days')
+       ORDER BY ms.created_at DESC
+       LIMIT 500`
+    )
+    .all<MealSignupWithParticipant>();
+  return result.results || [];
+}
+
+export async function getMealSignupsByEmail(email: string): Promise<MealSignupWithParticipant[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare(
+      `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT}
+       FROM meal_signups ms
+       JOIN participants p ON ms.participant_id = p.id
+       WHERE LOWER(p.email) = LOWER(?) AND ms.delivery_date >= ?
+       ORDER BY ms.delivery_date ASC`
+    )
+    .bind(email.toLowerCase(), today)
+    .all<MealSignupWithParticipant>();
+  return result.results || [];
+}
+
+export async function getDriverVolunteersByEmail(email: string): Promise<DriverVolunteerWithParticipant[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare(
+      `SELECT ${DRIVER_SELECT}, ${DRIVER_PARTICIPANT_SELECT}
+       FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
+       WHERE LOWER(p.email) = LOWER(?) AND dv.delivery_date >= ?
+       ORDER BY dv.delivery_date ASC`
+    )
+    .bind(email.toLowerCase(), today)
+    .all<DriverVolunteerWithParticipant>();
+  return result.results || [];
+}
+
+export async function updateMealSignup(id: number, data: {
+  participantId: number;
+  mealType: "regular" | "vegan";
   deliveryDate: string;
   comments?: string;
   quantity?: number;
@@ -110,13 +179,11 @@ export async function updateMealSignup(id: number, data: {
   const result = await db
     .prepare(
       `UPDATE meal_signups
-       SET name = ?, email = ?, phone = ?, address1 = ?, address2 = ?,
-           city = ?, state = ?, zip_code = ?, meal_type = ?,
-           quantity = ?, contact_method = ?, delivery_day = ?, delivery_date = ?, comments = ?
+       SET participant_id = ?, meal_type = ?, quantity = ?, delivery_day = ?, delivery_date = ?, comments = ?
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.mealType, data.quantity ?? 1, data.contactMethod, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, id)
+    .bind(data.participantId, data.mealType, data.quantity ?? 1, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, id)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to update meal signup");
@@ -125,9 +192,7 @@ export async function updateMealSignup(id: number, data: {
 }
 
 export async function createDriverVolunteer(data: {
-  name: string;
-  email: string;
-  phone: string;
+  participantId: number;
   onSignal: "yes" | "no" | "willing";
   regions: string;
   deliveryDate: string;
@@ -135,11 +200,11 @@ export async function createDriverVolunteer(data: {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO driver_volunteers (name, email, phone, on_signal, regions, delivery_day, delivery_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO driver_volunteers (participant_id, on_signal, regions, delivery_day, delivery_date)
+       VALUES (?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.onSignal, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate)
+    .bind(data.participantId, data.onSignal, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate)
     .first<DriverVolunteer>();
   if (!result) {
     throw new Error("Failed to create driver volunteer");
@@ -148,9 +213,7 @@ export async function createDriverVolunteer(data: {
 }
 
 export async function updateDriverVolunteer(id: number, data: {
-  name: string;
-  email: string;
-  phone: string;
+  participantId: number;
   onSignal: "yes" | "no" | "willing";
   regions: string;
   deliveryDate: string;
@@ -159,11 +222,11 @@ export async function updateDriverVolunteer(id: number, data: {
   const result = await db
     .prepare(
       `UPDATE driver_volunteers
-       SET name = ?, email = ?, phone = ?, on_signal = ?, regions = ?, delivery_day = ?, delivery_date = ?
+       SET participant_id = ?, on_signal = ?, regions = ?, delivery_day = ?, delivery_date = ?
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.onSignal, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate, id)
+    .bind(data.participantId, data.onSignal, data.regions, getDeliveryDay(data.deliveryDate), data.deliveryDate, id)
     .first<DriverVolunteer>();
   if (!result) {
     throw new Error("Failed to update driver volunteer");
@@ -185,21 +248,34 @@ export async function getMealSignupCountsByDate(): Promise<Record<string, number
   return counts;
 }
 
-export async function getDriverVolunteers(): Promise<DriverVolunteer[]> {
+export async function getDriverVolunteers(): Promise<DriverVolunteerWithParticipant[]> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT * FROM driver_volunteers WHERE delivery_date >= date('now', '-90 days') ORDER BY created_at DESC LIMIT 500")
-    .all<DriverVolunteer>();
+    .prepare(
+      `SELECT ${DRIVER_SELECT}, ${DRIVER_PARTICIPANT_SELECT}
+       FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
+       WHERE dv.delivery_date >= date('now', '-90 days')
+       ORDER BY dv.created_at DESC
+       LIMIT 500`
+    )
+    .all<DriverVolunteerWithParticipant>();
   return result.results || [];
 }
 
-export async function getDriverVolunteersByEmailOrPhone(email: string, phone: string): Promise<DriverVolunteer[]> {
+export async function getDriverVolunteersByEmailOrPhone(email: string, phone: string): Promise<DriverVolunteerWithParticipant[]> {
   const db = await getDB();
   const today = new Date().toISOString().split("T")[0];
   const result = await db
-    .prepare("SELECT * FROM driver_volunteers WHERE (email = ? OR phone = ?) AND delivery_date >= ? ORDER BY delivery_date ASC")
+    .prepare(
+      `SELECT ${DRIVER_SELECT}, ${DRIVER_PARTICIPANT_SELECT}
+       FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
+       WHERE (LOWER(p.email) = LOWER(?) OR p.phone = ?) AND dv.delivery_date >= ?
+       ORDER BY dv.delivery_date ASC`
+    )
     .bind(email.toLowerCase(), phone, today)
-    .all<DriverVolunteer>();
+    .all<DriverVolunteerWithParticipant>();
   return result.results || [];
 }
 
@@ -289,42 +365,23 @@ export async function updateUserPassword(id: number, passwordHash: string): Prom
     .run();
 }
 
-export interface MealSignupWithAssignmentDb {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address1: string;
-  address2: string | null;
-  city: string;
-  state: string;
-  zip_code: string;
-  meal_type: "regular" | "vegan";
-  quantity: number;
-  contact_method: "call" | "text" | "email";
-  delivery_day: "wednesday" | "thursday";
-  delivery_date: string;
-  comments: string | null;
-  created_at: string;
-  assignment_id: number | null;
-  driver_id: number | null;
-  driver_name: string | null;
-  driver_phone: string | null;
-}
-
-export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAssignmentDb[]> {
+export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAssignment[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT ms.*, da.id as assignment_id, da.driver_volunteer_id as driver_id, dv.name as driver_name, dv.phone as driver_phone
+      `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT},
+              da.id as assignment_id, da.driver_volunteer_id as driver_id,
+              dp.name as driver_name, dp.phone as driver_phone
        FROM meal_signups ms
+       JOIN participants p ON ms.participant_id = p.id
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
        LEFT JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
+       LEFT JOIN participants dp ON dv.participant_id = dp.id
        WHERE ms.delivery_date >= date('now', '-90 days')
        ORDER BY ms.delivery_date ASC, ms.created_at DESC
        LIMIT 500`
     )
-    .all<MealSignupWithAssignmentDb>();
+    .all<MealSignupWithAssignment>();
   return result.results || [];
 }
 
@@ -382,21 +439,31 @@ export interface TomorrowDriver {
   deliveries: TomorrowDelivery[];
 }
 
-export async function getMealSignupById(id: number): Promise<MealSignup | null> {
+export async function getMealSignupById(id: number): Promise<MealSignupWithParticipant | null> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT * FROM meal_signups WHERE id = ?")
+    .prepare(
+      `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT}
+       FROM meal_signups ms
+       JOIN participants p ON ms.participant_id = p.id
+       WHERE ms.id = ?`
+    )
     .bind(id)
-    .first<MealSignup>();
+    .first<MealSignupWithParticipant>();
   return result || null;
 }
 
-export async function getDriverById(id: number): Promise<DriverVolunteer | null> {
+export async function getDriverById(id: number): Promise<DriverVolunteerWithParticipant | null> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT * FROM driver_volunteers WHERE id = ?")
+    .prepare(
+      `SELECT ${DRIVER_SELECT}, ${DRIVER_PARTICIPANT_SELECT}
+       FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
+       WHERE dv.id = ?`
+    )
     .bind(id)
-    .first<DriverVolunteer>();
+    .first<DriverVolunteerWithParticipant>();
   return result || null;
 }
 
@@ -408,15 +475,17 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
 
   const result = await db
     .prepare(
-      `SELECT dv.id as driver_id, dv.name as driver_name, dv.email as driver_email, dv.phone as driver_phone,
-               ms.id as meal_id, ms.name as meal_name, ms.phone as meal_phone,
-               ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
+      `SELECT dv.id as driver_id, dp.name as driver_name, dp.email as driver_email, dp.phone as driver_phone,
+               ms.id as meal_id, mp.name as meal_name, mp.phone as meal_phone,
+               mp.address1, mp.address2, mp.city, mp.state, mp.zip_code,
                ms.comments, ms.meal_type, ms.quantity, ms.delivery_day, ms.delivery_date
        FROM delivery_assignments da
        JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
+       JOIN participants dp ON dv.participant_id = dp.id
        JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       JOIN participants mp ON ms.participant_id = mp.id
        WHERE ms.delivery_date = ?
-       ORDER BY dv.id, ms.name`
+       ORDER BY dv.id, mp.name`
     )
     .bind(tomorrowStr)
     .all<{

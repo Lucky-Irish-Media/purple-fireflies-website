@@ -37,7 +37,7 @@ export async function sendAssignmentEmail(
       year: "numeric",
     });
 
-    const address = `${signup.address1}${signup.address2 ? ", " + signup.address2 : ""}, ${signup.city}, ${signup.state} ${signup.zip_code}`;
+    const address = `${signup.participant_address1}${signup.participant_address2 ? ", " + signup.participant_address2 : ""}, ${signup.participant_city}, ${signup.participant_state} ${signup.participant_zip_code}`;
     const isWednesday = signup.delivery_day === "wednesday";
     const location = isWednesday
       ? "Episcopal Church of the Good Shepherd, 64 University Terrace, Athens, OH 45701"
@@ -47,12 +47,12 @@ export async function sendAssignmentEmail(
     const dayLabel = isWednesday ? "Wednesday" : "Thursday";
     const quantityLabel = signup.quantity === 2 ? "2 meals" : "1 meal";
     const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
-    const text = `Hi ${driver.name},
+    const text = `Hi ${driver.participant_name},
 
 You have been assigned a meal delivery.
 
 Delivery: ${formattedDate} (${dayLabel})
-Recipient: ${signup.name}
+Recipient: ${signup.participant_name}
 Address: ${address}
 Meal Type: ${signup.meal_type}
 Quantity: ${quantityLabel}
@@ -64,12 +64,12 @@ Meal Delivery Coordinator
 Purple Fireflies`;
 
     await sendEmail({
-      to: driver.email,
+      to: driver.participant_email,
       subject,
       text,
     });
 
-    return { success: true, message: `Assignment email sent to ${driver.name}.` };
+    return { success: true, message: `Assignment email sent to ${driver.participant_name}.` };
   } catch {
     console.error("sendAssignmentEmail action error:");
     return {

@@ -24,7 +24,7 @@ const stateAbbreviations = [
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ] as const;
 
-export const MealSignupSchema = z.object({
+export const ParticipantSchema = z.object({
   name: z.string().min(1, { message: "Name is required." }).trim(),
   email: z.string().email({ message: "Please enter a valid email." }).trim(),
   phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
@@ -33,9 +33,13 @@ export const MealSignupSchema = z.object({
   city: z.string().min(1, { message: "City is required." }).trim(),
   state: z.enum(stateAbbreviations, { message: "Please select a valid state." }),
   zipCode: z.string().min(5, { message: "ZIP code is required." }).max(10).trim(),
+  contactMethod: z.enum(["call", "text", "email"], { message: "Please select a contact method." }),
+});
+
+export const MealSignupSchema = z.object({
+  ...ParticipantSchema.shape,
   regularQuantity: z.coerce.number().int().min(0).max(2),
   veganQuantity: z.coerce.number().int().min(0).max(2),
-  contactMethod: z.enum(["call", "text", "email"], { message: "Please select a contact method." }),
   deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
   comments: z.string().optional(),
 }).refine((data) => {
@@ -73,7 +77,7 @@ export interface SessionPayload {
   expiresAt: Date;
 }
 
-export interface MealSignup {
+export interface Participant {
   id: number;
   name: string;
   email: string;
@@ -83,9 +87,16 @@ export interface MealSignup {
   city: string;
   state: string;
   zip_code: string;
+  contact_method: "call" | "text" | "email";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MealSignup {
+  id: number;
+  participant_id: number;
   meal_type: "regular" | "vegan";
   quantity: number;
-  contact_method: "call" | "text" | "email";
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   comments: string | null;
@@ -94,9 +105,7 @@ export interface MealSignup {
 
 export interface DriverVolunteer {
   id: number;
-  name: string;
-  email: string;
-  phone: string;
+  participant_id: number;
   on_signal: "yes" | "no" | "willing";
   regions: string;
   delivery_day: "wednesday" | "thursday";
@@ -112,7 +121,25 @@ export interface DeliveryAssignment {
   created_at: string;
 }
 
-export interface MealSignupWithAssignment extends MealSignup {
+export interface MealSignupWithParticipant extends MealSignup {
+  participant_name: string;
+  participant_email: string;
+  participant_phone: string;
+  participant_address1: string;
+  participant_address2: string | null;
+  participant_city: string;
+  participant_state: string;
+  participant_zip_code: string;
+  participant_contact_method: string;
+}
+
+export interface DriverVolunteerWithParticipant extends DriverVolunteer {
+  participant_name: string;
+  participant_email: string;
+  participant_phone: string;
+}
+
+export interface MealSignupWithAssignment extends MealSignupWithParticipant {
   assignment_id: number | null;
   driver_id: number | null;
   driver_name: string | null;

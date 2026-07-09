@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useTransition, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
-import type { DriverVolunteer } from "@/app/lib/definitions";
+import type { MealSignupWithAssignment } from "@/app/lib/definitions";
+import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
@@ -77,11 +77,11 @@ function DeliveryDateFilter({ column }: { column: any }) {
   );
 }
 
-const columnHelper = createColumnHelper<MealSignupWithAssignmentDb>();
+const columnHelper = createColumnHelper<MealSignupWithAssignment>();
 
 function DriverSelectCell({ row, drivers, isPending, onAssign }: {
-  row: { original: MealSignupWithAssignmentDb };
-  drivers: DriverVolunteer[];
+  row: { original: MealSignupWithAssignment };
+  drivers: DriverVolunteerWithParticipant[];
   isPending: boolean;
   onAssign: (mealSignupId: number, driverVolunteerId: string) => void;
 }) {
@@ -102,7 +102,7 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
         <option value="0">—</option>
         {availableDrivers.map((d) => (
           <option key={d.id} value={d.id}>
-            {d.name}
+            {d.participant_name}
           </option>
         ))}
       </select>
@@ -117,28 +117,28 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
 
 function SignupFormFields({ state, signup }: {
   state: AdminMealSignupActionState;
-  signup: MealSignupWithAssignmentDb | null;
+  signup: MealSignupWithAssignment | null;
 }) {
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label htmlFor="ms-name" className="block text-sm font-medium text-foreground mb-1">Name</label>
-          <input id="ms-name" name="name" type="text" required defaultValue={signup?.name || ""}
+          <input id="ms-name" name="name" type="text" required defaultValue={signup?.participant_name || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.name && <p className="mt-1 text-sm text-red-500">{state.errors.name[0]}</p>}
         </div>
         <div>
           <label htmlFor="ms-email" className="block text-sm font-medium text-foreground mb-1">Email</label>
-          <input id="ms-email" name="email" type="email" required defaultValue={signup?.email || ""}
+          <input id="ms-email" name="email" type="email" required defaultValue={signup?.participant_email || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.email && <p className="mt-1 text-sm text-red-500">{state.errors.email[0]}</p>}
         </div>
         <div>
           <label htmlFor="ms-phone" className="block text-sm font-medium text-foreground mb-1">Phone</label>
-          <input id="ms-phone" name="phone" type="text" required defaultValue={signup?.phone || ""}
+          <input id="ms-phone" name="phone" type="text" required defaultValue={signup?.participant_phone || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.phone && <p className="mt-1 text-sm text-red-500">{state.errors.phone[0]}</p>}
@@ -148,14 +148,14 @@ function SignupFormFields({ state, signup }: {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="ms-address1" className="block text-sm font-medium text-foreground mb-1">Address Line 1</label>
-          <input id="ms-address1" name="address1" type="text" required defaultValue={signup?.address1 || ""}
+          <input id="ms-address1" name="address1" type="text" required defaultValue={signup?.participant_address1 || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.address1 && <p className="mt-1 text-sm text-red-500">{state.errors.address1[0]}</p>}
         </div>
         <div>
           <label htmlFor="ms-address2" className="block text-sm font-medium text-foreground mb-1">Address Line 2</label>
-          <input id="ms-address2" name="address2" type="text" defaultValue={signup?.address2 || ""}
+          <input id="ms-address2" name="address2" type="text" defaultValue={signup?.participant_address2 || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.address2 && <p className="mt-1 text-sm text-red-500">{state.errors.address2[0]}</p>}
@@ -165,14 +165,14 @@ function SignupFormFields({ state, signup }: {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
           <label htmlFor="ms-city" className="block text-sm font-medium text-foreground mb-1">City</label>
-          <input id="ms-city" name="city" type="text" required defaultValue={signup?.city || ""}
+          <input id="ms-city" name="city" type="text" required defaultValue={signup?.participant_city || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.city && <p className="mt-1 text-sm text-red-500">{state.errors.city[0]}</p>}
         </div>
         <div>
           <label htmlFor="ms-state" className="block text-sm font-medium text-foreground mb-1">State</label>
-          <select id="ms-state" name="state" required defaultValue={signup?.state || "OH"}
+          <select id="ms-state" name="state" required defaultValue={signup?.participant_state || "OH"}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Select</option>
@@ -182,7 +182,7 @@ function SignupFormFields({ state, signup }: {
         </div>
         <div>
           <label htmlFor="ms-zipCode" className="block text-sm font-medium text-foreground mb-1">ZIP Code</label>
-          <input id="ms-zipCode" name="zipCode" type="text" required defaultValue={signup?.zip_code || ""}
+          <input id="ms-zipCode" name="zipCode" type="text" required defaultValue={signup?.participant_zip_code || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.zipCode && <p className="mt-1 text-sm text-red-500">{state.errors.zipCode[0]}</p>}
@@ -219,7 +219,7 @@ function SignupFormFields({ state, signup }: {
         </div>
         <div>
           <label htmlFor="ms-contactMethod" className="block text-sm font-medium text-foreground mb-1">Contact Method</label>
-          <select id="ms-contactMethod" name="contactMethod" required defaultValue={signup?.contact_method || "call"}
+          <select id="ms-contactMethod" name="contactMethod" required defaultValue={signup?.participant_contact_method || "call"}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="call">Call</option>
@@ -248,14 +248,14 @@ export default function MealSignupsTable({
   initialData,
   drivers,
 }: {
-  initialData: MealSignupWithAssignmentDb[];
-  drivers: DriverVolunteer[];
+  initialData: MealSignupWithAssignment[];
+  drivers: DriverVolunteerWithParticipant[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [signups, setSignups] = useState(initialData);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingSignup, setEditingSignup] = useState<MealSignupWithAssignmentDb | null>(null);
+  const [editingSignup, setEditingSignup] = useState<MealSignupWithAssignment | null>(null);
 
   const [createState, createAction, createPending] = useActionState<
     AdminMealSignupActionState,
@@ -296,8 +296,8 @@ export default function MealSignupsTable({
             return {
               ...s,
               driver_id: driverId,
-              driver_name: driver?.name ?? null,
-              driver_phone: driver?.phone ?? null,
+              driver_name: driver?.participant_name ?? null,
+              driver_phone: driver?.participant_phone ?? null,
               assignment_id: driverId ? (s.assignment_id ?? 0) : null,
             };
           })
@@ -308,34 +308,34 @@ export default function MealSignupsTable({
   }
 
   const columns = useMemo(() => [
-    columnHelper.accessor((row) => row.name, {
+    columnHelper.accessor((row) => row.participant_name, {
       id: "name",
       header: "Name",
       cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
       filterFn: filterFns.includesString,
     }),
-    columnHelper.accessor((row) => row.email, {
+    columnHelper.accessor((row) => row.participant_email, {
       id: "email",
       header: "Email",
       cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
       filterFn: filterFns.includesString,
     }),
-    columnHelper.accessor((row) => row.phone, {
+    columnHelper.accessor((row) => row.participant_phone, {
       id: "phone",
       header: "Phone",
       cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
       filterFn: filterFns.includesString,
     }),
-    columnHelper.accessor((row) => row.address1, {
+    columnHelper.accessor((row) => row.participant_address1, {
       id: "address1",
       header: "Address",
       cell: (info) => {
         const row = info.row.original;
         return (
           <span className="text-text-secondary max-w-xs truncate block">
-            {row.address1}
-            {row.address2 && `, ${row.address2}`}
-            {`, ${row.city}, ${row.state} ${row.zip_code}`}
+            {row.participant_address1}
+            {row.participant_address2 && `, ${row.participant_address2}`}
+            {`, ${row.participant_city}, ${row.participant_state} ${row.participant_zip_code}`}
           </span>
         );
       },
@@ -354,7 +354,7 @@ export default function MealSignupsTable({
       cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
       filterFn: filterFns.equals,
     }),
-    columnHelper.accessor((row) => row.contact_method, {
+    columnHelper.accessor((row) => row.participant_contact_method, {
       id: "contact_method",
       header: "Contact Method",
       cell: (info) => getContactMethodBadge(info.getValue()),
@@ -374,12 +374,12 @@ export default function MealSignupsTable({
       filterFn: deliveryDateFilterFn,
       meta: { filterComponent: DeliveryDateFilter },
     }),
-    columnHelper.accessor((row) => row.comments, {
+    columnHelper.display({
       id: "comments",
       header: "Comments",
       enableColumnFilter: false,
       cell: (info) => {
-        const value = info.getValue();
+        const value = info.row.original.comments;
         if (!value) return <span className="text-text-secondary">—</span>;
         return (
           <button
@@ -436,7 +436,7 @@ export default function MealSignupsTable({
     }),
   ] as const, [drivers, isPending, handleAssignment]);
 
-  const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignmentDb, unknown>[];
+  const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignment, unknown>[];
 
   const formState = editingSignup ? updateState : createState;
   const formPending = editingSignup ? updatePending : createPending;
