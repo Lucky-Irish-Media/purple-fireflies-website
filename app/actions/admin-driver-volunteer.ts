@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers } from "@/app/lib/db";
-import type { DriverVolunteer } from "@/app/lib/definitions";
+import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
+import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
 
@@ -22,7 +22,7 @@ const AdminDriverVolunteerSchema = z.object({
 export type AdminDriverVolunteerActionState = {
   errors?: Record<string, string[]>;
   message?: string;
-  volunteers?: DriverVolunteer[];
+  volunteers?: DriverVolunteerWithParticipant[];
 } | undefined;
 
 const AdminDriverVolunteerUpdateSchema = z.object({
@@ -60,10 +60,33 @@ export async function updateDriverVolunteerAction(
 
     const data = validated.data;
 
+    let participant = await getParticipantByEmail(data.email);
+    if (participant) {
+      participant = await updateParticipant(participant.id, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: "",
+        city: "",
+        state: "OH",
+        zipCode: "",
+        contactMethod: "call",
+      });
+    } else {
+      participant = await createParticipant({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: "",
+        city: "",
+        state: "OH",
+        zipCode: "",
+        contactMethod: "call",
+      });
+    }
+
     await updateDriverVolunteer(data.id, {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
+      participantId: participant.id,
       onSignal: data.onSignal,
       regions: data.regions.join(", "),
       deliveryDate: data.deliveryDate,
@@ -104,10 +127,33 @@ export async function createDriverVolunteerAction(
 
     const data = validated.data;
 
+    let participant = await getParticipantByEmail(data.email);
+    if (participant) {
+      participant = await updateParticipant(participant.id, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: "",
+        city: "",
+        state: "OH",
+        zipCode: "",
+        contactMethod: "call",
+      });
+    } else {
+      participant = await createParticipant({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: "",
+        city: "",
+        state: "OH",
+        zipCode: "",
+        contactMethod: "call",
+      });
+    }
+
     await createDriverVolunteer({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
+      participantId: participant.id,
       onSignal: data.onSignal,
       regions: data.regions.join(", "),
       deliveryDate: data.deliveryDate,

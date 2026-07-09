@@ -34,14 +34,15 @@ export async function sendDriverLoadEmail(
 
     const result = await env.purple_fireflies_db
       .prepare(
-        `SELECT ms.name, ms.phone, ms.address1, ms.address2, ms.city, ms.state, ms.zip_code, ms.comments, ms.meal_type, ms.quantity
+        `SELECT mp.name, mp.phone, mp.address1, mp.address2, mp.city, mp.state, mp.zip_code, ms.comments, ms.meal_type, ms.quantity
          FROM delivery_assignments da
          JOIN meal_signups ms ON da.meal_signup_id = ms.id
          JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
-         WHERE dv.email = ? AND ms.delivery_date = ?
-         ORDER BY ms.name`
+         JOIN participants mp ON ms.participant_id = mp.id
+         WHERE dv.participant_id = ? AND ms.delivery_date = ?
+         ORDER BY mp.name`
       )
-      .bind(driver.email, deliveryDate)
+      .bind(driver.participant_id, deliveryDate)
       .all<{
         name: string;
         phone: string;
@@ -75,7 +76,7 @@ export async function sendDriverLoadEmail(
     });
     const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
 
-    let body = `Hi ${driver.name},\n\n`;
+    let body = `Hi ${driver.participant_name},\n\n`;
     body += `Please arrive at the ${location} at ${time} to pickup the meals.\n\n`;
     body += `Persons you are delivering to:\n`;
 
@@ -92,12 +93,12 @@ export async function sendDriverLoadEmail(
     body += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;
 
     await sendEmail({
-      to: driver.email,
+      to: driver.participant_email,
       subject,
       text: body,
     });
 
-    return { success: true, message: `Load email sent to ${driver.name}.` };
+    return { success: true, message: `Load email sent to ${driver.participant_name}.` };
   } catch {
     console.error("sendDriverLoadEmail action error:");
     return {

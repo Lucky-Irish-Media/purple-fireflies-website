@@ -1,7 +1,7 @@
 "use server";
 
 import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definitions";
-import { createMealSignup } from "@/app/lib/db";
+import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 
@@ -61,20 +61,39 @@ export async function submitMealSignup(
       }
     }
 
+    let participant = await getParticipantByEmail(data.email);
+    if (participant) {
+      participant = await updateParticipant(participant.id, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        contactMethod: data.contactMethod,
+      });
+    } else {
+      participant = await createParticipant({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        contactMethod: data.contactMethod,
+      });
+    }
+
     const signups = [];
     for (const deliveryDate of data.deliveryDates) {
       if (data.regularQuantity > 0) {
         const signup = await createMealSignup({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          address1: data.address1,
-          address2: data.address2,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
+          participantId: participant.id,
           mealType: "regular",
-          contactMethod: data.contactMethod,
           deliveryDate,
           quantity: data.regularQuantity,
           comments: data.comments,
@@ -83,16 +102,8 @@ export async function submitMealSignup(
       }
       if (data.veganQuantity > 0) {
         const signup = await createMealSignup({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          address1: data.address1,
-          address2: data.address2,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
+          participantId: participant.id,
           mealType: "vegan",
-          contactMethod: data.contactMethod,
           deliveryDate,
           quantity: data.veganQuantity,
           comments: data.comments,
@@ -101,7 +112,7 @@ export async function submitMealSignup(
       }
     }
 
-    await sendMealSignupConfirmation(signups);
+    await sendMealSignupConfirmation(signups, participant);
 
     const datesFormatted = data.deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
 

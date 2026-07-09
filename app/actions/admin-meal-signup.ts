@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments } from "@/app/lib/db";
-import type { MealSignupWithAssignmentDb } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
+import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
 
@@ -35,7 +35,7 @@ const AdminMealSignupSchema = z.object({
 export type AdminMealSignupActionState = {
   errors?: Record<string, string[]>;
   message?: string;
-  signups?: MealSignupWithAssignmentDb[];
+  signups?: MealSignupWithAssignment[];
 } | undefined;
 
 const AdminMealSignupUpdateSchema = z.object({
@@ -85,17 +85,36 @@ export async function updateMealSignupAction(
 
     const data = validated.data;
 
+    let participant = await getParticipantByEmail(data.email);
+    if (participant) {
+      participant = await updateParticipant(participant.id, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        contactMethod: data.contactMethod,
+      });
+    } else {
+      participant = await createParticipant({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        contactMethod: data.contactMethod,
+      });
+    }
+
     await updateMealSignup(data.id, {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address1: data.address1,
-      address2: data.address2,
-      city: data.city,
-      state: data.state,
-      zipCode: data.zipCode,
+      participantId: participant.id,
       mealType: data.mealType,
-      contactMethod: data.contactMethod,
       deliveryDate: data.deliveryDate,
       quantity: data.quantity,
       comments: data.comments,
@@ -141,17 +160,36 @@ export async function createMealSignupAction(
 
     const data = validated.data;
 
+    let participant = await getParticipantByEmail(data.email);
+    if (participant) {
+      participant = await updateParticipant(participant.id, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        contactMethod: data.contactMethod,
+      });
+    } else {
+      participant = await createParticipant({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address1: data.address1,
+        address2: data.address2,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        contactMethod: data.contactMethod,
+      });
+    }
+
     await createMealSignup({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address1: data.address1,
-      address2: data.address2,
-      city: data.city,
-      state: data.state,
-      zipCode: data.zipCode,
+      participantId: participant.id,
       mealType: data.mealType,
-      contactMethod: data.contactMethod,
       deliveryDate: data.deliveryDate,
       quantity: data.quantity,
       comments: data.comments,

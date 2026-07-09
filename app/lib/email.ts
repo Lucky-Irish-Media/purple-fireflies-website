@@ -1,9 +1,8 @@
-import { MealSignup } from "@/app/lib/db";
+import type { Participant, MealSignup } from "@/app/lib/definitions";
 
-export async function sendMealSignupConfirmation(signups: MealSignup[]): Promise<void> {
+export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant): Promise<void> {
   if (signups.length === 0) return;
-  const first = signups[0];
-  const address = `${first.address1}${first.address2 ? `, ${first.address2}` : ""}, ${first.city}, ${first.state} ${first.zip_code}`;
+  const address = `${participant.address1}${participant.address2 ? `, ${participant.address2}` : ""}, ${participant.city}, ${participant.state} ${participant.zip_code}`;
 
   const datesSet = new Set(signups.map((s) => s.delivery_date));
   const datesFormatted = Array.from(datesSet).map((d) =>
@@ -31,9 +30,9 @@ export async function sendMealSignupConfirmation(signups: MealSignup[]): Promise
   }
 
   const subject = `Meal Signup Confirmed — ${datesFormatted}`;
-  const text = `Hi ${first.name},\n\nYour meal delivery signup has been received.\n\n${mealLines.join("\n")}\nAddress: ${address}\nContact Method: ${first.contact_method}\n\nWe'll reach out if anything changes.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
+  const text = `Hi ${participant.name},\n\nYour meal delivery signup has been received.\n\n${mealLines.join("\n")}\nAddress: ${address}\nContact Method: ${participant.contact_method}\n\nWe'll reach out if anything changes.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
 
-  await sendEmail({ to: first.email, subject, text });
+  await sendEmail({ to: participant.email, subject, text });
 }
 
 export async function sendEmail(params: {
