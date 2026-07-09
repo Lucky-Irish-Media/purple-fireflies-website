@@ -298,7 +298,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       .first<{ delivery_date: string; count: number }>(),
     db
       .prepare(
-        `SELECT COALESCE(SUM(ms.quantity), 0) as count
+        `SELECT COALESCE(SUM(ms.regular_quantity + ms.vegan_quantity), 0) as count
          FROM delivery_assignments da
          JOIN meal_signups ms ON da.meal_signup_id = ms.id
          WHERE ms.delivery_date < date('now')`
