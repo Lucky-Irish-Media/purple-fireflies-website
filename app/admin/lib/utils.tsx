@@ -110,3 +110,48 @@ export function getContactMethodBadge(method: string) {
     <span className="capitalize text-text-secondary">{method}</span>
   );
 }
+
+export function DeliveryDateFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All</option>
+      <option value="future">Future Dates Only</option>
+      <option value="past">Past Dates Only</option>
+      <option value="today">Today</option>
+      <option value="nextWeek">Next Week</option>
+    </select>
+  );
+}
+
+export function requesterFilterFn(row: any, _columnId: string, filterValue: string): boolean {
+  if (!filterValue) return true;
+  const r = row.original;
+  const search = String(filterValue).toLowerCase();
+  return (
+    r.participant_name?.toLowerCase().includes(search) ||
+    r.participant_email?.toLowerCase().includes(search) ||
+    r.participant_phone?.includes(search) ||
+    r.participant_address1?.toLowerCase().includes(search) ||
+    r.participant_address2?.toLowerCase().includes(search) ||
+    r.participant_city?.toLowerCase().includes(search)
+  );
+}
+
+export function mealsFilterFn(row: any, _columnId: string, filterValue: string): boolean {
+  if (!filterValue) return true;
+  const r = row.original;
+  switch (filterValue) {
+    case "regular": return r.regular_quantity > 0 && r.vegan_quantity === 0;
+    case "vegan": return r.vegan_quantity > 0 && r.regular_quantity === 0;
+    case "both": return r.regular_quantity > 0 && r.vegan_quantity > 0;
+    default: return true;
+  }
+}

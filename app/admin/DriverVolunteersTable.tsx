@@ -6,29 +6,8 @@ import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { createDriverVolunteerAction, updateDriverVolunteerAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, todayLocal, deliveryDateFilterFn } from "./lib/utils";
+import { formatDate, formatPhone, formatDateTime, deliveryDateFilterFn, DeliveryDateFilter } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
-
-function DeliveryDateFilter({ column }: { column: any }) {
-  const value = column.getFilterValue() as string | undefined;
-  const today = todayLocal();
-  return (
-    <select
-      value={value || ""}
-      onChange={(e) => {
-        e.stopPropagation();
-        column.setFilterValue(e.target.value || undefined);
-      }}
-      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-    >
-      <option value="">All</option>
-      <option value="future">Future Dates Only</option>
-      <option value="past">Past Dates Only</option>
-      <option value="today">Today</option>
-      <option value="nextWeek">Next Week</option>
-    </select>
-  );
-}
 
 function VolunteerFormFields({ state, volunteer }: {
   state: AdminDriverVolunteerActionState;
