@@ -31,19 +31,21 @@ export async function getWeeklyAssignments(): Promise<WeeklyAssignmentRow[]> {
     .prepare(
        `SELECT
           ms.id as signup_id,
-          ms.name as recipient_name,
-          ms.address1, ms.address2, ms.city, ms.state, ms.zip_code,
+          p.name as recipient_name,
+          p.address1, p.address2, p.city, p.state, p.zip_code,
          ms.meal_type,
          ms.delivery_date, ms.delivery_day,
-         dv.name as driver_name,
-         dv.phone as driver_phone,
-         dv.email as driver_email,
+         dp.name as driver_name,
+         dp.phone as driver_phone,
+         dp.email as driver_email,
          dv.id as driver_id
        FROM delivery_assignments da
        JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       JOIN participants p ON ms.participant_id = p.id
        JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
+       JOIN participants dp ON dv.participant_id = dp.id
        WHERE ms.delivery_date >= date('now', '-90 days')
-       ORDER BY ms.delivery_date DESC, dv.name ASC`
+       ORDER BY ms.delivery_date DESC, dp.name ASC`
     )
     .all<Omit<WeeklyAssignmentRow, "iso_week" | "week_start" | "week_end">>();
   const rows = result.results || [];
@@ -83,14 +85,15 @@ export async function getUnassignedSignups(): Promise<UnassignedSignup[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT ms.id, ms.name, ms.email, ms.phone, ms.address1, ms.address2, ms.city,
-               ms.state, ms.zip_code, ms.meal_type, ms.delivery_date,
-              ms.delivery_day, ms.comments, ms.created_at
+      `SELECT ms.id, p.name, p.email, p.phone, p.address1, p.address2, p.city,
+               p.state, p.zip_code, ms.meal_type, ms.delivery_date,
+               ms.delivery_day, ms.comments, ms.created_at
        FROM meal_signups ms
+       JOIN participants p ON ms.participant_id = p.id
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
        WHERE da.id IS NULL
          AND ms.delivery_date >= date('now')
-       ORDER BY ms.delivery_date ASC, ms.name ASC`
+       ORDER BY ms.delivery_date ASC, p.name ASC`
     )
     .all<UnassignedSignup>();
   return (result.results || []).map((row) => ({
@@ -115,13 +118,14 @@ export async function getDriverLoad(): Promise<DriverLoadRow[]> {
     .prepare(
       `SELECT
          dv.id as driver_id,
-         dv.name as driver_name,
-         dv.phone as driver_phone,
-         dv.email as driver_email,
+         p.name as driver_name,
+         p.phone as driver_phone,
+         p.email as driver_email,
          ms.delivery_date,
          ms.delivery_day,
          COUNT(da.id) as assignment_count
        FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
        LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
        LEFT JOIN meal_signups ms ON da.meal_signup_id = ms.id
        WHERE dv.delivery_date >= date('now', '-30 days')
@@ -214,13 +218,14 @@ export async function getDriverTotalAssignments(): Promise<DriverTotalAssignment
   const result = await db
     .prepare(
       `SELECT
-         dv.name as driver_name,
-         dv.phone as driver_phone,
+         p.name as driver_name,
+         p.phone as driver_phone,
          COUNT(da.id) as assignment_count
        FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
        LEFT JOIN delivery_assignments da ON dv.id = da.driver_volunteer_id
-       GROUP BY dv.name, dv.phone
-       ORDER BY assignment_count DESC, dv.name ASC`
+       GROUP BY dv.id, p.name, p.phone
+       ORDER BY assignment_count DESC, p.name ASC`
     )
     .all<DriverTotalAssignmentRow>();
   return result.results || [];
