@@ -9,23 +9,13 @@ export async function sendMealSignupConfirmation(signups: MealSignup[], particip
     new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
   ).join(", ");
 
-  const grouped = new Map<string, { regular: number; vegan: number }>();
-  for (const s of signups) {
-    if (!grouped.has(s.delivery_date)) {
-      grouped.set(s.delivery_date, { regular: 0, vegan: 0 });
-    }
-    const g = grouped.get(s.delivery_date)!;
-    if (s.meal_type === "regular") g.regular += s.quantity;
-    else g.vegan += s.quantity;
-  }
-
   const mealLines: string[] = [];
-  for (const [date, counts] of grouped) {
+  for (const s of signups) {
     const parts: string[] = [];
-    if (counts.regular > 0) parts.push(`${counts.regular} Regular`);
-    if (counts.vegan > 0) parts.push(`${counts.vegan} Vegan / GF`);
-    const formatted = new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-    const day = new Date(date).getDay() === 3 ? "Wednesday" : "Thursday";
+    if (s.regular_quantity > 0) parts.push(`${s.regular_quantity} Regular`);
+    if (s.vegan_quantity > 0) parts.push(`${s.vegan_quantity} Vegan / GF`);
+    const formatted = new Date(s.delivery_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    const day = new Date(s.delivery_date).getDay() === 3 ? "Wednesday" : "Thursday";
     mealLines.push(`${formatted} (${day}): ${parts.join(" + ")}`);
   }
 

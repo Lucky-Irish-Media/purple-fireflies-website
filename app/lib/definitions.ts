@@ -95,8 +95,8 @@ export interface Participant {
 export interface MealSignup {
   id: number;
   participant_id: number;
-  meal_type: "regular" | "vegan";
-  quantity: number;
+  regular_quantity: number;
+  vegan_quantity: number;
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   comments: string | null;

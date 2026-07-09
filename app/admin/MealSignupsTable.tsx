@@ -9,7 +9,7 @@ import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, getMealTypeBadge, getContactMethodBadge, getDeliveryDayBadge } from "./lib/utils";
+import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const STATE_OPTIONS = [
@@ -122,12 +122,8 @@ function SignupFormFields({ state, signup, formPending, editing }: {
   formPending: boolean;
   editing: boolean;
 }) {
-  const [regularQty, setRegularQty] = useState(
-    signup?.meal_type === "regular" ? signup.quantity : 1
-  );
-  const [veganQty, setVeganQty] = useState(
-    signup?.meal_type === "vegan" ? signup.quantity : 0
-  );
+  const [regularQty, setRegularQty] = useState(signup?.regular_quantity ?? 1);
+  const [veganQty, setVeganQty] = useState(signup?.vegan_quantity ?? 0);
   const totalMeals = regularQty + veganQty;
   const totalInvalid = totalMeals < 1 || totalMeals > 2;
 
@@ -418,11 +414,11 @@ export default function MealSignupsTable({
       enableColumnFilter: false,
       cell: (info) => {
         const r = info.row.original;
+        const parts: string[] = [];
+        if (r.regular_quantity > 0) parts.push(`${r.regular_quantity} Regular`);
+        if (r.vegan_quantity > 0) parts.push(`${r.vegan_quantity} Vegan`);
         return (
-          <div className="flex items-center gap-2">
-            {getMealTypeBadge(r.meal_type)}
-            <span className="text-foreground font-medium">×{r.quantity}</span>
-          </div>
+          <span className="text-foreground font-medium">{parts.join(" / ") || "—"}</span>
         );
       },
     }),
