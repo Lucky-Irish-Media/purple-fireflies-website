@@ -309,6 +309,38 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
+export interface HomePageStats {
+  total_meals_delivered: number;
+  delivery_days: number;
+  total_volunteers: number;
+}
+
+export async function getHomePageStats(): Promise<HomePageStats> {
+  const db = await getDB();
+  const [meals, days, volunteers] = await Promise.all([
+    db
+      .prepare(
+        `SELECT COALESCE(SUM(ms.quantity), 0) as count
+         FROM delivery_assignments da
+         JOIN meal_signups ms ON da.meal_signup_id = ms.id
+         WHERE ms.delivery_date < date('now')`
+      )
+      .first<{ count: number }>(),
+    db
+      .prepare("SELECT COUNT(DISTINCT delivery_day) as count FROM meal_signups")
+      .first<{ count: number }>(),
+    db
+      .prepare("SELECT COUNT(*) as count FROM driver_volunteers")
+      .first<{ count: number }>(),
+  ]);
+
+  return {
+    total_meals_delivered: meals?.count ?? 0,
+    delivery_days: days?.count ?? 0,
+    total_volunteers: volunteers?.count ?? 0,
+  };
+}
+
 function getISOWeek(date: Date): string {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);

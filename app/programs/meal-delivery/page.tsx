@@ -1,82 +1,127 @@
-export default function MealDeliveryPage() {
+import Link from "next/link";
+import { getHomePageStats } from "@/app/lib/reports";
+
+export const dynamic = "force-dynamic";
+
+const cards = [
+  {
+    icon: "🍲",
+    title: "Receive a Meal",
+    desc: "Sign up to receive meal deliveries in your area. We deliver on Wednesdays at 12:00 PM and Thursdays at 5:00 PM.",
+    href: "/programs/meal-delivery/delivery-signup",
+    cta: "Sign up for delivery",
+  },
+  {
+    icon: "🚗",
+    title: "Deliver Meals",
+    desc: "Help deliver meals to those who can't get to town. Every trip makes a direct difference to neighbors in need.",
+    href: "/programs/meal-delivery/volunteer-signup",
+    cta: "Sign up to volunteer",
+  },
+];
+
+export default async function MealDeliveryPage() {
+  const stats = await getHomePageStats();
+
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="mb-6 text-4xl font-bold">Meal Delivery</h1>
-
-      <div className="space-y-6 text-lg text-text-secondary">
-        <p>
-          In our county, there&apos;s a stark divide: a wealthy university town surrounded by
-          communities facing deep poverty. While the town has multiple organizations offering
-          free meals, these resources primarily serve students and those with transportation
-          to get there.
-        </p>
-
-        <p>
-          For many residents throughout the county, lack of transportation creates an
-          insurmountable barrier. They can&apos;t access the free meals available just miles away,
-          leaving them without options for nutritious food.
-        </p>
-
-        <h2 className="mt-8 mb-4 text-2xl font-semibold text-foreground">
-          Our Solution
-        </h2>
-
-        <p>
-          The Meal Delivery program bridges this gap. We recruit volunteers who travel to
-          the free meal organizations in town, pick up meals, and deliver them directly to
-          people in need throughout the county.
-        </p>
-
-        <h2 className="mt-8 mb-4 text-2xl font-semibold text-foreground">
-          Delivery Regions
-        </h2>
-
-        <p>
-          We deliver up to 20 minutes from Athens Uptown. If you are more than 20 minutes from the meal pickup location, we may contact you to let you know we do not have a driver available that can accommodate the request.
-        </p>
-
-        <h2 className="mt-8 mb-4 text-2xl font-semibold text-foreground">
-          Get Involved
-        </h2>
-
-        <p>
-          This program relies entirely on community solidarity. Whether you need meals
-          delivered or you can volunteer to make deliveries, we&apos;re building a network
-          of mutual aid to ensure no one goes hungry.
-        </p>
-
-        <div className="mt-8 flex gap-4">
-          <div className="flex-1 rounded-lg border bg-background p-6">
-            <h3 className="mb-2 text-xl font-semibold text-foreground">
-              Receive a Meal
-            </h3>
-            <p className="mb-4 text-sm">
-              Sign up to receive meal deliveries in your area. We deliver on Wednesdays at 12:00 PM and Thursdays at 5:00 PM.
-            </p>
-            <a
-              href="/programs/meal-delivery/delivery-signup"
-              className="inline-block text-sm font-medium text-primary hover:underline"
+    <div className="flex flex-col flex-1 font-sans">
+      {/* Hero */}
+      <section
+        style={{ background: "linear-gradient(160deg, #3b0764 0%, #5B21B6 45%, #7C3AED 100%)" }}
+      >
+        <div className="px-4 pt-16 pb-0 text-center">
+          <div className="max-w-2xl mx-auto">
+            <span
+              className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white mb-5"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
             >
-              Sign Up for Meal Delivery →
-            </a>
-          </div>
-
-          <div className="flex-1 rounded-lg border bg-background p-6">
-            <h3 className="mb-2 text-xl font-semibold text-foreground">
-              Deliver Meals
-            </h3>
-            <p className="mb-4 text-sm">
-              Help deliver meals to those who can&apos;t get to town.
+              Programs
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
+              Meal Delivery
+            </h1>
+            <p className="text-lg leading-8 mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 520, margin: "0 auto 2.5rem" }}>
+              Bridging the gap between free meal resources and the neighbors who can't reach them — one delivery at a time.
             </p>
-            <a
-              href="/programs/meal-delivery/volunteer-signup"
-              className="inline-block text-sm font-medium text-primary hover:underline"
-            >
-              Sign Up to Volunteer →
-            </a>
           </div>
         </div>
-      </div>
-    </main>
+
+        {/* Stats strip */}
+        <div style={{ background: "rgba(0,0,0,0.25)", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+          <div className="max-w-7xl mx-auto px-4 grid grid-cols-1">
+            <div className="py-5 text-center">
+              <div className="text-2xl font-bold" style={{ color: "#F59E0B" }}>{stats.total_meals_delivered}</div>
+              <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Total Meals Delivered</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Body content */}
+      <section className="px-4 py-16 bg-white">
+        <div className="max-w-5xl mx-auto">
+
+          <div className="space-y-5 text-lg text-text-secondary leading-relaxed mb-12">
+            <p>
+              In our county, there&apos;s a stark divide: a wealthy university town surrounded by
+              communities facing deep poverty. While the town has multiple organizations offering
+              free meals, these resources primarily serve students and those with transportation
+              to get there.
+            </p>
+            <p>
+              For many residents throughout the county, lack of transportation creates an
+              insurmountable barrier — leaving them without access to nutritious food just miles away.
+            </p>
+          </div>
+
+          <h2 className="text-2xl font-bold text-foreground mb-3">Our Solution</h2>
+          <p className="text-lg text-text-secondary leading-relaxed mb-10">
+            The Meal Delivery program bridges this gap. We recruit volunteers who travel to
+            free meal organizations in town, pick up meals, and deliver them directly to
+            people in need throughout the county.
+          </p>
+
+          <h2 className="text-2xl font-bold text-foreground mb-3">Delivery Regions</h2>
+          <p className="text-lg text-text-secondary leading-relaxed mb-12">
+            We deliver up to 20 minutes from Athens Uptown. If you are more than 20 minutes
+            from the meal pickup location, we may contact you to let you know we don&apos;t have
+            a driver available for your area.
+          </p>
+
+          {/* CTA cards */}
+          <h2 className="text-2xl font-bold text-foreground mb-6">Get Involved</h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {cards.map((c) => (
+              <div
+                key={c.title}
+                className="rounded-xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                style={{
+                  background: "#fff",
+                  border: "1px solid rgba(124,58,237,0.12)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                }}
+              >
+                <div
+                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
+                  style={{ background: "rgba(124,58,237,0.08)" }}
+                >
+                  {c.icon}
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{c.title}</h3>
+                <p className="text-sm text-text-secondary leading-relaxed flex-1">{c.desc}</p>
+                <Link
+                  href={c.href}
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-colors"
+                  style={{ color: "#7C3AED" }}
+                >
+                  {c.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+    </div>
   );
 }
