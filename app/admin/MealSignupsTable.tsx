@@ -493,7 +493,7 @@ export default function MealSignupsTable({
     }),
     columnHelper.display({
       id: "internal_notes",
-      header: "Notes",
+      header: "Internal Notes",
       enableColumnFilter: false,
       cell: (info) => (
         <InlineEditCell
@@ -577,7 +577,7 @@ export default function MealSignupsTable({
         enableColumnPinning
         enableColumnResizing
         enableFacetedFilters
-        initialVisibility={{ created_at: false, contact_method: false, bag_number: false, internal_notes: false }}
+        initialVisibility={{ created_at: false, contact_method: false }}
         initialColumnPinning={{ left: ["requester"] }}
         initialSorting={[{ id: "delivery", desc: true }]}
         pageSize={15}
