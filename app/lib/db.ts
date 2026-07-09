@@ -370,8 +370,9 @@ export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAss
   const result = await db
     .prepare(
       `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT},
-              da.id as assignment_id, da.driver_volunteer_id as driver_id,
-              dp.name as driver_name, dp.phone as driver_phone
+               da.id as assignment_id, da.driver_volunteer_id as driver_id,
+               dp.name as driver_name, dp.phone as driver_phone,
+               da.notes as assignment_notes, da.bag_number
        FROM meal_signups ms
        JOIN participants p ON ms.participant_id = p.id
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
@@ -410,6 +411,37 @@ export async function createAssignment(
     .first<DeliveryAssignment>();
   if (!result) throw new Error("Failed to create assignment");
   return result;
+}
+
+export async function updateAssignmentDetails(
+  mealSignupId: number,
+  data: { notes?: string | null; bag_number?: string | null }
+): Promise<void> {
+  const db = await getDB();
+  const existing = await db
+    .prepare("SELECT id FROM delivery_assignments WHERE meal_signup_id = ?")
+    .bind(mealSignupId)
+    .first<{ id: number }>();
+
+  if (!existing) return;
+
+  const sets: string[] = [];
+  const values: any[] = [];
+  if (data.notes !== undefined) {
+    sets.push("notes = ?");
+    values.push(data.notes);
+  }
+  if (data.bag_number !== undefined) {
+    sets.push("bag_number = ?");
+    values.push(data.bag_number);
+  }
+  if (sets.length === 0) return;
+
+  values.push(mealSignupId);
+  await db
+    .prepare(`UPDATE delivery_assignments SET ${sets.join(", ")} WHERE meal_signup_id = ?`)
+    .bind(...values)
+    .run();
 }
 
 export async function deleteAssignmentByMealSignupId(mealSignupId: number): Promise<void> {

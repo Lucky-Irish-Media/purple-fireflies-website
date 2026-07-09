@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition, useActionState } from "react";
+import { useMemo, useState, useTransition, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
-import { assignDriverAction } from "@/app/actions/assignments";
+import { assignDriverAction, updateAssignmentAction } from "@/app/actions/assignments";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
@@ -112,6 +112,45 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
         </span>
       )}
     </div>
+  );
+}
+
+function InlineEditCell({ row, field, placeholder }: {
+  row: { original: MealSignupWithAssignment };
+  field: "bag_number" | "assignment_notes";
+  placeholder: string;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const formField = field === "bag_number" ? "bagNumber" : "notes";
+  const currentValue = row.original[field] ?? "";
+  const [value, setValue] = useState(currentValue);
+
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue]);
+
+  function handleBlur() {
+    if (value === currentValue) return;
+    const formData = new FormData();
+    formData.set("mealSignupId", String(row.original.id));
+    formData.set(formField, value);
+    startTransition(async () => {
+      await updateAssignmentAction(formData);
+      router.refresh();
+    });
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={handleBlur}
+      disabled={isPending}
+      placeholder={placeholder}
+      className="w-full bg-transparent border-b border-transparent hover:border-primary/30 focus:border-primary text-sm text-foreground outline-none px-1 py-0.5 disabled:opacity-50"
+    />
   );
 }
 
@@ -415,6 +454,30 @@ export default function MealSignupsTable({
           drivers={drivers}
           isPending={isPending}
           onAssign={handleAssignment}
+        />
+      ),
+    }),
+    columnHelper.display({
+      id: "bag_number",
+      header: "Bag #",
+      enableColumnFilter: false,
+      cell: (info) => (
+        <InlineEditCell
+          row={info.row}
+          field="bag_number"
+          placeholder="Bag #"
+        />
+      ),
+    }),
+    columnHelper.display({
+      id: "assignment_notes",
+      header: "Notes",
+      enableColumnFilter: false,
+      cell: (info) => (
+        <InlineEditCell
+          row={info.row}
+          field="assignment_notes"
+          placeholder="Internal notes"
         />
       ),
     }),

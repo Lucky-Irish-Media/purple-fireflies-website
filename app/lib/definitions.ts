@@ -118,6 +118,7 @@ export interface DeliveryAssignment {
   meal_signup_id: number;
   driver_volunteer_id: number;
   notes: string | null;
+  bag_number: string | null;
   created_at: string;
 }
 
@@ -144,4 +145,6 @@ export interface MealSignupWithAssignment extends MealSignupWithParticipant {
   driver_id: number | null;
   driver_name: string | null;
   driver_phone: string | null;
+  assignment_notes: string | null;
+  bag_number: string | null;
 }
