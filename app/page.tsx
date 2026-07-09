@@ -32,7 +32,6 @@ export default async function Home() {
 
   const statDisplays = [
     { num: `${stats.total_meals_delivered}`, label: "Meals delivered" },
-    { num: `${stats.delivery_days}`, label: "Delivery days" },
     { num: `${stats.total_volunteers}`, label: "Volunteers" },
   ];
 
@@ -77,7 +76,7 @@ export default async function Home() {
 
         {/* Stats strip */}
         <div style={{ background: "rgba(0,0,0,0.25)", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-          <div className="max-w-7xl mx-auto px-4 grid grid-cols-3">
+          <div className="max-w-7xl mx-auto px-4 grid grid-cols-2">
           {statDisplays.map((s, i) => (
             <div
               key={s.label}
