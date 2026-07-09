@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, updateAssignmentDetails } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -30,6 +30,8 @@ const AdminMealSignupSchema = z.object({
   deliveryDate: z.string().min(1, "Delivery date is required."),
   quantity: z.coerce.number().int().min(1, "Quantity must be 1 or 2.").max(2, "Quantity must be 1 or 2."),
   comments: z.string().optional(),
+  bagNumber: z.string().optional(),
+  internalNotes: z.string().optional(),
 });
 
 export type AdminMealSignupActionState = {
@@ -53,8 +55,8 @@ const AdminMealSignupUpdateSchema = z.object({
   deliveryDate: z.string().min(1, "Delivery date is required."),
   quantity: z.coerce.number().int().min(1, "Quantity must be 1 or 2.").max(2, "Quantity must be 1 or 2."),
   comments: z.string().optional(),
-  assignmentNotes: z.string().optional(),
   bagNumber: z.string().optional(),
+  internalNotes: z.string().optional(),
 });
 
 export async function updateMealSignupAction(
@@ -79,8 +81,8 @@ export async function updateMealSignupAction(
       deliveryDate: formData.get("deliveryDate"),
       quantity: formData.get("quantity"),
       comments: formData.get("comments"),
-      assignmentNotes: formData.get("assignmentNotes"),
       bagNumber: formData.get("bagNumber"),
+      internalNotes: formData.get("internalNotes"),
     });
 
     if (!validated.success) {
@@ -122,11 +124,8 @@ export async function updateMealSignupAction(
       deliveryDate: data.deliveryDate,
       quantity: data.quantity,
       comments: data.comments,
-    });
-
-    await updateAssignmentDetails(data.id, {
-      notes: data.assignmentNotes ?? null,
-      bag_number: data.bagNumber ?? null,
+      bagNumber: data.bagNumber,
+      internalNotes: data.internalNotes,
     });
 
     const signups = await getMealSignupsWithAssignments();
@@ -161,6 +160,8 @@ export async function createMealSignupAction(
       deliveryDate: formData.get("deliveryDate"),
       quantity: formData.get("quantity"),
       comments: formData.get("comments"),
+      bagNumber: formData.get("bagNumber"),
+      internalNotes: formData.get("internalNotes"),
     });
 
     if (!validated.success) {
@@ -202,6 +203,8 @@ export async function createMealSignupAction(
       deliveryDate: data.deliveryDate,
       quantity: data.quantity,
       comments: data.comments,
+      bagNumber: data.bagNumber,
+      internalNotes: data.internalNotes,
     });
 
     const signups = await getMealSignupsWithAssignments();
@@ -212,5 +215,32 @@ export async function createMealSignupAction(
   } catch (e) {
     console.error("createMealSignup action error:", e);
     return { message: "Failed to add signup. Please try again." };
+  }
+}
+
+export async function updateMealSignupFieldAction(formData: FormData): Promise<{ success: boolean; message: string }> {
+  try {
+    await verifySession();
+
+    const id = Number(formData.get("id"));
+    const field = formData.get("field") as string;
+    const value = formData.get("value") as string;
+
+    if (!id || !field) {
+      return { success: false, message: "Invalid request." };
+    }
+
+    if (field !== "bag_number" && field !== "internal_notes") {
+      return { success: false, message: "Invalid field." };
+    }
+
+    const { updateMealSignupField } = await import("@/app/lib/db");
+    await updateMealSignupField(id, field, value || null);
+
+    revalidatePath("/admin/programs/meal-delivery");
+    return { success: true, message: "Updated." };
+  } catch (e) {
+    console.error("updateMealSignupField action error:", e);
+    return { success: false, message: "Failed to update." };
   }
 }

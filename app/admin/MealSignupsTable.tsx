@@ -4,7 +4,8 @@ import { useMemo, useState, useTransition, useActionState, useEffect } from "rea
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
-import { assignDriverAction, updateAssignmentAction } from "@/app/actions/assignments";
+import { assignDriverAction } from "@/app/actions/assignments";
+import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
@@ -117,12 +118,11 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
 
 function InlineEditCell({ row, field, placeholder }: {
   row: { original: MealSignupWithAssignment };
-  field: "bag_number" | "assignment_notes";
+  field: "bag_number" | "internal_notes";
   placeholder: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const formField = field === "bag_number" ? "bagNumber" : "notes";
   const currentValue = row.original[field] ?? "";
   const [value, setValue] = useState(currentValue);
 
@@ -133,10 +133,11 @@ function InlineEditCell({ row, field, placeholder }: {
   function handleBlur() {
     if (value === currentValue) return;
     const formData = new FormData();
-    formData.set("mealSignupId", String(row.original.id));
-    formData.set(formField, value);
+    formData.set("id", String(row.original.id));
+    formData.set("field", field);
+    formData.set("value", value);
     startTransition(async () => {
-      await updateAssignmentAction(formData);
+      await updateMealSignupFieldAction(formData);
       router.refresh();
     });
   }
@@ -276,22 +277,20 @@ function SignupFormFields({ state, signup }: {
         </div>
       </div>
 
-      {signup && signup.assignment_id && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-primary/10">
-          <div>
-            <label htmlFor="ms-bagNumber" className="block text-sm font-medium text-foreground mb-1">Bag #</label>
-            <input id="ms-bagNumber" name="bagNumber" type="text" defaultValue={signup.bag_number || ""}
-              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="ms-assignmentNotes" className="block text-sm font-medium text-foreground mb-1">Internal Notes</label>
-            <input id="ms-assignmentNotes" name="assignmentNotes" type="text" defaultValue={signup.assignment_notes || ""}
-              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-primary/10">
+        <div>
+          <label htmlFor="ms-bagNumber" className="block text-sm font-medium text-foreground mb-1">Bag #</label>
+          <input id="ms-bagNumber" name="bagNumber" type="text" defaultValue={signup?.bag_number || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
         </div>
-      )}
+        <div>
+          <label htmlFor="ms-internalNotes" className="block text-sm font-medium text-foreground mb-1">Internal Notes</label>
+          <input id="ms-internalNotes" name="internalNotes" type="text" defaultValue={signup?.internal_notes || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
 
       {state?.message && !state?.errors && (
         <p className="text-sm text-green-600">{state.message}</p>
@@ -487,13 +486,13 @@ export default function MealSignupsTable({
       ),
     }),
     columnHelper.display({
-      id: "assignment_notes",
+      id: "internal_notes",
       header: "Notes",
       enableColumnFilter: false,
       cell: (info) => (
         <InlineEditCell
           row={info.row}
-          field="assignment_notes"
+          field="internal_notes"
           placeholder="Internal notes"
         />
       ),

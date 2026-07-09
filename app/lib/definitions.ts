@@ -100,6 +100,8 @@ export interface MealSignup {
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   comments: string | null;
+  bag_number: string | null;
+  internal_notes: string | null;
   created_at: string;
 }
 
@@ -145,6 +147,4 @@ export interface MealSignupWithAssignment extends MealSignupWithParticipant {
   driver_id: number | null;
   driver_name: string | null;
   driver_phone: string | null;
-  assignment_notes: string | null;
-  bag_number: string | null;
 }
