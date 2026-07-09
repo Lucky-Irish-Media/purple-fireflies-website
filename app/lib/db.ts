@@ -482,6 +482,34 @@ export async function updateMealSignupField(id: number, field: string, value: st
     .run();
 }
 
+export async function deleteMealSignup(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM delivery_assignments WHERE meal_signup_id = ?")
+    .bind(id)
+    .run();
+  await db
+    .prepare("DELETE FROM meal_signups WHERE id = ?")
+    .bind(id)
+    .run();
+}
+
+export async function getMealSignupsByParticipantAndDate(
+  participantId: number,
+  deliveryDate: string
+): Promise<MealSignup[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${MEAL_SIGNUP_SELECT}
+       FROM meal_signups ms
+       WHERE ms.participant_id = ? AND ms.delivery_date = ?`
+    )
+    .bind(participantId, deliveryDate)
+    .all<MealSignup>();
+  return result.results || [];
+}
+
 export async function getMealSignupById(id: number): Promise<MealSignupWithParticipant | null> {
   const db = await getDB();
   const result = await db
