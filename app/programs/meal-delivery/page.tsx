@@ -1,11 +1,7 @@
 import Link from "next/link";
+import { getHomePageStats } from "@/app/lib/reports";
 
-// Link is used for the CTA cards below
-const stats = [
-  { num: "2x", label: "Weekly deliveries" },
-  { num: "20 min", label: "Delivery radius" },
-  { num: "100%", label: "Volunteer powered" },
-];
+export const dynamic = "force-dynamic";
 
 const cards = [
   {
@@ -24,7 +20,9 @@ const cards = [
   },
 ];
 
-export default function MealDeliveryPage() {
+export default async function MealDeliveryPage() {
+  const stats = await getHomePageStats();
+
   return (
     <div className="flex flex-col flex-1 font-sans">
       {/* Hero */}
@@ -50,17 +48,11 @@ export default function MealDeliveryPage() {
 
         {/* Stats strip */}
         <div style={{ background: "rgba(0,0,0,0.25)", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-          <div className="max-w-7xl mx-auto px-4 grid grid-cols-3">
-            {stats.map((s, i) => (
-              <div
-                key={s.label}
-                className="py-5 text-center"
-                style={{ borderRight: i < stats.length - 1 ? "1px solid rgba(255,255,255,0.12)" : "none" }}
-              >
-                <div className="text-2xl font-bold" style={{ color: "#F59E0B" }}>{s.num}</div>
-                <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>{s.label}</div>
-              </div>
-            ))}
+          <div className="max-w-7xl mx-auto px-4 grid grid-cols-1">
+            <div className="py-5 text-center">
+              <div className="text-2xl font-bold" style={{ color: "#F59E0B" }}>{stats.total_meals_delivered}</div>
+              <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Total Meals Delivered</div>
+            </div>
           </div>
         </div>
       </section>
