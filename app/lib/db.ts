@@ -22,7 +22,7 @@ function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
   return day === 3 ? "wednesday" : "thursday";
 }
 
-const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.meal_type, ms.quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.created_at`;
+const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.meal_type, ms.quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.internal_notes, ms.created_at`;
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
 const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method`;
 const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone`;
@@ -105,15 +105,17 @@ export async function createMealSignup(data: {
   deliveryDate: string;
   comments?: string;
   quantity?: number;
+  bagNumber?: string;
+  internalNotes?: string;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO meal_signups (participant_id, meal_type, quantity, delivery_day, delivery_date, comments)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO meal_signups (participant_id, meal_type, quantity, delivery_day, delivery_date, comments, bag_number, internal_notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.participantId, data.mealType, data.quantity ?? 1, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null)
+    .bind(data.participantId, data.mealType, data.quantity ?? 1, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, data.bagNumber || null, data.internalNotes || null)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to create meal signup");
@@ -174,16 +176,18 @@ export async function updateMealSignup(id: number, data: {
   deliveryDate: string;
   comments?: string;
   quantity?: number;
+  bagNumber?: string;
+  internalNotes?: string;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
     .prepare(
       `UPDATE meal_signups
-       SET participant_id = ?, meal_type = ?, quantity = ?, delivery_day = ?, delivery_date = ?, comments = ?
+       SET participant_id = ?, meal_type = ?, quantity = ?, delivery_day = ?, delivery_date = ?, comments = ?, bag_number = ?, internal_notes = ?
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.participantId, data.mealType, data.quantity ?? 1, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, id)
+    .bind(data.participantId, data.mealType, data.quantity ?? 1, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, data.bagNumber || null, data.internalNotes || null, id)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to update meal signup");
@@ -370,8 +374,8 @@ export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAss
   const result = await db
     .prepare(
       `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT},
-              da.id as assignment_id, da.driver_volunteer_id as driver_id,
-              dp.name as driver_name, dp.phone as driver_phone
+               da.id as assignment_id, da.driver_volunteer_id as driver_id,
+               dp.name as driver_name, dp.phone as driver_phone
        FROM meal_signups ms
        JOIN participants p ON ms.participant_id = p.id
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
@@ -412,6 +416,37 @@ export async function createAssignment(
   return result;
 }
 
+export async function updateAssignmentDetails(
+  mealSignupId: number,
+  data: { notes?: string | null; bag_number?: string | null }
+): Promise<void> {
+  const db = await getDB();
+  const existing = await db
+    .prepare("SELECT id FROM delivery_assignments WHERE meal_signup_id = ?")
+    .bind(mealSignupId)
+    .first<{ id: number }>();
+
+  if (!existing) return;
+
+  const sets: string[] = [];
+  const values: any[] = [];
+  if (data.notes !== undefined) {
+    sets.push("notes = ?");
+    values.push(data.notes);
+  }
+  if (data.bag_number !== undefined) {
+    sets.push("bag_number = ?");
+    values.push(data.bag_number);
+  }
+  if (sets.length === 0) return;
+
+  values.push(mealSignupId);
+  await db
+    .prepare(`UPDATE delivery_assignments SET ${sets.join(", ")} WHERE meal_signup_id = ?`)
+    .bind(...values)
+    .run();
+}
+
 export async function deleteAssignmentByMealSignupId(mealSignupId: number): Promise<void> {
   const db = await getDB();
   await db
@@ -437,6 +472,42 @@ export interface TomorrowDriver {
   delivery_day: string;
   delivery_date: string;
   deliveries: TomorrowDelivery[];
+}
+
+export async function updateMealSignupField(id: number, field: string, value: string | null): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(`UPDATE meal_signups SET ${field} = ? WHERE id = ?`)
+    .bind(value, id)
+    .run();
+}
+
+export async function deleteMealSignup(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM delivery_assignments WHERE meal_signup_id = ?")
+    .bind(id)
+    .run();
+  await db
+    .prepare("DELETE FROM meal_signups WHERE id = ?")
+    .bind(id)
+    .run();
+}
+
+export async function getMealSignupsByParticipantAndDate(
+  participantId: number,
+  deliveryDate: string
+): Promise<MealSignup[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${MEAL_SIGNUP_SELECT}
+       FROM meal_signups ms
+       WHERE ms.participant_id = ? AND ms.delivery_date = ?`
+    )
+    .bind(participantId, deliveryDate)
+    .all<MealSignup>();
+  return result.results || [];
 }
 
 export async function getMealSignupById(id: number): Promise<MealSignupWithParticipant | null> {

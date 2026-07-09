@@ -100,6 +100,8 @@ export interface MealSignup {
   delivery_day: "wednesday" | "thursday";
   delivery_date: string;
   comments: string | null;
+  bag_number: string | null;
+  internal_notes: string | null;
   created_at: string;
 }
 
@@ -118,6 +120,7 @@ export interface DeliveryAssignment {
   meal_signup_id: number;
   driver_volunteer_id: number;
   notes: string | null;
+  bag_number: string | null;
   created_at: string;
 }
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition, useActionState } from "react";
+import { useMemo, useState, useTransition, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
+import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
 import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
@@ -115,10 +116,60 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
   );
 }
 
-function SignupFormFields({ state, signup }: {
+function InlineEditCell({ row, field, placeholder }: {
+  row: { original: MealSignupWithAssignment };
+  field: "bag_number" | "internal_notes";
+  placeholder: string;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const currentValue = row.original[field] ?? "";
+  const [value, setValue] = useState(currentValue);
+
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue]);
+
+  function handleBlur() {
+    if (value === currentValue) return;
+    const formData = new FormData();
+    formData.set("id", String(row.original.id));
+    formData.set("field", field);
+    formData.set("value", value);
+    startTransition(async () => {
+      await updateMealSignupFieldAction(formData);
+      router.refresh();
+    });
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={handleBlur}
+      disabled={isPending}
+      placeholder={placeholder}
+      className="w-full bg-transparent border-b border-transparent hover:border-primary/30 focus:border-primary text-sm text-foreground outline-none px-1 py-0.5 disabled:opacity-50"
+    />
+  );
+}
+
+function SignupFormFields({ state, signup, formPending, editing }: {
   state: AdminMealSignupActionState;
   signup: MealSignupWithAssignment | null;
+  formPending: boolean;
+  editing: boolean;
 }) {
+  const [regularQty, setRegularQty] = useState(
+    signup?.meal_type === "regular" ? signup.quantity : 1
+  );
+  const [veganQty, setVeganQty] = useState(
+    signup?.meal_type === "vegan" ? signup.quantity : 0
+  );
+  const totalMeals = regularQty + veganQty;
+  const totalInvalid = totalMeals < 1 || totalMeals > 2;
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -196,27 +247,74 @@ function SignupFormFields({ state, signup }: {
         </div>
       </div>
 
+      <fieldset className="space-y-2">
+        <legend className="block text-sm font-medium text-foreground mb-1">Meals Requested</legend>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-text-secondary mb-2">Regular meals:</p>
+            <div className="flex gap-4">
+              {[0, 1, 2].map((n) => {
+                const disabled = n + veganQty > 2;
+                return (
+                  <label key={`reg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                    <input
+                      type="radio"
+                      name="regularQuantity"
+                      value={n}
+                      required
+                      checked={regularQty === n}
+                      disabled={disabled}
+                      onChange={(e) => setRegularQty(Number(e.target.value))}
+                      className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
+                    />
+                    <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm text-text-secondary mb-2">Vegan / GF meals:</p>
+            <div className="flex gap-4">
+              {[0, 1, 2].map((n) => {
+                const disabled = n + regularQty > 2;
+                return (
+                  <label key={`vg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                    <input
+                      type="radio"
+                      name="veganQuantity"
+                      value={n}
+                      required
+                      checked={veganQty === n}
+                      disabled={disabled}
+                      onChange={(e) => setVeganQty(Number(e.target.value))}
+                      className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
+                    />
+                    <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {totalInvalid && (
+          <p className="text-sm text-red-500" role="alert">
+            Total meals must be 1 or 2.
+          </p>
+        )}
+        {state?.errors?.regularQuantity && (
+          <p className="text-sm text-red-500" role="alert">
+            {state.errors.regularQuantity[0]}
+          </p>
+        )}
+        {state?.errors?.veganQuantity && (
+          <p className="text-sm text-red-500" role="alert">
+            {state.errors.veganQuantity[0]}
+          </p>
+        )}
+      </fieldset>
+
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div>
-          <label htmlFor="ms-mealType" className="block text-sm font-medium text-foreground mb-1">Meal Type</label>
-          <select id="ms-mealType" name="mealType" required defaultValue={signup?.meal_type || "regular"}
-            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="regular">Regular</option>
-            <option value="vegan">Vegan / GF</option>
-          </select>
-          {state?.errors?.mealType && <p className="mt-1 text-sm text-red-500">{state.errors.mealType[0]}</p>}
-        </div>
-        <div>
-          <label htmlFor="ms-quantity" className="block text-sm font-medium text-foreground mb-1">Quantity</label>
-          <select id="ms-quantity" name="quantity" required defaultValue={String(signup?.quantity ?? 1)}
-            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="1">1</option>
-            <option value="2">2</option>
-          </select>
-          {state?.errors?.quantity && <p className="mt-1 text-sm text-red-500">{state.errors.quantity[0]}</p>}
-        </div>
         <div>
           <label htmlFor="ms-contactMethod" className="block text-sm font-medium text-foreground mb-1">Contact Method</label>
           <select id="ms-contactMethod" name="contactMethod" required defaultValue={signup?.participant_contact_method || "call"}
@@ -237,9 +335,34 @@ function SignupFormFields({ state, signup }: {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-primary/10">
+        <div>
+          <label htmlFor="ms-bagNumber" className="block text-sm font-medium text-foreground mb-1">Bag #</label>
+          <input id="ms-bagNumber" name="bagNumber" type="text" defaultValue={signup?.bag_number || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label htmlFor="ms-internalNotes" className="block text-sm font-medium text-foreground mb-1">Internal Notes</label>
+          <input id="ms-internalNotes" name="internalNotes" type="text" defaultValue={signup?.internal_notes || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
+
       {state?.message && !state?.errors && (
         <p className="text-sm text-green-600">{state.message}</p>
       )}
+
+      <button
+        type="submit"
+        disabled={formPending || totalInvalid}
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+      >
+        {formPending
+          ? (editing ? "Saving..." : "Adding...")
+          : (editing ? "Save Changes" : "Add Signup")}
+      </button>
     </>
   );
 }
@@ -419,6 +542,30 @@ export default function MealSignupsTable({
       ),
     }),
     columnHelper.display({
+      id: "bag_number",
+      header: "Bag #",
+      enableColumnFilter: false,
+      cell: (info) => (
+        <InlineEditCell
+          row={info.row}
+          field="bag_number"
+          placeholder="Bag #"
+        />
+      ),
+    }),
+    columnHelper.display({
+      id: "internal_notes",
+      header: "Notes",
+      enableColumnFilter: false,
+      cell: (info) => (
+        <InlineEditCell
+          row={info.row}
+          field="internal_notes"
+          placeholder="Internal notes"
+        />
+      ),
+    }),
+    columnHelper.display({
       id: "edit",
       enableHiding: false,
       header: "",
@@ -468,17 +615,7 @@ export default function MealSignupsTable({
         <form action={formAction} className="space-y-4">
           {editingSignup && <input type="hidden" name="id" value={editingSignup.id} />}
 
-          <SignupFormFields state={formState} signup={editingSignup} />
-
-          <button
-            type="submit"
-            disabled={formPending}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
-          >
-            {formPending
-              ? (editingSignup ? "Saving..." : "Adding...")
-              : (editingSignup ? "Save Changes" : "Add Signup")}
-          </button>
+          <SignupFormFields state={formState} signup={editingSignup} formPending={formPending} editing={!!editingSignup} />
         </form>
       </Modal>
 
