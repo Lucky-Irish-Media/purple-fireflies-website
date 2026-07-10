@@ -77,12 +77,23 @@ export function getMealTypeBadge(mealType: string) {
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
         mealType === "vegan"
           ? "bg-green-100 text-green-800"
+          : mealType === "regular + vegan"
+          ? "bg-purple-100 text-purple-800"
           : "bg-blue-100 text-blue-800"
       }`}
     >
       {mealType}
     </span>
   );
+}
+
+export function getMealTypeLabel(
+  regular_quantity: number,
+  vegan_quantity: number
+): string {
+  if (regular_quantity > 0 && vegan_quantity > 0) return "regular + vegan";
+  if (vegan_quantity > 0) return "vegan";
+  return "regular";
 }
 
 export function getRoleBadge(role: string) {

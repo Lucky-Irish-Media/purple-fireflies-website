@@ -15,7 +15,7 @@ import type {
 import { createColumnHelper } from "@tanstack/react-table";
 import { sendAssignmentEmail } from "@/app/actions/send-assignment-email";
 import { sendDriverLoadEmail } from "@/app/actions/send-driver-load-email";
-import { formatDate, formatPhone, getMealTypeBadge, getSignalBadge } from "@/app/admin/lib/utils";
+import { formatDate, formatPhone, getMealTypeBadge, getMealTypeLabel, getSignalBadge } from "@/app/admin/lib/utils";
 
 type TabKey =
   | "weekly"
@@ -82,9 +82,12 @@ const weekCols = [
   }),
   wch.accessor("recipient_name", { header: "Recipient", enableSorting: true }),
   wch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
-  wch.accessor("meal_type", {
+  wch.accessor("regular_quantity", {
     header: "Meal Type",
-    cell: (info) => getMealTypeBadge(info.getValue()),
+    cell: (info) => {
+      const row = info.row.original;
+      return getMealTypeBadge(getMealTypeLabel(row.regular_quantity, row.vegan_quantity));
+    },
   }),
   wch.display({
     id: "send_email",
@@ -112,9 +115,12 @@ const unsCols = [
     cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue() || "")}</span>,
   }),
   unsch.accessor("_full_address", { id: "address", header: "Address", enableSorting: true }),
-  unsch.accessor("meal_type", {
+  unsch.accessor("regular_quantity", {
     header: "Meal Type",
-    cell: (info) => getMealTypeBadge(info.getValue()),
+    cell: (info) => {
+      const row = info.row.original;
+      return getMealTypeBadge(getMealTypeLabel(row.regular_quantity, row.vegan_quantity));
+    },
   }),
 ] as unknown as ColumnDef<any, unknown>[];
 
@@ -172,11 +178,9 @@ const mtCols = [
     enableSorting: true,
     cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
   }),
-  mtch.accessor("meal_type", {
-    header: "Meal Type",
-    cell: (info) => getMealTypeBadge(info.getValue()),
-  }),
-  mtch.accessor("count", { header: "Count", enableSorting: true }),
+  mtch.accessor("regular_count", { header: "Regular", enableSorting: true }),
+  mtch.accessor("vegan_count", { header: "Vegan", enableSorting: true }),
+  mtch.accessor("total_count", { header: "Total", enableSorting: true }),
 ];
 
 const cgch = createColumnHelper<any>();
