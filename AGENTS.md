@@ -1,3 +1,5 @@
+# ⚠️ FIRST THING: Run `ls ~/.opencode/skills/` and READ every skill file before doing anything else.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
