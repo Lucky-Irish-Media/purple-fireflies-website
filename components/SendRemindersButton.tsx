@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { sendDriverReminders, type SendRemindersState } from "@/app/actions/send-reminders";
+import type { ReminderLog } from "@/app/lib/db";
+import { formatDateTime } from "@/app/admin/lib/utils";
 
 function formatDateLabel(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00");
@@ -13,11 +16,24 @@ function formatDateLabel(dateStr: string) {
   });
 }
 
-export function SendRemindersButton({ dates }: { dates: string[] }) {
+export function SendRemindersButton({
+  dates,
+  logs,
+}: {
+  dates: string[];
+  logs: ReminderLog[];
+}) {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState<SendRemindersState | null, FormData>(
     sendDriverReminders,
     null,
   );
+
+  useEffect(() => {
+    if (state?.success) {
+      router.refresh();
+    }
+  }, [state, router]);
 
   return (
     <div>
@@ -67,6 +83,34 @@ export function SendRemindersButton({ dates }: { dates: string[] }) {
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {logs.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold text-foreground mb-2">Reminder History</h3>
+          <div className="overflow-x-auto rounded-lg border border-primary/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-primary/10 bg-card">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-text-secondary">Sent At</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-text-secondary">Delivery Date</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-text-secondary">Sent</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-text-secondary">Failed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id} className="border-b border-primary/5 last:border-0">
+                    <td className="px-3 py-2 text-text-secondary">{formatDateTime(log.created_at)}</td>
+                    <td className="px-3 py-2 text-foreground font-medium">{formatDateLabel(log.delivery_date)}</td>
+                    <td className="px-3 py-2 text-foreground">{log.sent_count}</td>
+                    <td className="px-3 py-2 text-foreground">{log.failed_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

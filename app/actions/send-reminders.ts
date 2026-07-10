@@ -1,7 +1,7 @@
 "use server";
 
 import { verifySession } from "@/app/lib/dal";
-import { getAssignmentsForDate } from "@/app/lib/db";
+import { getAssignmentsForDate, logReminderSent } from "@/app/lib/db";
 import { sendEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
@@ -98,6 +98,9 @@ export async function sendDriverReminders(
 
     const sent = results.filter((r) => r.status === "sent").length;
     const failed = results.filter((r) => r.status !== "sent").length;
+
+    await logReminderSent(date, sent, failed);
+
     const message = failed > 0
       ? `Sent ${sent} email(s), ${failed} failed.`
       : `Sent ${sent} reminder email(s).`;
