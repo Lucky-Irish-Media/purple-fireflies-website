@@ -18,13 +18,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - NEVER run any command against production (e.g. `wrangler ... --remote` without `--env preview`) unless the user EXPLICITLY states you may
 - This includes D1 migrations, KV operations, and any other wrangler commands targeting the production environment
 - When in doubt, default to the preview environment (`--env preview`)
-
-# "Make it so"
-
-When the user says "make it so", perform these steps in order:
-1. Switch to `main` and pull
-2. Run any pending migrations on production if they haven't been run yet
-3. Delete the remote and local feature branch
 <!-- END:deployment-rules -->
 
 # Verification
