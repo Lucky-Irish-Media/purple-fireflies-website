@@ -455,7 +455,7 @@ export async function deleteAssignmentByMealSignupId(mealSignupId: number): Prom
     .run();
 }
 
-export interface TomorrowDelivery {
+export interface DateDelivery {
   meal_name: string;
   meal_phone: string;
   address: string;
@@ -464,14 +464,14 @@ export interface TomorrowDelivery {
   vegan_quantity: number;
 }
 
-export interface TomorrowDriver {
+export interface DateDriver {
   driver_id: number;
   driver_name: string;
   driver_email: string;
   driver_phone: string;
   delivery_day: string;
   delivery_date: string;
-  deliveries: TomorrowDelivery[];
+  deliveries: DateDelivery[];
 }
 
 export async function updateMealSignupField(id: number, field: string, value: string | null): Promise<void> {
@@ -538,11 +538,8 @@ export async function getDriverById(id: number): Promise<DriverVolunteerWithPart
   return result || null;
 }
 
-export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
+export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver[]> {
   const db = await getDB();
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
   const result = await db
     .prepare(
@@ -558,7 +555,7 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
        WHERE ms.delivery_date = ?
        ORDER BY dv.id, mp.name`
     )
-    .bind(tomorrowStr)
+    .bind(dateStr)
     .all<{
       driver_id: number;
       driver_name: string;
@@ -583,7 +580,7 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
     return [];
   }
 
-  const driverMap = new Map<number, TomorrowDriver>();
+  const driverMap = new Map<number, DateDriver>();
   for (const row of result.results) {
     if (!driverMap.has(row.driver_id)) {
       driverMap.set(row.driver_id, {
