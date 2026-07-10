@@ -12,6 +12,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Only push code to GitHub; Cloudflare will automatically build and deploy from the `main` branch
 - Build command for Cloudflare Workers Builds: `npm run cf:build`
 - Deploy command for Cloudflare Workers Builds: (none - use build output directly)
+
+# Production Safety
+
+- NEVER run any command against production (e.g. `wrangler ... --remote` without `--env preview`) unless the user EXPLICITLY states you may
+- This includes D1 migrations, KV operations, and any other wrangler commands targeting the production environment
+- When in doubt, default to the preview environment (`--env preview`)
 <!-- END:deployment-rules -->
 
 # Verification
