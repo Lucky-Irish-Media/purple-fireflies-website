@@ -1,7 +1,7 @@
 "use server";
 
 import { verifySession } from "@/app/lib/dal";
-import { getTomorrowsAssignments } from "@/app/lib/db";
+import { getAssignmentsForDate, logReminderSent } from "@/app/lib/db";
 import { sendEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
@@ -18,15 +18,27 @@ export interface SendRemindersState {
 
 export async function sendDriverReminders(
   _prevState: SendRemindersState | null,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<SendRemindersState> {
   try {
     await verifySession();
 
-    const drivers = await getTomorrowsAssignments();
+    const date = formData.get("date") as string;
+    if (!date) {
+      return { success: false, message: "Please select a date.", sent: 0, results: [] };
+    }
+
+    const drivers = await getAssignmentsForDate(date);
+
+    const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
 
     if (drivers.length === 0) {
-      return { success: true, message: "No deliveries scheduled for tomorrow.", sent: 0, results: [] };
+      return { success: true, message: `No deliveries scheduled for ${formattedDate}.`, sent: 0, results: [] };
     }
 
     const results: SendRemindersState["results"] = [];
@@ -86,6 +98,9 @@ export async function sendDriverReminders(
 
     const sent = results.filter((r) => r.status === "sent").length;
     const failed = results.filter((r) => r.status !== "sent").length;
+
+    await logReminderSent(date, sent, failed);
+
     const message = failed > 0
       ? `Sent ${sent} email(s), ${failed} failed.`
       : `Sent ${sent} reminder email(s).`;

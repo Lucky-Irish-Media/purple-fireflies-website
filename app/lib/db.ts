@@ -455,7 +455,7 @@ export async function deleteAssignmentByMealSignupId(mealSignupId: number): Prom
     .run();
 }
 
-export interface TomorrowDelivery {
+export interface DateDelivery {
   meal_name: string;
   meal_phone: string;
   address: string;
@@ -464,14 +464,14 @@ export interface TomorrowDelivery {
   vegan_quantity: number;
 }
 
-export interface TomorrowDriver {
+export interface DateDriver {
   driver_id: number;
   driver_name: string;
   driver_email: string;
   driver_phone: string;
   delivery_day: string;
   delivery_date: string;
-  deliveries: TomorrowDelivery[];
+  deliveries: DateDelivery[];
 }
 
 export async function updateMealSignupField(id: number, field: string, value: string | null): Promise<void> {
@@ -538,11 +538,26 @@ export async function getDriverById(id: number): Promise<DriverVolunteerWithPart
   return result || null;
 }
 
-export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
+export async function getDeliveryDates(): Promise<string[]> {
   const db = await getDB();
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
+
+  const result = await db
+    .prepare(
+      `SELECT DISTINCT ms.delivery_date
+       FROM delivery_assignments da
+       JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       WHERE ms.delivery_date >= ?
+       ORDER BY ms.delivery_date`
+    )
+    .bind(today)
+    .all<{ delivery_date: string }>();
+
+  return result.results.map((r) => r.delivery_date);
+}
+
+export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver[]> {
+  const db = await getDB();
 
   const result = await db
     .prepare(
@@ -558,7 +573,7 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
        WHERE ms.delivery_date = ?
        ORDER BY dv.id, mp.name`
     )
-    .bind(tomorrowStr)
+    .bind(dateStr)
     .all<{
       driver_id: number;
       driver_name: string;
@@ -583,7 +598,7 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
     return [];
   }
 
-  const driverMap = new Map<number, TomorrowDriver>();
+  const driverMap = new Map<number, DateDriver>();
   for (const row of result.results) {
     if (!driverMap.has(row.driver_id)) {
       driverMap.set(row.driver_id, {
@@ -608,4 +623,39 @@ export async function getTomorrowsAssignments(): Promise<TomorrowDriver[]> {
   }
 
   return Array.from(driverMap.values());
+}
+
+export interface ReminderLog {
+  id: number;
+  delivery_date: string;
+  sent_count: number;
+  failed_count: number;
+  created_at: string;
+}
+
+export async function logReminderSent(
+  deliveryDate: string,
+  sentCount: number,
+  failedCount: number,
+): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `INSERT INTO reminder_logs (delivery_date, sent_count, failed_count) VALUES (?, ?, ?)`
+    )
+    .bind(deliveryDate, sentCount, failedCount)
+    .run();
+}
+
+export async function getReminderLogs(): Promise<ReminderLog[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT id, delivery_date, sent_count, failed_count, created_at
+       FROM reminder_logs
+       ORDER BY created_at DESC
+       LIMIT 20`
+    )
+    .all<ReminderLog>();
+  return result.results;
 }

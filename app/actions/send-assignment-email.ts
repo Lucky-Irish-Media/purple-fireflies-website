@@ -57,6 +57,7 @@ Delivery: ${formattedDate} (${dayLabel})
 Recipient: ${signup.participant_name}
 Address: ${address}
 Meals: ${mealParts.join(" + ")}
+Comments: ${signup.comments || "None"}
 
 Please arrive at the ${location} at ${time} to pickup the meals.
 

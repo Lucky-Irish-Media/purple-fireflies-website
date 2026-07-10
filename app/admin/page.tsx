@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardSummary, getUnassignedSignups, getCoverageGaps } from "@/app/lib/reports";
+import { getDeliveryDates, getReminderLogs } from "@/app/lib/db";
 import { SendRemindersButton } from "@/components/SendRemindersButton";
 
 async function StatCard({
@@ -41,10 +42,12 @@ async function StatCard({
 }
 
 export default async function AdminDashboard() {
-  const [summary, unassigned, gaps] = await Promise.all([
+  const [summary, unassigned, gaps, deliveryDates, reminderLogs] = await Promise.all([
     getDashboardSummary(),
     getUnassignedSignups(),
     getCoverageGaps(),
+    getDeliveryDates(),
+    getReminderLogs(),
   ]);
 
   const gapDates = gaps.filter((g) => g.unassigned_count > 0);
@@ -129,13 +132,9 @@ export default async function AdminDashboard() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground">Driver Reminder Emails</h2>
         <p className="text-sm text-text-secondary">
-          Send reminder emails to drivers with deliveries scheduled for tomorrow. Requires
-          <code className="mx-1 rounded bg-card px-1.5 py-0.5 text-xs font-mono">EMAIL_API_KEY</code>
-          and
-          <code className="mx-1 rounded bg-card px-1.5 py-0.5 text-xs font-mono">EMAIL_FROM</code>
-          to be configured.
+          Send reminder emails to drivers with deliveries scheduled for a selected date.
         </p>
-        <SendRemindersButton />
+        <SendRemindersButton dates={deliveryDates} logs={reminderLogs} />
       </section>
     </div>
   );
