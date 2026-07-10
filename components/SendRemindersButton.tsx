@@ -1,51 +1,41 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
+import { useActionState } from "react";
 import { sendDriverReminders, type SendRemindersState } from "@/app/actions/send-reminders";
 
-function getDateOptions() {
-  const options: { value: string; label: string }[] = [];
-  const today = new Date();
-  for (let i = 0; i < 8; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const value = d.toISOString().split("T")[0];
-    const label = d.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    options.push({ value, label: i === 0 ? `Today — ${label}` : label });
-  }
-  return options;
+function formatDateLabel(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-export function SendRemindersButton() {
+export function SendRemindersButton({ dates }: { dates: string[] }) {
   const [state, formAction, isPending] = useActionState<SendRemindersState | null, FormData>(
     sendDriverReminders,
     null,
   );
-
-  const dateOptions = useMemo(getDateOptions, []);
 
   return (
     <div>
       <form action={formAction} className="flex items-center gap-3">
         <select
           name="date"
-          defaultValue={dateOptions[0].value}
+          defaultValue={dates[0] ?? ""}
           className="rounded-lg border border-primary/20 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
-          {dateOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          {dates.map((d) => (
+            <option key={d} value={d}>
+              {formatDateLabel(d)}
             </option>
           ))}
         </select>
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || dates.length === 0}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? "Sending Reminder Emails..." : "Send Reminder Emails"}

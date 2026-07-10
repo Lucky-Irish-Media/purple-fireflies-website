@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardSummary, getUnassignedSignups, getCoverageGaps } from "@/app/lib/reports";
+import { getDeliveryDates } from "@/app/lib/db";
 import { SendRemindersButton } from "@/components/SendRemindersButton";
 
 async function StatCard({
@@ -41,10 +42,11 @@ async function StatCard({
 }
 
 export default async function AdminDashboard() {
-  const [summary, unassigned, gaps] = await Promise.all([
+  const [summary, unassigned, gaps, deliveryDates] = await Promise.all([
     getDashboardSummary(),
     getUnassignedSignups(),
     getCoverageGaps(),
+    getDeliveryDates(),
   ]);
 
   const gapDates = gaps.filter((g) => g.unassigned_count > 0);
@@ -135,7 +137,7 @@ export default async function AdminDashboard() {
           <code className="mx-1 rounded bg-card px-1.5 py-0.5 text-xs font-mono">EMAIL_FROM</code>
           to be configured.
         </p>
-        <SendRemindersButton />
+        <SendRemindersButton dates={deliveryDates} />
       </section>
     </div>
   );

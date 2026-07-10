@@ -538,6 +538,24 @@ export async function getDriverById(id: number): Promise<DriverVolunteerWithPart
   return result || null;
 }
 
+export async function getDeliveryDates(): Promise<string[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+
+  const result = await db
+    .prepare(
+      `SELECT DISTINCT ms.delivery_date
+       FROM delivery_assignments da
+       JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       WHERE ms.delivery_date >= ?
+       ORDER BY ms.delivery_date`
+    )
+    .bind(today)
+    .all<{ delivery_date: string }>();
+
+  return result.results.map((r) => r.delivery_date);
+}
+
 export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver[]> {
   const db = await getDB();
 
