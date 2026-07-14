@@ -538,6 +538,22 @@ export async function getDriverById(id: number): Promise<DriverVolunteerWithPart
   return result || null;
 }
 
+export async function getDriverVolunteersByParticipantAndDate(
+  participantId: number,
+  deliveryDate: string
+): Promise<DriverVolunteer[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${DRIVER_SELECT}
+       FROM driver_volunteers dv
+       WHERE dv.participant_id = ? AND dv.delivery_date = ?`
+    )
+    .bind(participantId, deliveryDate)
+    .all<DriverVolunteer>();
+  return result.results || [];
+}
+
 export async function getDeliveryDates(): Promise<string[]> {
   const db = await getDB();
   const today = new Date().toISOString().split("T")[0];

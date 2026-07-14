@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
+import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getDriverById, getDriverVolunteersByParticipantAndDate, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -167,5 +167,46 @@ export async function createDriverVolunteerAction(
   } catch (e) {
     console.error("createDriverVolunteer action error:", e);
     return { message: "Failed to add driver volunteer. Please try again." };
+  }
+}
+
+export async function duplicateDriverVolunteerAction(
+  _prevState: AdminDriverVolunteerActionState,
+  formData: FormData,
+): Promise<AdminDriverVolunteerActionState> {
+  try {
+    await verifySession();
+
+    const id = Number(formData.get("id"));
+    const deliveryDate = formData.get("deliveryDate") as string;
+
+    if (!id || !deliveryDate) {
+      return { message: "Missing required fields." };
+    }
+
+    const existing = await getDriverById(id);
+    if (!existing) {
+      return { message: "Original volunteer not found." };
+    }
+
+    const existingForDate = await getDriverVolunteersByParticipantAndDate(existing.participant_id, deliveryDate);
+    if (existingForDate.length > 0) {
+      return { message: "This participant already has a volunteer entry for the selected date." };
+    }
+
+    await createDriverVolunteer({
+      participantId: existing.participant_id,
+      onSignal: existing.on_signal,
+      regions: existing.regions,
+      deliveryDate,
+    });
+
+    const volunteers = await getDriverVolunteers();
+    revalidatePath("/admin/programs/meal-delivery");
+
+    return { message: "Volunteer duplicated successfully.", volunteers };
+  } catch (e) {
+    console.error("duplicateDriverVolunteer action error:", e);
+    return { message: "Failed to duplicate volunteer. Please try again." };
   }
 }

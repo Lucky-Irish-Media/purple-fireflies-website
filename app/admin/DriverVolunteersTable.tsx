@@ -3,7 +3,7 @@
 import { useMemo, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
-import { createDriverVolunteerAction, updateDriverVolunteerAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
+import { createDriverVolunteerAction, updateDriverVolunteerAction, duplicateDriverVolunteerAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate, formatPhone, formatDateTime, deliveryDateFilterFn, DeliveryDateFilter } from "./lib/utils";
@@ -90,6 +90,22 @@ export default function DriverVolunteersTable({
     return result;
   }, undefined);
 
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [duplicatingVolunteer, setDuplicatingVolunteer] = useState<DriverVolunteerWithParticipant | null>(null);
+
+  const [duplicateState, duplicateAction, duplicatePending] = useActionState<
+    AdminDriverVolunteerActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await duplicateDriverVolunteerAction(prev, formData);
+    if (result?.volunteers) {
+      setVolunteers(result.volunteers);
+      setDuplicateModalOpen(false);
+      setDuplicatingVolunteer(null);
+    }
+    return result;
+  }, undefined);
+
   const columns = useMemo(() => [
     columnHelper.accessor((row) => row.participant_name, {
       id: "name",
@@ -129,15 +145,26 @@ export default function DriverVolunteersTable({
       enableHiding: false,
       header: "",
       cell: (info) => (
-        <button
-          onClick={() => {
-            setEditingVolunteer(info.row.original);
-            setModalOpen(true);
-          }}
-          className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-        >
-          Edit
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setEditingVolunteer(info.row.original);
+              setModalOpen(true);
+            }}
+            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => {
+              setDuplicatingVolunteer(info.row.original);
+              setDuplicateModalOpen(true);
+            }}
+            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+          >
+            Duplicate
+          </button>
+        </div>
       ),
     }),
   ] as const, []);
@@ -184,6 +211,38 @@ export default function DriverVolunteersTable({
             {formPending
               ? (editingVolunteer ? "Saving..." : "Adding...")
               : (editingVolunteer ? "Save Changes" : "Add Volunteer")}
+          </button>
+        </form>
+      </Modal>
+
+      <Modal
+        open={duplicateModalOpen}
+        onClose={() => {
+          setDuplicateModalOpen(false);
+          setDuplicatingVolunteer(null);
+        }}
+        title="Duplicate Driver Volunteer"
+      >
+        <form action={duplicateAction} className="space-y-4">
+          <input type="hidden" name="id" value={duplicatingVolunteer?.id || ""} />
+          <div>
+            <label htmlFor="dup-deliveryDate" className="block text-sm font-medium text-foreground mb-1">
+              New Delivery Date
+            </label>
+            <input id="dup-deliveryDate" name="deliveryDate" type="date" required
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {duplicateState?.errors?.deliveryDate && <p className="mt-1 text-sm text-red-500">{duplicateState.errors.deliveryDate[0]}</p>}
+          </div>
+          {duplicateState?.message && !duplicateState?.errors && (
+            <p className="text-sm text-red-500">{duplicateState.message}</p>
+          )}
+          <button
+            type="submit"
+            disabled={duplicatePending}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+          >
+            {duplicatePending ? "Duplicating..." : "Duplicate Volunteer"}
           </button>
         </form>
       </Modal>
