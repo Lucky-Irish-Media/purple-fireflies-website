@@ -113,7 +113,7 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
 
 function InlineEditCell({ row, field, placeholder }: {
   row: { original: MealSignupWithAssignment };
-  field: "bag_number" | "internal_notes";
+  field: "bag_number";
   placeholder: string;
 }) {
   const router = useRouter();
@@ -335,7 +335,7 @@ function SignupFormFields({ state, signup, formPending, editing }: {
         </div>
         <div>
           <label htmlFor="ms-internalNotes" className="block text-sm font-medium text-foreground mb-1">Internal Notes</label>
-          <input id="ms-internalNotes" name="internalNotes" type="text" defaultValue={signup?.internal_notes || ""}
+          <input id="ms-internalNotes" name="internalNotes" type="text" defaultValue={signup?.participant_internal_notes || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -548,7 +548,7 @@ export default function MealSignupsTable({
       header: "Internal Notes",
       enableColumnFilter: false,
       cell: (info) => {
-        const value = info.row.original.internal_notes;
+        const value = info.row.original.participant_internal_notes;
         if (!value) return <span className="text-text-secondary">—</span>;
         return (
           <button

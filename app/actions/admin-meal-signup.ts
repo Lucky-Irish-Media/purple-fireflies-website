@@ -109,6 +109,7 @@ export async function updateMealSignupAction(
         state: data.state,
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
+        internalNotes: data.internalNotes,
       });
     } else {
       participant = await createParticipant({
@@ -121,6 +122,7 @@ export async function updateMealSignupAction(
         state: data.state,
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
+        internalNotes: data.internalNotes,
       });
     }
 
@@ -134,7 +136,6 @@ export async function updateMealSignupAction(
       deliveryDate: data.deliveryDate,
       comments: data.comments,
       bagNumber: data.bagNumber,
-      internalNotes: data.internalNotes,
     });
 
     const signups = await getMealSignupsWithAssignments();
@@ -191,6 +192,7 @@ export async function createMealSignupAction(
         state: data.state,
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
+        internalNotes: data.internalNotes,
       });
     } else {
       participant = await createParticipant({
@@ -203,6 +205,7 @@ export async function createMealSignupAction(
         state: data.state,
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
+        internalNotes: data.internalNotes,
       });
     }
 
@@ -213,7 +216,6 @@ export async function createMealSignupAction(
       deliveryDate: data.deliveryDate,
       comments: data.comments,
       bagNumber: data.bagNumber,
-      internalNotes: data.internalNotes,
     });
 
     const signups = await getMealSignupsWithAssignments();
@@ -281,7 +283,7 @@ export async function updateMealSignupFieldAction(formData: FormData): Promise<{
       return { success: false, message: "Invalid request." };
     }
 
-    if (field !== "bag_number" && field !== "internal_notes") {
+    if (field !== "bag_number") {
       return { success: false, message: "Invalid field." };
     }
 
