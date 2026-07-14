@@ -22,9 +22,9 @@ function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
   return day === 3 ? "wednesday" : "thursday";
 }
 
-const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.internal_notes, ms.created_at`;
+const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.created_at`;
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
-const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method`;
+const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method, p.internal_notes as participant_internal_notes`;
 const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone`;
 
 export async function getParticipantByEmail(email: string): Promise<Participant | null> {
@@ -55,15 +55,16 @@ export async function createParticipant(data: {
   state: string;
   zipCode: string;
   contactMethod: "call" | "text" | "email";
+  internalNotes?: string;
 }): Promise<Participant> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO participants (name, email, phone, address1, address2, city, state, zip_code, contact_method, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `INSERT INTO participants (name, email, phone, address1, address2, city, state, zip_code, contact_method, internal_notes, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod)
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod, data.internalNotes || null)
     .first<Participant>();
   if (!result) {
     throw new Error("Failed to create participant");
@@ -81,17 +82,18 @@ export async function updateParticipant(id: number, data: {
   state: string;
   zipCode: string;
   contactMethod: "call" | "text" | "email";
+  internalNotes?: string;
 }): Promise<Participant> {
   const db = await getDB();
   const result = await db
     .prepare(
       `UPDATE participants
        SET name = ?, email = ?, phone = ?, address1 = ?, address2 = ?,
-           city = ?, state = ?, zip_code = ?, contact_method = ?, updated_at = datetime('now')
+           city = ?, state = ?, zip_code = ?, contact_method = ?, internal_notes = ?, updated_at = datetime('now')
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod, id)
+    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod, data.internalNotes || null, id)
     .first<Participant>();
   if (!result) {
     throw new Error("Failed to update participant");
@@ -106,16 +108,15 @@ export async function createMealSignup(data: {
   deliveryDate: string;
   comments?: string;
   bagNumber?: string;
-  internalNotes?: string;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO meal_signups (participant_id, regular_quantity, vegan_quantity, delivery_day, delivery_date, comments, bag_number, internal_notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO meal_signups (participant_id, regular_quantity, vegan_quantity, delivery_day, delivery_date, comments, bag_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.participantId, data.regularQuantity, data.veganQuantity, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, data.bagNumber || null, data.internalNotes || null)
+    .bind(data.participantId, data.regularQuantity, data.veganQuantity, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, data.bagNumber || null)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to create meal signup");
@@ -177,17 +178,16 @@ export async function updateMealSignup(id: number, data: {
   deliveryDate: string;
   comments?: string;
   bagNumber?: string;
-  internalNotes?: string;
 }): Promise<MealSignup> {
   const db = await getDB();
   const result = await db
     .prepare(
       `UPDATE meal_signups
-       SET participant_id = ?, regular_quantity = ?, vegan_quantity = ?, delivery_day = ?, delivery_date = ?, comments = ?, bag_number = ?, internal_notes = ?
+       SET participant_id = ?, regular_quantity = ?, vegan_quantity = ?, delivery_day = ?, delivery_date = ?, comments = ?, bag_number = ?
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.participantId, data.regularQuantity, data.veganQuantity, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, data.bagNumber || null, data.internalNotes || null, id)
+    .bind(data.participantId, data.regularQuantity, data.veganQuantity, getDeliveryDay(data.deliveryDate), data.deliveryDate, data.comments || null, data.bagNumber || null, id)
     .first<MealSignup>();
   if (!result) {
     throw new Error("Failed to update meal signup");
@@ -476,6 +476,9 @@ export interface DateDriver {
 
 export async function updateMealSignupField(id: number, field: string, value: string | null): Promise<void> {
   const db = await getDB();
+  if (field !== "bag_number") {
+    throw new Error(`Invalid field: ${field}`);
+  }
   await db
     .prepare(`UPDATE meal_signups SET ${field} = ? WHERE id = ?`)
     .bind(value, id)

@@ -88,6 +88,7 @@ export interface Participant {
   state: string;
   zip_code: string;
   contact_method: "call" | "text" | "email";
+  internal_notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -101,7 +102,6 @@ export interface MealSignup {
   delivery_date: string;
   comments: string | null;
   bag_number: string | null;
-  internal_notes: string | null;
   created_at: string;
 }
 
@@ -134,6 +134,7 @@ export interface MealSignupWithParticipant extends MealSignup {
   participant_state: string;
   participant_zip_code: string;
   participant_contact_method: string;
+  participant_internal_notes: string | null;
 }
 
 export interface DriverVolunteerWithParticipant extends DriverVolunteer {
