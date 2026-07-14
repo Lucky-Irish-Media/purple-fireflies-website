@@ -6,7 +6,7 @@ import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
 import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
-import { createMealSignupAction, updateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
+import { createMealSignupAction, updateMealSignupAction, duplicateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
@@ -370,6 +370,8 @@ export default function MealSignupsTable({
   const [signups, setSignups] = useState(initialData);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSignup, setEditingSignup] = useState<MealSignupWithAssignment | null>(null);
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [duplicatingSignup, setDuplicatingSignup] = useState<MealSignupWithAssignment | null>(null);
 
   const [createState, createAction, createPending] = useActionState<
     AdminMealSignupActionState,
@@ -391,6 +393,19 @@ export default function MealSignupsTable({
     if (result?.signups) {
       setSignups(result.signups);
       setModalOpen(false);
+    }
+    return result;
+  }, undefined);
+
+  const [duplicateState, duplicateAction, duplicatePending] = useActionState<
+    AdminMealSignupActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await duplicateMealSignupAction(prev, formData);
+    if (result?.signups) {
+      setSignups(result.signups);
+      setDuplicateModalOpen(false);
+      setDuplicatingSignup(null);
     }
     return result;
   }, undefined);
@@ -565,18 +580,29 @@ export default function MealSignupsTable({
       enableHiding: false,
       header: "",
       cell: (info) => (
-        <button
-          onClick={() => {
-            setEditingSignup(info.row.original);
-            setModalOpen(true);
-          }}
-          className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-        >
-          Edit
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setEditingSignup(info.row.original);
+              setModalOpen(true);
+            }}
+            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => {
+              setDuplicatingSignup(info.row.original);
+              setDuplicateModalOpen(true);
+            }}
+            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+          >
+            Duplicate
+          </button>
+        </div>
       ),
     }),
-  ] as const, [drivers, isPending, handleAssignment]);
+  ] as const, [drivers, isPending, handleAssignment, duplicateAction]);
 
   const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignment, unknown>[];
 
@@ -611,6 +637,36 @@ export default function MealSignupsTable({
           {editingSignup && <input type="hidden" name="id" value={editingSignup.id} />}
 
           <SignupFormFields state={formState} signup={editingSignup} formPending={formPending} editing={!!editingSignup} />
+        </form>
+      </Modal>
+
+      <Modal
+        open={duplicateModalOpen}
+        onClose={() => {
+          setDuplicateModalOpen(false);
+          setDuplicatingSignup(null);
+        }}
+        title="Duplicate Meal Signup"
+      >
+        <form action={duplicateAction} className="space-y-4">
+          <input type="hidden" name="id" value={duplicatingSignup?.id || ""} />
+          <div>
+            <label htmlFor="dup-deliveryDate" className="block text-sm font-medium text-foreground mb-1">New Delivery Date</label>
+            <input id="dup-deliveryDate" name="deliveryDate" type="date" required
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {duplicateState?.errors?.deliveryDate && <p className="mt-1 text-sm text-red-500">{duplicateState.errors.deliveryDate[0]}</p>}
+          </div>
+          {duplicateState?.message && !duplicateState?.errors && (
+            <p className="text-sm text-red-500">{duplicateState.message}</p>
+          )}
+          <button
+            type="submit"
+            disabled={duplicatePending}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+          >
+            {duplicatePending ? "Duplicating..." : "Duplicate Signup"}
+          </button>
         </form>
       </Modal>
 

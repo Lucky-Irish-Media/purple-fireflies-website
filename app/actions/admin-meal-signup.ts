@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate } from "@/app/lib/db";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -224,6 +224,48 @@ export async function createMealSignupAction(
   } catch (e) {
     console.error("createMealSignup action error:", e);
     return { message: "Failed to add signup. Please try again." };
+  }
+}
+
+export async function duplicateMealSignupAction(
+  _prevState: AdminMealSignupActionState,
+  formData: FormData,
+): Promise<AdminMealSignupActionState> {
+  try {
+    await verifySession();
+
+    const id = Number(formData.get("id"));
+    const deliveryDate = formData.get("deliveryDate") as string;
+
+    if (!id || !deliveryDate) {
+      return { message: "Missing required fields." };
+    }
+
+    const existingSignup = await getMealSignupById(id);
+    if (!existingSignup) {
+      return { message: "Original signup not found." };
+    }
+
+    const existingForDate = await getMealSignupsByParticipantAndDate(existingSignup.participant_id, deliveryDate);
+    if (existingForDate.length > 0) {
+      return { message: "This participant already has a signup for the selected date." };
+    }
+
+    await createMealSignup({
+      participantId: existingSignup.participant_id,
+      regularQuantity: existingSignup.regular_quantity,
+      veganQuantity: existingSignup.vegan_quantity,
+      deliveryDate: deliveryDate,
+      comments: existingSignup.comments || undefined,
+    });
+
+    const signups = await getMealSignupsWithAssignments();
+    revalidatePath("/admin/programs/meal-delivery");
+
+    return { message: "Signup duplicated successfully.", signups };
+  } catch (e) {
+    console.error("duplicateMealSignup action error:", e);
+    return { message: "Failed to duplicate signup. Please try again." };
   }
 }
 
