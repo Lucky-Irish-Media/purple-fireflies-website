@@ -2,7 +2,7 @@
 
 import { verifySession } from "@/app/lib/dal";
 import { getAssignmentsForDate, logReminderSent } from "@/app/lib/db";
-import { sendEmail } from "@/app/lib/email";
+import { sendEmail, sendDeliverySummaryEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
   success: boolean;
@@ -98,6 +98,12 @@ export async function sendDriverReminders(
 
     const sent = results.filter((r) => r.status === "sent").length;
     const failed = results.filter((r) => r.status !== "sent").length;
+
+    try {
+      await sendDeliverySummaryEmail(date, drivers);
+    } catch (err) {
+      console.error("Failed to send delivery summary email:", err);
+    }
 
     await logReminderSent(date, sent, failed);
 
