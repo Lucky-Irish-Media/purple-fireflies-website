@@ -6,6 +6,7 @@ import {
   getCoverageGaps,
   getVolunteerAvailability,
   getDriverTotalAssignments,
+  getMonthlyMealDeliveryTotals,
 } from "@/app/lib/reports";
 import ReportsTabs from "./ReportsTabs";
 
@@ -18,6 +19,7 @@ export default async function AdminReportsPage() {
     coverageGaps,
     volunteerAvailability,
     driverTotalAssignments,
+    monthlyMealTotals,
   ] = await Promise.all([
     getWeeklyAssignments(),
     getUnassignedSignups(),
@@ -26,6 +28,7 @@ export default async function AdminReportsPage() {
     getCoverageGaps(),
     getVolunteerAvailability(),
     getDriverTotalAssignments(),
+    getMonthlyMealDeliveryTotals(),
   ]);
 
   const weeks = [...new Set(weeklyAssignments.map((r) => r.iso_week))].sort().reverse();
@@ -39,6 +42,7 @@ export default async function AdminReportsPage() {
       coverageGaps={coverageGaps}
       volunteerAvailability={volunteerAvailability}
       driverTotalAssignments={driverTotalAssignments}
+      monthlyMealTotals={monthlyMealTotals}
       weeks={weeks}
     />
   );

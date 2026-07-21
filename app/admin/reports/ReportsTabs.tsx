@@ -11,6 +11,7 @@ import type {
   CoverageGapRow,
   VolunteerAvailabilityRow,
   DriverTotalAssignmentRow,
+  MonthlyMealTotalRow,
 } from "@/app/lib/reports";
 import { createColumnHelper } from "@tanstack/react-table";
 import { sendAssignmentEmail } from "@/app/actions/send-assignment-email";
@@ -24,7 +25,8 @@ type TabKey =
   | "meal-breakdown"
   | "coverage-gaps"
   | "availability"
-  | "total-assignments";
+  | "total-assignments"
+  | "monthly-totals";
 
 interface Tab {
   key: TabKey;
@@ -39,6 +41,7 @@ const tabs: Tab[] = [
   { key: "coverage-gaps", label: "Coverage Gaps" },
   { key: "availability", label: "Availability" },
   { key: "total-assignments", label: "Total Assignments" },
+  { key: "monthly-totals", label: "Monthly Totals" },
 ];
 
 function EmailButton({ row }: { row: WeeklyAssignmentRow }) {
@@ -227,6 +230,14 @@ const vaCols = [
   vach.accessor("count", { header: "Count", enableSorting: true }),
 ];
 
+const mtotch = createColumnHelper<any>();
+const mtotCols = [
+  mtotch.accessor("month", { header: "Month", enableSorting: true }),
+  mtotch.accessor("regular_count", { header: "Regular", enableSorting: true }),
+  mtotch.accessor("vegan_count", { header: "Vegan", enableSorting: true }),
+  mtotch.accessor("total_meals", { header: "Total Meals", enableSorting: true }),
+];
+
 interface Props {
   weeklyAssignments: WeeklyAssignmentRow[];
   unassignedSignups: UnassignedSignup[];
@@ -235,6 +246,7 @@ interface Props {
   coverageGaps: CoverageGapRow[];
   volunteerAvailability: VolunteerAvailabilityRow[];
   driverTotalAssignments: DriverTotalAssignmentRow[];
+  monthlyMealTotals: MonthlyMealTotalRow[];
   weeks: string[];
 }
 
@@ -246,6 +258,7 @@ export default function ReportsTabs({
   coverageGaps,
   volunteerAvailability,
   driverTotalAssignments,
+  monthlyMealTotals,
   weeks,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("weekly");
@@ -444,6 +457,28 @@ export default function ReportsTabs({
             />
           ) : (
             <p className="text-text-secondary italic">No assignment data available.</p>
+          )}
+        </section>
+      )}
+
+      {/* Monthly Meal Totals */}
+      {activeTab === "monthly-totals" && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Monthly Meal Totals</h2>
+            <p className="text-sm text-text-secondary mt-1">
+              Total meals delivered per month, broken down by meal type.
+            </p>
+          </div>
+          {monthlyMealTotals.length > 0 ? (
+            <DataTable
+              data={monthlyMealTotals}
+              columns={mtotCols}
+              pageSize={20}
+              initialSorting={[{ id: "month", desc: true }]}
+            />
+          ) : (
+            <p className="text-text-secondary italic">No delivery data available.</p>
           )}
         </section>
       )}
