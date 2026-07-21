@@ -237,6 +237,32 @@ export async function getDriverTotalAssignments(): Promise<DriverTotalAssignment
   return result.results || [];
 }
 
+export interface MonthlyMealTotalRow {
+  month: string;
+  regular_count: number;
+  vegan_count: number;
+  total_meals: number;
+}
+
+export async function getMonthlyMealDeliveryTotals(): Promise<MonthlyMealTotalRow[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT
+         SUBSTR(ms.delivery_date, 1, 7) as month,
+         SUM(ms.regular_quantity) as regular_count,
+         SUM(ms.vegan_quantity) as vegan_count,
+         SUM(ms.regular_quantity + ms.vegan_quantity) as total_meals
+       FROM meal_signups ms
+       JOIN delivery_assignments da ON ms.id = da.meal_signup_id
+       WHERE ms.delivery_date < date('now')
+       GROUP BY month
+       ORDER BY month DESC`
+    )
+    .all<MonthlyMealTotalRow>();
+  return result.results || [];
+}
+
 export interface DashboardSummary {
   unassigned_count: number;
   upcoming_delivery_dates: number;
