@@ -128,9 +128,7 @@ export async function submitMealSignup(
       waitlisted.push(deliveryDate);
     }
 
-    if (signups.length > 0) {
-      await sendMealSignupConfirmation(signups, participant);
-    }
+    await sendMealSignupConfirmation(signups, participant, waitlisted.length > 0 ? waitlisted : undefined);
 
     if (signups.length > 0 && waitlisted.length === 0) {
       const datesFormatted = deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");

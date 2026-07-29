@@ -1,12 +1,12 @@
 import type { Participant, MealSignup, WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import type { DateDriver } from "@/app/lib/db";
 
-export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant): Promise<void> {
-  if (signups.length === 0) return;
+export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant, waitlistedDates?: string[]): Promise<void> {
+  if (signups.length === 0 && (!waitlistedDates || waitlistedDates.length === 0)) return;
   const address = `${participant.address1}${participant.address2 ? `, ${participant.address2}` : ""}, ${participant.city}, ${participant.state} ${participant.zip_code}`;
 
-  const datesSet = new Set(signups.map((s) => s.delivery_date));
-  const datesFormatted = Array.from(datesSet).map((d) =>
+  const signupDates = Array.from(new Set(signups.map((s) => s.delivery_date)));
+  const datesFormatted = signupDates.map((d) =>
     new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
   ).join(", ");
 
@@ -20,8 +20,33 @@ export async function sendMealSignupConfirmation(signups: MealSignup[], particip
     mealLines.push(`${formatted} (${day}): ${parts.join(" + ")}`);
   }
 
-  const subject = `Meal Signup Confirmed — ${datesFormatted}`;
-  const text = `Hi ${participant.name},\n\nYour meal delivery signup has been received.\n\n${mealLines.join("\n")}\nAddress: ${address}\nContact Method: ${participant.contact_method}\n\nWe'll reach out if anything changes.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
+  const parts: string[] = [];
+  if (signups.length > 0) {
+    if (signups[0].regular_quantity > 0) parts.push(`${signups[0].regular_quantity} Regular`);
+    if (signups[0].vegan_quantity > 0) parts.push(`${signups[0].vegan_quantity} Vegan / GF`);
+  }
+
+  let text = "";
+  if (signups.length > 0) {
+    text += `Your meal delivery signup has been received.\n\n${mealLines.join("\n")}\nAddress: ${address}\nContact Method: ${participant.contact_method}\n\n`;
+  }
+
+  if (waitlistedDates && waitlistedDates.length > 0) {
+    const waitlistedFormatted = waitlistedDates.map((d) => {
+      const formatted = new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+      const day = new Date(d).getDay() === 3 ? "Wednesday" : "Thursday";
+      return `${formatted} (${day}): ${parts.join(" + ") || "None"}`;
+    }).join("\n");
+
+    text += `You have been added to the waitlist for:\n${waitlistedFormatted}\n\nWe will notify you if a spot opens up.\n\n`;
+  }
+
+  text += `Take care,\nMeal Delivery Coordinator\nPurple Fireflies`;
+
+  const allDatesFormatted = [...signupDates, ...(waitlistedDates || [])].map((d) =>
+    new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
+  ).join(", ");
+  const subject = `Meal Signup Confirmed — ${allDatesFormatted}`;
 
   await sendEmail({ to: participant.email, subject, text });
 }
@@ -74,7 +99,7 @@ export async function sendEmail(params: {
   }
 }
 
-export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver[]): Promise<void> {
+export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver[], waitlistEntries?: WaitlistEntryWithParticipant[]): Promise<void> {
   const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -128,7 +153,7 @@ export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver
       <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">Meal Delivery Summary — ${formattedDate}</h1>
     </div>
     <div style="padding:16px 24px;">
-      <p style="margin:0 0 12px;font-size:14px;color:#374151;">${rows.length} delivery(ies) across ${drivers.length} driver(s).</p>
+      <p style="margin:0 0 12px;font-size:14px;color:#374151;">${rows.length} delivery(ies) across ${drivers.length} driver(s)${waitlistEntries && waitlistEntries.length > 0 ? `, ${waitlistEntries.length} on waitlist` : ""}.</p>
       <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;">
         <thead>
           <tr style="background-color:#f3f4f6;">
@@ -143,13 +168,52 @@ export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver
 ${tableRows}
         </tbody>
       </table>
+      ${waitlistEntries && waitlistEntries.length > 0 ? `
+      <h2 style="font-size:16px;font-weight:600;color:#6b21a8;margin:24px 0 8px;">Waitlist (${waitlistEntries.length})</h2>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;">
+        <thead>
+          <tr style="background-color:#f3f4f6;">
+            <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Name</th>
+            <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Phone</th>
+            <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Email</th>
+            <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Meals</th>
+            <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Waitlisted</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${waitlistEntries.map((w) => {
+            const parts: string[] = [];
+            if (w.regular_quantity > 0) parts.push(`${w.regular_quantity} Regular`);
+            if (w.vegan_quantity > 0) parts.push(`${w.vegan_quantity} Vegan/GF`);
+            const waitlistedDate = new Date(w.created_at + (w.created_at.includes("T") ? "" : "T00:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            return `          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${w.participant_name}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${w.participant_phone}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${w.participant_email}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${parts.join(" + ") || "None"}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${waitlistedDate}</td>
+          </tr>`;
+          }).join("\n")}
+        </tbody>
+      </table>` : ""}
     </div>
   </div>
 </body>
 </html>`;
 
-  const text = `Meal Delivery Summary — ${formattedDate}\n${rows.length} delivery(ies) across ${drivers.length} driver(s).\n\n` +
+  let text = `Meal Delivery Summary — ${formattedDate}\n${rows.length} delivery(ies) across ${drivers.length} driver(s)${waitlistEntries && waitlistEntries.length > 0 ? `, ${waitlistEntries.length} on waitlist` : ""}.\n\n` +
     rows.map((r) => `${r.name} | ${r.phone} | ${r.address} | ${r.meals} | ${r.driver}`).join("\n");
+
+  if (waitlistEntries && waitlistEntries.length > 0) {
+    text += `\n\n--- Waitlist (${waitlistEntries.length}) ---\n`;
+    for (const w of waitlistEntries) {
+      const parts: string[] = [];
+      if (w.regular_quantity > 0) parts.push(`${w.regular_quantity} Regular`);
+      if (w.vegan_quantity > 0) parts.push(`${w.vegan_quantity} Vegan/GF`);
+      const waitlistedDate = new Date(w.created_at + (w.created_at.includes("T") ? "" : "T00:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      text += `\n${w.participant_name} | ${w.participant_phone} | ${w.participant_email} | ${parts.join(" + ") || "None"} | Waitlisted: ${waitlistedDate}`;
+    }
+  }
 
   await sendEmail({
     to: "meal.delivery@purplefireflies.org",

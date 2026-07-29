@@ -1,7 +1,7 @@
 "use server";
 
 import { verifySession } from "@/app/lib/dal";
-import { getAssignmentsForDate, logReminderSent } from "@/app/lib/db";
+import { getAssignmentsForDate, getWaitlistEntriesByDate, logReminderSent } from "@/app/lib/db";
 import { sendEmail, sendDeliverySummaryEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
@@ -100,7 +100,8 @@ export async function sendDriverReminders(
     const failed = results.filter((r) => r.status !== "sent").length;
 
     try {
-      await sendDeliverySummaryEmail(date, drivers);
+      const waitlistEntries = await getWaitlistEntriesByDate(date);
+      await sendDeliverySummaryEmail(date, drivers, waitlistEntries);
     } catch (err) {
       console.error("Failed to send delivery summary email:", err);
     }
