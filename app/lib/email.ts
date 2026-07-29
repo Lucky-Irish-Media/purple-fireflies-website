@@ -1,4 +1,4 @@
-import type { Participant, MealSignup } from "@/app/lib/definitions";
+import type { Participant, MealSignup, WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import type { DateDriver } from "@/app/lib/db";
 
 export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant): Promise<void> {
@@ -24,6 +24,13 @@ export async function sendMealSignupConfirmation(signups: MealSignup[], particip
   const text = `Hi ${participant.name},\n\nYour meal delivery signup has been received.\n\n${mealLines.join("\n")}\nAddress: ${address}\nContact Method: ${participant.contact_method}\n\nWe'll reach out if anything changes.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
 
   await sendEmail({ to: participant.email, subject, text });
+}
+
+export async function sendWaitlistNotification(entry: WaitlistEntryWithParticipant): Promise<void> {
+  const formattedDate = new Date(entry.delivery_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  const subject = `Spot Available — ${formattedDate}`;
+  const text = `Hi ${entry.participant_name},\n\nA spot has opened up for meal delivery on ${formattedDate}! Please sign up as soon as possible at:\n\nhttps://purplefireflies.org/programs/meal-delivery/delivery-signup\n\nThis spot will be offered to the next person on the waitlist if not claimed.\n\nTake care,\nMeal Delivery Coordinator\nPurple Fireflies`;
+  await sendEmail({ to: entry.participant_email, subject, text });
 }
 
 export async function sendEmail(params: {

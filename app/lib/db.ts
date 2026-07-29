@@ -9,6 +9,8 @@ import type {
   MealSignupWithParticipant,
   DriverVolunteerWithParticipant,
   MealSignupWithAssignment,
+  WaitlistEntry,
+  WaitlistEntryWithParticipant,
 } from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
@@ -26,6 +28,7 @@ const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.ve
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
 const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method, p.internal_notes as participant_internal_notes`;
 const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone`;
+const WAITLIST_SELECT = `wl.id, wl.participant_id, wl.delivery_date, wl.regular_quantity, wl.vegan_quantity, wl.status, wl.created_at`;
 
 export async function getParticipantByEmail(email: string): Promise<Participant | null> {
   const db = await getDB();
@@ -677,4 +680,96 @@ export async function getReminderLogs(): Promise<ReminderLog[]> {
     )
     .all<ReminderLog>();
   return result.results;
+}
+
+export const MAX_SIGNUPS_PER_DATE = 15;
+
+export async function getMealSignupCountForDate(deliveryDate: string): Promise<number> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT COALESCE(SUM(regular_quantity + vegan_quantity), 0) as count FROM meal_signups WHERE delivery_date = ?")
+    .bind(deliveryDate)
+    .first<{ count: number }>();
+  return result?.count ?? 0;
+}
+
+export async function addToWaitlist(data: {
+  participantId: number;
+  deliveryDate: string;
+  regularQuantity: number;
+  veganQuantity: number;
+}): Promise<WaitlistEntry> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO waitlist (participant_id, delivery_date, regular_quantity, vegan_quantity)
+       VALUES (?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.participantId, data.deliveryDate, data.regularQuantity, data.veganQuantity)
+    .first<WaitlistEntry>();
+  if (!result) throw new Error("Failed to add to waitlist");
+  return result;
+}
+
+export async function getWaitlistEntries(): Promise<WaitlistEntryWithParticipant[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${WAITLIST_SELECT},
+              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+       FROM waitlist wl
+       JOIN participants p ON wl.participant_id = p.id
+       WHERE wl.delivery_date >= date('now', '-30 days')
+       ORDER BY wl.delivery_date ASC, wl.created_at ASC`
+    )
+    .all<WaitlistEntryWithParticipant>();
+  return result.results || [];
+}
+
+export async function getWaitlistEntriesByDate(deliveryDate: string): Promise<WaitlistEntryWithParticipant[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${WAITLIST_SELECT},
+              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+       FROM waitlist wl
+       JOIN participants p ON wl.participant_id = p.id
+       WHERE wl.delivery_date = ? AND wl.status = 'waiting'
+       ORDER BY wl.created_at ASC`
+    )
+    .bind(deliveryDate)
+    .all<WaitlistEntryWithParticipant>();
+  return result.results || [];
+}
+
+export async function getWaitlistEntryById(id: number): Promise<WaitlistEntryWithParticipant | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ${WAITLIST_SELECT},
+              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+       FROM waitlist wl
+       JOIN participants p ON wl.participant_id = p.id
+       WHERE wl.id = ?`
+    )
+    .bind(id)
+    .first<WaitlistEntryWithParticipant>();
+  return result || null;
+}
+
+export async function updateWaitlistStatus(id: number, status: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE waitlist SET status = ? WHERE id = ?")
+    .bind(status, id)
+    .run();
+}
+
+export async function deleteWaitlistEntry(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM waitlist WHERE id = ?")
+    .bind(id)
+    .run();
 }

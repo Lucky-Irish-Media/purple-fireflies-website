@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { MealSignupWithAssignment } from "@/app/lib/definitions";
-import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
+import type { MealSignupWithAssignment, DriverVolunteerWithParticipant, WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import MealSignupsTable from "../../MealSignupsTable";
 import DriverVolunteersTable from "../../DriverVolunteersTable";
+import { WaitlistTable } from "../../WaitlistTable";
 
-type TabKey = "signups" | "volunteers";
+type TabKey = "signups" | "volunteers" | "waitlist";
 
 interface Tab {
   key: TabKey;
@@ -16,14 +16,16 @@ interface Tab {
 const tabs: Tab[] = [
   { key: "signups", label: "Meal Signups" },
   { key: "volunteers", label: "Driver Volunteers" },
+  { key: "waitlist", label: "Waitlist" },
 ];
 
 interface Props {
   mealSignups: MealSignupWithAssignment[];
   driverVolunteers: DriverVolunteerWithParticipant[];
+  waitlistEntries: WaitlistEntryWithParticipant[];
 }
 
-export default function MealDeliveryTabs({ mealSignups, driverVolunteers }: Props) {
+export default function MealDeliveryTabs({ mealSignups, driverVolunteers, waitlistEntries }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("signups");
 
   return (
@@ -53,6 +55,12 @@ export default function MealDeliveryTabs({ mealSignups, driverVolunteers }: Prop
       {activeTab === "volunteers" && (
         <section>
           <DriverVolunteersTable initialData={driverVolunteers} />
+        </section>
+      )}
+
+      {activeTab === "waitlist" && (
+        <section>
+          <WaitlistTable initialData={waitlistEntries} />
         </section>
       )}
     </div>

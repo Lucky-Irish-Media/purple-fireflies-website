@@ -365,7 +365,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
           )}
         </fieldset>
 
-        <fieldset className="space-y-2">
+          <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-foreground">
             Delivery Dates <span className="text-red-500">*</span>
           </legend>
@@ -379,21 +379,44 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
               const veganRestricted = veganQty > 0 && isFirstWed;
               const disabled = isFull || veganRestricted;
               return (
-                <label key={option.value} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"} block`}>
-                  <input
-                    type="checkbox"
-                    name="deliveryDates"
-                    value={option.value}
-                    disabled={disabled}
-                    className="h-4 w-4 text-primary border-input focus:ring-primary rounded disabled:opacity-40"
-                  />
-                  <span className={disabled ? "text-text-secondary line-through" : "text-foreground"}>
-                    {option.label}
-                  </span>
-                  <span className={`text-xs ${isFull ? "text-red-400" : veganRestricted ? "text-amber-600" : "text-text-secondary"}`}>
-                    {isFull ? "Full" : veganRestricted ? "Not available for Vegan / GF" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
-                  </span>
-                </label>
+                <div key={option.value} className="space-y-1">
+                  <label className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"} block`}>
+                    {isFull ? (
+                      <input
+                        type="checkbox"
+                        name="deliveryDates"
+                        value={option.value}
+                        disabled={true}
+                        className="h-4 w-4 text-primary border-input focus:ring-primary rounded disabled:opacity-40"
+                      />
+                    ) : (
+                      <input
+                        type="checkbox"
+                        name="deliveryDates"
+                        value={option.value}
+                        disabled={veganRestricted}
+                        className="h-4 w-4 text-primary border-input focus:ring-primary rounded disabled:opacity-40"
+                      />
+                    )}
+                    <span className={disabled ? "text-text-secondary line-through" : "text-foreground"}>
+                      {option.label}
+                    </span>
+                    <span className={`text-xs ${isFull ? "text-red-400" : veganRestricted ? "text-amber-600" : "text-text-secondary"}`}>
+                      {isFull ? "Full" : veganRestricted ? "Not available for Vegan / GF" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
+                    </span>
+                  </label>
+                  {isFull && (
+                    <label className="flex items-center gap-2 cursor-pointer pl-6">
+                      <input
+                        type="checkbox"
+                        name="waitlistDates"
+                        value={option.value}
+                        className="h-4 w-4 text-amber-500 border-input focus:ring-amber-500 rounded"
+                      />
+                      <span className="text-xs text-amber-400">Join waitlist for this date</span>
+                    </label>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -417,7 +440,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
           />
         </div>
 
-        {state?.message && state.message !== "success" && (
+        {state?.message && state.message !== "success" && state.message !== "waitlist_success" && state.message !== "mixed_success" && (
           <div className="rounded-lg bg-red-50 p-4 text-red-600" role="alert">
             {state.message}
           </div>
@@ -426,6 +449,18 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
         {state?.message === "success" && (
           <div className="rounded-lg bg-green-50 p-4 text-green-600" role="status">
             Thank you for signing up! Your delivery is scheduled for {state.selectedDate || "the selected date"}. We&apos;ll be in touch soon with delivery details.
+          </div>
+        )}
+
+        {state?.message === "waitlist_success" && (
+          <div className="rounded-lg bg-amber-50 p-4 text-amber-700" role="status">
+            You&apos;ve been added to the waitlist for {state.selectedDate || "the selected date"}. We&apos;ll notify you if a spot opens up.
+          </div>
+        )}
+
+        {state?.message === "mixed_success" && (
+          <div className="rounded-lg bg-blue-50 p-4 text-blue-700" role="status">
+            Your signup for {state.selectedDate || "some dates"} is confirmed. You&apos;ve also been added to the waitlist for {state.waitlistedDates || "some dates"}. We&apos;ll notify you if a spot opens up.
           </div>
         )}
 

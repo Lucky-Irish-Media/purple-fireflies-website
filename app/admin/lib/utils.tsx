@@ -122,6 +122,20 @@ export function getContactMethodBadge(method: string) {
   );
 }
 
+export function getWaitlistStatusBadge(status: string) {
+  const styles: Record<string, string> = {
+    waiting: "bg-yellow-100 text-yellow-800",
+    notified: "bg-blue-100 text-blue-800",
+    converted: "bg-green-100 text-green-800",
+    expired: "bg-gray-100 text-gray-800",
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${styles[status] || "bg-gray-100 text-gray-800"}`}>
+      {status}
+    </span>
+  );
+}
+
 export function DeliveryDateFilter({ column }: { column: any }) {
   const value = column.getFilterValue() as string | undefined;
   return (
