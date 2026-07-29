@@ -123,6 +123,15 @@ export function DataTable<TData extends RowData>({
   const hasPinning = enableColumnPinning && Object.values(columnPinning).some(arr => arr && arr.length > 0);
 
   const table = useReactTable({
+    _features: [{
+      createColumn: (column: any, _table: any) => {
+        column.getCanGlobalFilter = () => {
+          if (column.columnDef.enableGlobalFilter === false) return false;
+          return true;
+        };
+      },
+    }],
+    
     data,
     columns,
     state: {
