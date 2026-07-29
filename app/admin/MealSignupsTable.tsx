@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, useActionState, useEffect } from "react";
+import { useMemo, useState, useTransition, useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
@@ -368,6 +368,13 @@ export default function MealSignupsTable({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [signups, setSignups] = useState(initialData);
+  const prevInitialData = useRef(initialData);
+  useEffect(() => {
+    if (prevInitialData.current !== initialData) {
+      setSignups(initialData);
+      prevInitialData.current = initialData;
+    }
+  }, [initialData]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSignup, setEditingSignup] = useState<MealSignupWithAssignment | null>(null);
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
