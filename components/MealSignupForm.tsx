@@ -440,7 +440,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
           />
         </div>
 
-        {state?.message && state.message !== "success" && (
+        {state?.message && state.message !== "success" && state.message !== "waitlist_success" && state.message !== "mixed_success" && (
           <div className="rounded-lg bg-red-50 p-4 text-red-600" role="alert">
             {state.message}
           </div>
