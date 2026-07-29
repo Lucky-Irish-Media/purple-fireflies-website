@@ -59,7 +59,7 @@ export const DriverVolunteerSchema = z.object({
 });
 
 export type MealSignupFormState =
-  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; regularQuantity?: string[]; veganQuantity?: string[]; contactMethod?: string[]; deliveryDates?: string[]; comments?: string[] }; message?: string; selectedDate?: string }
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; address1?: string[]; address2?: string[]; city?: string[]; state?: string[]; zipCode?: string[]; regularQuantity?: string[]; veganQuantity?: string[]; contactMethod?: string[]; deliveryDates?: string[]; comments?: string[] }; message?: string; selectedDate?: string; waitlistedDates?: string[] }
   | undefined;
 
 export type DriverVolunteerFormState =
@@ -149,3 +149,25 @@ export interface MealSignupWithAssignment extends MealSignupWithParticipant {
   driver_name: string | null;
   driver_phone: string | null;
 }
+
+export type WaitlistStatus = "waiting" | "notified" | "converted" | "expired";
+
+export interface WaitlistEntry {
+  id: number;
+  participant_id: number;
+  delivery_date: string;
+  regular_quantity: number;
+  vegan_quantity: number;
+  status: WaitlistStatus;
+  created_at: string;
+}
+
+export interface WaitlistEntryWithParticipant extends WaitlistEntry {
+  participant_name: string;
+  participant_email: string;
+  participant_phone: string;
+}
+
+export const WaitlistSchema = z.object({
+  deliveryDates: z.array(z.string()),
+});

@@ -1,7 +1,7 @@
 "use server";
 
 import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definitions";
-import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
+import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE, addToWaitlist } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 
@@ -25,6 +25,9 @@ export async function submitMealSignup(
     }
 
     const deliveryDates = formData.getAll("deliveryDates") as string[];
+    const waitlistDates = formData.getAll("waitlistDates") as string[];
+
+    const allDates = [...new Set([...deliveryDates, ...waitlistDates])];
 
     const validatedFields = MealSignupSchema.safeParse({
       name: formData.get("name"),
@@ -38,7 +41,7 @@ export async function submitMealSignup(
       regularQuantity: formData.get("regularQuantity"),
       veganQuantity: formData.get("veganQuantity"),
       contactMethod: formData.get("contactMethod"),
-      deliveryDates,
+      deliveryDates: allDates,
       comments: formData.get("comments"),
     });
 
@@ -58,6 +61,20 @@ export async function submitMealSignup(
             ],
           },
         };
+      }
+    }
+
+    for (const date of deliveryDates) {
+      const count = await getMealSignupCountForDate(date);
+      if (count >= MAX_SIGNUPS_PER_DATE) {
+        return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} is now full. Please add it to the waitlist instead.` };
+      }
+    }
+
+    for (const date of waitlistDates) {
+      const count = await getMealSignupCountForDate(date);
+      if (count < MAX_SIGNUPS_PER_DATE) {
+        return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} still has space available. Please sign up instead of joining the waitlist.` };
       }
     }
 
@@ -89,7 +106,7 @@ export async function submitMealSignup(
     }
 
     const signups = [];
-    for (const deliveryDate of data.deliveryDates) {
+    for (const deliveryDate of deliveryDates) {
       const signup = await createMealSignup({
         participantId: participant.id,
         regularQuantity: data.regularQuantity,
@@ -100,11 +117,34 @@ export async function submitMealSignup(
       signups.push(signup);
     }
 
-    await sendMealSignupConfirmation(signups, participant);
+    const waitlisted: string[] = [];
+    for (const deliveryDate of waitlistDates) {
+      await addToWaitlist({
+        participantId: participant.id,
+        deliveryDate,
+        regularQuantity: data.regularQuantity,
+        veganQuantity: data.veganQuantity,
+      });
+      waitlisted.push(deliveryDate);
+    }
 
-    const datesFormatted = data.deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+    if (signups.length > 0) {
+      await sendMealSignupConfirmation(signups, participant);
+    }
 
-    return { message: "success", selectedDate: datesFormatted };
+    if (signups.length > 0 && waitlisted.length === 0) {
+      const datesFormatted = deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+      return { message: "success", selectedDate: datesFormatted };
+    }
+
+    if (signups.length === 0 && waitlisted.length > 0) {
+      const datesFormatted = waitlisted.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+      return { message: "waitlist_success", selectedDate: datesFormatted };
+    }
+
+    const signedUp = deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+    const waitlistedStr = waitlisted.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+    return { message: "mixed_success", selectedDate: signedUp, waitlistedDates: waitlisted };
   } catch (e) {
     console.error("meal signup action error:", e);
     return { message: getErrorMessage() };

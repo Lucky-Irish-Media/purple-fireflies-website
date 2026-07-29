@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -179,6 +179,11 @@ export async function createMealSignupAction(
     }
 
     const data = validated.data;
+
+    const count = await getMealSignupCountForDate(data.deliveryDate);
+    if (count >= MAX_SIGNUPS_PER_DATE) {
+      return { message: "This date is at capacity. Consider using the waitlist instead." };
+    }
 
     let participant = await getParticipantByEmail(data.email);
     if (participant) {
