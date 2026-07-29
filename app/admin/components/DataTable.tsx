@@ -123,6 +123,15 @@ export function DataTable<TData extends RowData>({
   const hasPinning = enableColumnPinning && Object.values(columnPinning).some(arr => arr && arr.length > 0);
 
   const table = useReactTable({
+    _features: [{
+      createColumn: (column: any, _table: any) => {
+        column.getCanGlobalFilter = () => {
+          if (column.columnDef.enableGlobalFilter === false) return false;
+          return true;
+        };
+      },
+    }],
+    
     data,
     columns,
     state: {
@@ -153,7 +162,23 @@ export function DataTable<TData extends RowData>({
     enableColumnPinning,
     enableColumnResizing,
     columnResizeMode,
-    globalFilterFn: "auto",
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const safeFilter = String(filterValue).toLowerCase();
+      const value = row.getValue(_columnId);
+      if (value !== undefined && value !== null) {
+        return String(value).toLowerCase().includes(safeFilter);
+      }
+      const original = row.original;
+      if (original && typeof original === "object") {
+        return Object.values(original).some(
+          (v) =>
+            v !== null &&
+            v !== undefined &&
+            String(v).toLowerCase().includes(safeFilter),
+        );
+      }
+      return false;
+    },
   });
 
   const { getHeaderGroups, getRowModel, getFooterGroups, getState } = table;
