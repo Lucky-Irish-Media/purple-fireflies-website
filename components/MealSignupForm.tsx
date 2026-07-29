@@ -460,7 +460,7 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
 
         {state?.message === "mixed_success" && (
           <div className="rounded-lg bg-blue-50 p-4 text-blue-700" role="status">
-            Your signup for {state.selectedDate || "some dates"} is confirmed. You&apos;ve also been added to the waitlist for {state.waitlistedDates?.length || 0} date(s). We&apos;ll notify you if a spot opens up.
+            Your signup for {state.selectedDate || "some dates"} is confirmed. You&apos;ve also been added to the waitlist for {state.waitlistedDates || "some dates"}. We&apos;ll notify you if a spot opens up.
           </div>
         )}
 

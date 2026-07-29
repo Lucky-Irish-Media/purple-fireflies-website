@@ -144,7 +144,7 @@ export async function submitMealSignup(
 
     const signedUp = deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
     const waitlistedStr = waitlisted.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
-    return { message: "mixed_success", selectedDate: signedUp, waitlistedDates: waitlisted };
+    return { message: "mixed_success", selectedDate: signedUp, waitlistedDates: waitlistedStr };
   } catch (e) {
     console.error("meal signup action error:", e);
     return { message: getErrorMessage() };
