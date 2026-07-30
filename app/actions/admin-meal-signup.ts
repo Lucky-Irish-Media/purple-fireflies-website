@@ -276,6 +276,41 @@ export async function duplicateMealSignupAction(
   }
 }
 
+export async function updateMealSignupStatusAction(
+  _prevState: AdminMealSignupActionState,
+  formData: FormData,
+): Promise<AdminMealSignupActionState> {
+  try {
+    await verifySession();
+
+    const id = Number(formData.get("id"));
+    const status = formData.get("status") as string;
+
+    if (!id || !status) {
+      return { message: "Missing required fields." };
+    }
+
+    if (status !== "active" && status !== "out_of_range") {
+      return { message: "Invalid status." };
+    }
+
+    const { updateMealSignupField } = await import("@/app/lib/db");
+    await updateMealSignupField(id, "status", status);
+
+    const { getMealSignupsWithAssignments } = await import("@/app/lib/db");
+    const signups = await getMealSignupsWithAssignments();
+
+    revalidatePath("/admin/programs/meal-delivery");
+
+    return { message: status === "out_of_range" ? "Flagged as out of range." : "Restored to active.", signups };
+  } catch (e) {
+    console.error("updateMealSignupStatus action error:", e);
+    return { message: "Failed to update status. Please try again." };
+  }
+}
+
+const ALLOWED_INLINE_FIELDS = ["bag_number", "status"] as const;
+
 export async function updateMealSignupFieldAction(formData: FormData): Promise<{ success: boolean; message: string }> {
   try {
     await verifySession();
@@ -288,7 +323,7 @@ export async function updateMealSignupFieldAction(formData: FormData): Promise<{
       return { success: false, message: "Invalid request." };
     }
 
-    if (field !== "bag_number") {
+    if (!ALLOWED_INLINE_FIELDS.includes(field as any)) {
       return { success: false, message: "Invalid field." };
     }
 

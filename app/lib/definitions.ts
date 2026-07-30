@@ -102,6 +102,7 @@ export interface MealSignup {
   delivery_date: string;
   comments: string | null;
   bag_number: string | null;
+  status: "active" | "out_of_range";
   created_at: string;
 }
 
