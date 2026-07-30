@@ -24,7 +24,7 @@ function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
   return day === 3 ? "wednesday" : "thursday";
 }
 
-const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.created_at`;
+const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.status, ms.created_at`;
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
 const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method, p.internal_notes as participant_internal_notes`;
 const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone`;
@@ -245,7 +245,7 @@ export async function getMealSignupCountsByDate(): Promise<Record<string, number
   const db = await getDB();
   const today = new Date().toISOString().split("T")[0];
   const result = await db
-    .prepare("SELECT delivery_date, SUM(regular_quantity + vegan_quantity) as count FROM meal_signups WHERE delivery_date >= ? GROUP BY delivery_date")
+    .prepare("SELECT delivery_date, SUM(regular_quantity + vegan_quantity) as count FROM meal_signups WHERE delivery_date >= ? AND status = 'active' GROUP BY delivery_date")
     .bind(today)
     .all<{ delivery_date: string; count: number }>();
   const counts: Record<string, number> = {};
@@ -477,9 +477,11 @@ export interface DateDriver {
   deliveries: DateDelivery[];
 }
 
+const ALLOWED_UPDATE_FIELDS = ["bag_number", "status"] as const;
+
 export async function updateMealSignupField(id: number, field: string, value: string | null): Promise<void> {
   const db = await getDB();
-  if (field !== "bag_number") {
+  if (!ALLOWED_UPDATE_FIELDS.includes(field as any)) {
     throw new Error(`Invalid field: ${field}`);
   }
   await db
@@ -687,7 +689,7 @@ export const MAX_SIGNUPS_PER_DATE = 15;
 export async function getMealSignupCountForDate(deliveryDate: string): Promise<number> {
   const db = await getDB();
   const result = await db
-    .prepare("SELECT COALESCE(SUM(regular_quantity + vegan_quantity), 0) as count FROM meal_signups WHERE delivery_date = ?")
+    .prepare("SELECT COALESCE(SUM(regular_quantity + vegan_quantity), 0) as count FROM meal_signups WHERE delivery_date = ? AND status = 'active'")
     .bind(deliveryDate)
     .first<{ count: number }>();
   return result?.count ?? 0;

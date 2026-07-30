@@ -6,10 +6,10 @@ import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
 import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
-import { createMealSignupAction, updateMealSignupAction, duplicateMealSignupAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
+import { createMealSignupAction, updateMealSignupAction, duplicateMealSignupAction, updateMealSignupStatusAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
+import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, getDeliveryStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const STATE_OPTIONS = [
@@ -52,6 +52,24 @@ function RequesterFilter({ column }: { column: any }) {
       onClick={(e) => e.stopPropagation()}
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     />
+  );
+}
+
+function StatusFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All</option>
+      <option value="active">Active</option>
+      <option value="out_of_range">Out of Range</option>
+    </select>
   );
 }
 
@@ -417,6 +435,27 @@ export default function MealSignupsTable({
     return result;
   }, undefined);
 
+  const [statusState, statusAction, statusPending] = useActionState<
+    AdminMealSignupActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await updateMealSignupStatusAction(prev, formData);
+    if (result?.signups) {
+      setSignups(result.signups);
+    }
+    return result;
+  }, undefined);
+
+  function handleStatusChange(mealSignupId: number, status: "active" | "out_of_range") {
+    const formData = new FormData();
+    formData.set("id", String(mealSignupId));
+    formData.set("status", status);
+    startTransition(async () => {
+      await statusAction(formData);
+      router.refresh();
+    });
+  }
+
   function handleAssignment(mealSignupId: number, driverVolunteerId: string) {
     const formData = new FormData();
     formData.set("mealSignupId", String(mealSignupId));
@@ -502,6 +541,13 @@ export default function MealSignupsTable({
         );
       },
     }),
+    columnHelper.accessor((row) => row.status, {
+      id: "status",
+      header: "Status",
+      filterFn: filterFns.equals,
+      meta: { filterComponent: StatusFilter },
+      cell: (info) => getDeliveryStatusBadge(info.getValue()),
+    }),
     columnHelper.display({
       id: "comments",
       header: "Comments",
@@ -586,30 +632,45 @@ export default function MealSignupsTable({
       id: "edit",
       enableHiding: false,
       header: "",
-      cell: (info) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setEditingSignup(info.row.original);
-              setModalOpen(true);
-            }}
-            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              setDuplicatingSignup(info.row.original);
-              setDuplicateModalOpen(true);
-            }}
-            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-          >
-            Duplicate
-          </button>
-        </div>
-      ),
+      cell: (info) => {
+        const signup = info.row.original;
+        const isOutOfRange = signup.status === "out_of_range";
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setEditingSignup(signup);
+                setModalOpen(true);
+              }}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => {
+                setDuplicatingSignup(signup);
+                setDuplicateModalOpen(true);
+              }}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Duplicate
+            </button>
+            <button
+              onClick={() => handleStatusChange(signup.id, isOutOfRange ? "active" : "out_of_range")}
+              disabled={statusPending}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                isOutOfRange
+                  ? "border-green-500/30 text-green-600 hover:bg-green-500/5"
+                  : "border-red-500/30 text-red-600 hover:bg-red-500/5"
+              } disabled:opacity-50`}
+            >
+              {isOutOfRange ? "Restore" : "Flag OoR"}
+            </button>
+          </div>
+        );
+      },
     }),
-  ] as const, [drivers, isPending, handleAssignment, duplicateAction]);
+  ] as const, [drivers, isPending, handleAssignment, duplicateAction, statusPending, handleStatusChange]);
 
   const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignment, unknown>[];
 

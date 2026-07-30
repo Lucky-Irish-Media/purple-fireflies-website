@@ -122,6 +122,18 @@ export function getContactMethodBadge(method: string) {
   );
 }
 
+export function getDeliveryStatusBadge(status: string) {
+  const styles: Record<string, string> = {
+    active: "bg-green-100 text-green-800",
+    out_of_range: "bg-red-100 text-red-800",
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${styles[status] || "bg-gray-100 text-gray-800"}`}>
+      {status === "out_of_range" ? "Out of Range" : status}
+    </span>
+  );
+}
+
 export function getWaitlistStatusBadge(status: string) {
   const styles: Record<string, string> = {
     waiting: "bg-yellow-100 text-yellow-800",
