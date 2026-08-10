@@ -129,6 +129,11 @@ export async function updateMealSignupAction(
     const existingSignup = await getMealSignupById(data.id);
     const existingParticipantId = existingSignup?.participant_id ?? participant.id;
 
+    const existingForDate = await getMealSignupsByParticipantAndDate(participant.id, data.deliveryDate);
+    if (existingForDate.some((s) => s.id !== data.id)) {
+      return { message: "This participant already has a signup for the selected date." };
+    }
+
     await updateMealSignup(data.id, {
       participantId: participant.id,
       regularQuantity: data.regularQuantity,
@@ -212,6 +217,11 @@ export async function createMealSignupAction(
         contactMethod: data.contactMethod,
         internalNotes: data.internalNotes,
       });
+    }
+
+    const existingForDate = await getMealSignupsByParticipantAndDate(participant.id, data.deliveryDate);
+    if (existingForDate.length > 0) {
+      return { message: "This participant already has a signup for the selected date." };
     }
 
     await createMealSignup({
