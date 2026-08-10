@@ -23,7 +23,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 
 ## Features
 
-- **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options
+- **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date
 - **Driver Volunteer Signup** — Public form for volunteers to sign up for delivery dates and regions
 - **Signup Lookup** — Modal to look up existing signups by email
 - **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, and admin users; driver assignment management

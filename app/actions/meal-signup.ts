@@ -1,7 +1,7 @@
 "use server";
 
 import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definitions";
-import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE, addToWaitlist } from "@/app/lib/db";
+import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupsByEmail, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE, addToWaitlist } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 
@@ -64,14 +64,21 @@ export async function submitMealSignup(
       }
     }
 
-    for (const date of deliveryDates) {
+    const existingSignups = await getMealSignupsByEmail(data.email);
+    const existingDates = new Set(existingSignups.map((s) => s.delivery_date));
+
+    const newDates = deliveryDates.filter((d) => !existingDates.has(d));
+    const newWaitlistDates = waitlistDates.filter((d) => !existingDates.has(d));
+    const duplicateDates = [...new Set([...deliveryDates, ...waitlistDates])].filter((d) => existingDates.has(d));
+
+    for (const date of newDates) {
       const count = await getMealSignupCountForDate(date);
       if (count >= MAX_SIGNUPS_PER_DATE) {
         return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} is now full. Please add it to the waitlist instead.` };
       }
     }
 
-    for (const date of waitlistDates) {
+    for (const date of newWaitlistDates) {
       const count = await getMealSignupCountForDate(date);
       if (count < MAX_SIGNUPS_PER_DATE) {
         return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} still has space available. Please sign up instead of joining the waitlist.` };
@@ -106,7 +113,7 @@ export async function submitMealSignup(
     }
 
     const signups = [];
-    for (const deliveryDate of deliveryDates) {
+    for (const deliveryDate of newDates) {
       const signup = await createMealSignup({
         participantId: participant.id,
         regularQuantity: data.regularQuantity,
@@ -118,7 +125,7 @@ export async function submitMealSignup(
     }
 
     const waitlisted: string[] = [];
-    for (const deliveryDate of waitlistDates) {
+    for (const deliveryDate of newWaitlistDates) {
       await addToWaitlist({
         participantId: participant.id,
         deliveryDate,
@@ -130,18 +137,29 @@ export async function submitMealSignup(
 
     await sendMealSignupConfirmation(signups, participant, waitlisted.length > 0 ? waitlisted : undefined);
 
+    const formatDate = (d: string) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+
+    if (duplicateDates.length > 0) {
+      const dupFormatted = duplicateDates.map(formatDate).join(", ");
+      const addedDates = [...newDates, ...newWaitlistDates];
+      if (addedDates.length > 0) {
+        return { message: `Added: ${addedDates.map(formatDate).join(", ")}. Already signed up: ${dupFormatted}.` };
+      }
+      return { message: `You were already signed up for: ${dupFormatted}.` };
+    }
+
     if (signups.length > 0 && waitlisted.length === 0) {
-      const datesFormatted = deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+      const datesFormatted = newDates.map(formatDate).join(", ");
       return { message: "success", selectedDate: datesFormatted };
     }
 
     if (signups.length === 0 && waitlisted.length > 0) {
-      const datesFormatted = waitlisted.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+      const datesFormatted = newWaitlistDates.map(formatDate).join(", ");
       return { message: "waitlist_success", selectedDate: datesFormatted };
     }
 
-    const signedUp = deliveryDates.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
-    const waitlistedStr = waitlisted.map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })).join(", ");
+    const signedUp = newDates.map(formatDate).join(", ");
+    const waitlistedStr = newWaitlistDates.map(formatDate).join(", ");
     return { message: "mixed_success", selectedDate: signedUp, waitlistedDates: waitlistedStr };
   } catch (e) {
     console.error("meal signup action error:", e);
