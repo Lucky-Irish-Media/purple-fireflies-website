@@ -34,7 +34,7 @@ export async function sendDriverLoadEmail(
 
     const result = await env.purple_fireflies_db
       .prepare(
-        `SELECT mp.name, mp.phone, mp.address1, mp.address2, mp.city, mp.state, mp.zip_code, ms.comments, ms.regular_quantity, ms.vegan_quantity
+        `SELECT mp.name, mp.phone, mp.address1, mp.address2, mp.city, mp.state, mp.zip_code, ms.comments, mp.internal_notes, ms.regular_quantity, ms.vegan_quantity
          FROM delivery_assignments da
          JOIN meal_signups ms ON da.meal_signup_id = ms.id
          JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
@@ -52,6 +52,7 @@ export async function sendDriverLoadEmail(
         state: string;
         zip_code: string;
         comments: string | null;
+        internal_notes: string | null;
         regular_quantity: number;
         vegan_quantity: number;
       }>();
@@ -86,6 +87,9 @@ export async function sendDriverLoadEmail(
       body += `Phone: ${delivery.phone}\n`;
       body += `Address: ${address}\n`;
       body += `Comments: ${delivery.comments || "None"}\n`;
+      if (delivery.internal_notes) {
+        body += `Internal Notes: ${delivery.internal_notes}\n`;
+      }
       const mealParts: string[] = [];
       if (delivery.regular_quantity > 0) mealParts.push(`${delivery.regular_quantity} Regular`);
       if (delivery.vegan_quantity > 0) mealParts.push(`${delivery.vegan_quantity} Vegan/GF`);
