@@ -66,6 +66,9 @@ export async function sendDriverReminders(
         body += `Phone: ${delivery.meal_phone}\n`;
         body += `Address: ${delivery.address}\n`;
         body += `Comments: ${delivery.comments || "None"}\n`;
+        if (delivery.internal_notes) {
+          body += `Internal Notes: ${delivery.internal_notes}\n`;
+        }
         const mealParts: string[] = [];
         if (delivery.regular_quantity > 0) mealParts.push(`${delivery.regular_quantity} Regular`);
         if (delivery.vegan_quantity > 0) mealParts.push(`${delivery.vegan_quantity} Vegan/GF`);

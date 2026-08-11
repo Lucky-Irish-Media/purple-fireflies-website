@@ -112,6 +112,7 @@ export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver
     phone: string;
     address: string;
     meals: string;
+    notes: string;
     driver: string;
   }> = [];
 
@@ -120,11 +121,15 @@ export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver
       const parts: string[] = [];
       if (d.regular_quantity > 0) parts.push(`${d.regular_quantity} Regular`);
       if (d.vegan_quantity > 0) parts.push(`${d.vegan_quantity} Vegan/GF`);
+      const notes: string[] = [];
+      if (d.comments) notes.push(`Comments: ${d.comments}`);
+      if (d.internal_notes) notes.push(`Internal Notes: ${d.internal_notes}`);
       rows.push({
         name: d.meal_name,
         phone: d.meal_phone,
         address: d.address,
         meals: parts.join(" + ") || "None",
+        notes: notes.join("; ") || "None",
         driver: driver.driver_name,
       });
     }
@@ -139,6 +144,7 @@ export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver
             <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${r.phone}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${r.address}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${r.meals}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${r.notes}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${r.driver}</td>
           </tr>`,
     )
@@ -161,6 +167,7 @@ export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver
             <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Phone</th>
             <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Address</th>
             <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Meals</th>
+            <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Notes</th>
             <th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">Driver</th>
           </tr>
         </thead>
@@ -202,7 +209,7 @@ ${tableRows}
 </html>`;
 
   let text = `Meal Delivery Summary — ${formattedDate}\n${rows.length} delivery(ies) across ${drivers.length} driver(s)${waitlistEntries && waitlistEntries.length > 0 ? `, ${waitlistEntries.length} on waitlist` : ""}.\n\n` +
-    rows.map((r) => `${r.name} | ${r.phone} | ${r.address} | ${r.meals} | ${r.driver}`).join("\n");
+    rows.map((r) => `${r.name} | ${r.phone} | ${r.address} | ${r.meals} | ${r.notes} | ${r.driver}`).join("\n");
 
   if (waitlistEntries && waitlistEntries.length > 0) {
     text += `\n\n--- Waitlist (${waitlistEntries.length}) ---\n`;

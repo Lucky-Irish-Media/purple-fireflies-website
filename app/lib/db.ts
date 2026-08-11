@@ -463,6 +463,7 @@ export interface DateDelivery {
   meal_phone: string;
   address: string;
   comments: string | null;
+  internal_notes: string | null;
   regular_quantity: number;
   vegan_quantity: number;
 }
@@ -588,7 +589,7 @@ export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver
       `SELECT dv.id as driver_id, dp.name as driver_name, dp.email as driver_email, dp.phone as driver_phone,
                ms.id as meal_id, mp.name as meal_name, mp.phone as meal_phone,
                mp.address1, mp.address2, mp.city, mp.state, mp.zip_code,
-               ms.comments, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date
+               ms.comments, mp.internal_notes, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date
        FROM delivery_assignments da
        JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
        JOIN participants dp ON dv.participant_id = dp.id
@@ -612,6 +613,7 @@ export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver
       state: string;
       zip_code: string;
       comments: string | null;
+      internal_notes: string | null;
       regular_quantity: number;
       vegan_quantity: number;
       delivery_day: string;
@@ -641,6 +643,7 @@ export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver
       meal_phone: row.meal_phone,
       address,
       comments: row.comments,
+      internal_notes: row.internal_notes,
       regular_quantity: row.regular_quantity,
       vegan_quantity: row.vegan_quantity,
     });
