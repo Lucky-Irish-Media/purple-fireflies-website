@@ -380,7 +380,7 @@ export async function getUsers(): Promise<User[]> {
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDB();
   const user = await db
-    .prepare("SELECT id, email, name, role, status, created_at, password_hash FROM users WHERE email = ?")
+    .prepare("SELECT id, email, name, role, status, created_at, password_hash FROM users WHERE LOWER(email) = LOWER(?)")
     .bind(email)
     .first<User>();
   return user || null;
@@ -400,7 +400,7 @@ export async function createUser(data: {
        VALUES (?, ?, ?, ?, ?)
        RETURNING id, email, name, role, status, created_at`
     )
-    .bind(data.email, data.name, data.passwordHash, data.role, data.status || "active")
+    .bind(data.email.toLowerCase(), data.name, data.passwordHash, data.role, data.status || "active")
     .first<User>();
   if (!result) {
     throw new Error("Failed to create user");
@@ -419,7 +419,7 @@ export async function updateUserRecord(id: number, data: {
       `UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?
        RETURNING id, email, name, role, status, created_at`
     )
-    .bind(data.name, data.email, data.role, id)
+    .bind(data.name, data.email.toLowerCase(), data.role, id)
     .first<User>();
   if (!result) {
     throw new Error("Failed to update user");
@@ -438,7 +438,7 @@ export async function updateUserStatus(id: number, status: UserStatus): Promise<
 export async function updateUserEmail(id: number, email: string): Promise<void> {
   const db = await getDB();
   await db
-    .prepare("UPDATE users SET email = ? WHERE id = ?")
+    .prepare("UPDATE users SET email = LOWER(?) WHERE id = ?")
     .bind(email, id)
     .run();
 }

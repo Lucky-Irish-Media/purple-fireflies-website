@@ -110,7 +110,7 @@ export async function updateVolunteerProfile(
     const user = await getUserByEmail(session.email);
     if (user && data.email.toLowerCase() !== session.email.toLowerCase()) {
       await updateUserEmail(user.id, data.email);
-      await createSession(user.id, data.email, user.role);
+      await createSession(user.id, data.email.toLowerCase(), user.role);
     }
 
     revalidatePath("/volunteer");
