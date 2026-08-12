@@ -6,13 +6,15 @@ import type {
   VolunteerSignupWithDeliveries,
 } from "@/app/lib/definitions";
 import { SignupsSection } from "@/app/volunteer/SignupsSection";
+import { DeliveriesSection } from "@/app/volunteer/DeliveriesSection";
 import { ProfileForm } from "@/app/volunteer/ProfileForm";
 import { PasswordForm } from "@/app/volunteer/PasswordForm";
 
-type TabKey = "signups" | "profile";
+type TabKey = "signups" | "deliveries" | "profile";
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "signups", label: "Upcoming Signups" },
+  { key: "deliveries", label: "My Deliveries" },
   { key: "profile", label: "Profile" },
 ];
 
@@ -52,6 +54,12 @@ export function VolunteerTabs({
       {activeTab === "signups" && (
         <section className="space-y-4">
           <SignupsSection signups={signups} />
+        </section>
+      )}
+
+      {activeTab === "deliveries" && (
+        <section className="space-y-4">
+          <DeliveriesSection signups={signups} />
         </section>
       )}
 
