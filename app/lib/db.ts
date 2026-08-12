@@ -11,6 +11,7 @@ import type {
   MealSignupWithAssignment,
   WaitlistEntry,
   WaitlistEntryWithParticipant,
+  Event,
 } from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
@@ -775,6 +776,100 @@ export async function deleteWaitlistEntry(id: number): Promise<void> {
   const db = await getDB();
   await db
     .prepare("DELETE FROM waitlist WHERE id = ?")
+    .bind(id)
+    .run();
+}
+
+export async function getEvents(): Promise<Event[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM events ORDER BY event_date DESC, created_at DESC")
+    .all<Event>();
+  return result.results || [];
+}
+
+export async function getUpcomingEvents(): Promise<Event[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare("SELECT * FROM events WHERE event_date >= ? ORDER BY event_date ASC")
+    .bind(today)
+    .all<Event>();
+  return result.results || [];
+}
+
+export async function getPastEvents(): Promise<Event[]> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare("SELECT * FROM events WHERE event_date < ? ORDER BY event_date DESC")
+    .bind(today)
+    .all<Event>();
+  return result.results || [];
+}
+
+export async function getEventById(id: number): Promise<Event | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM events WHERE id = ?")
+    .bind(id)
+    .first<Event>();
+  return result || null;
+}
+
+export async function createEvent(data: {
+  title: string;
+  eventDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  location?: string | null;
+  description?: string | null;
+  url?: string | null;
+}): Promise<Event> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO events (title, description, event_date, start_time, end_time, location, url)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.title, data.description || null, data.eventDate, data.startTime || null, data.endTime || null, data.location || null, data.url || null)
+    .first<Event>();
+  if (!result) {
+    throw new Error("Failed to create event");
+  }
+  return result;
+}
+
+export async function updateEvent(id: number, data: {
+  title: string;
+  eventDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  location?: string | null;
+  description?: string | null;
+  url?: string | null;
+}): Promise<Event> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE events
+       SET title = ?, description = ?, event_date = ?, start_time = ?, end_time = ?, location = ?, url = ?
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.title, data.description || null, data.eventDate, data.startTime || null, data.endTime || null, data.location || null, data.url || null, id)
+    .first<Event>();
+  if (!result) {
+    throw new Error("Failed to update event");
+  }
+  return result;
+}
+
+export async function deleteEvent(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM events WHERE id = ?")
     .bind(id)
     .run();
 }

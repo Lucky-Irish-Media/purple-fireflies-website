@@ -172,3 +172,25 @@ export interface WaitlistEntryWithParticipant extends WaitlistEntry {
 export const WaitlistSchema = z.object({
   deliveryDates: z.array(z.string()),
 });
+
+export interface Event {
+  id: number;
+  title: string;
+  description: string | null;
+  event_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+  url: string | null;
+  created_at: string;
+}
+
+export const EventSchema = z.object({
+  title: z.string().min(1, { message: "Title is required." }).trim(),
+  event_date: z.string().min(1, { message: "Date is required." }),
+  start_time: z.string().optional(),
+  end_time: z.string().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  url: z.union([z.string().url({ message: "Please enter a valid URL." }), z.literal("")]).optional(),
+});
