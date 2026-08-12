@@ -194,3 +194,21 @@ export const EventSchema = z.object({
   description: z.string().optional(),
   url: z.union([z.string().url({ message: "Please enter a valid URL." }), z.literal("")]).optional(),
 });
+
+export interface NewsArticle {
+  id: number;
+  title: string;
+  source: string;
+  url: string;
+  published_at: string;
+  excerpt: string | null;
+  created_at: string;
+}
+
+export const NewsArticleSchema = z.object({
+  title: z.string().min(1, { message: "Title is required." }).trim(),
+  source: z.string().min(1, { message: "Source is required." }).trim(),
+  url: z.string().url({ message: "Please enter a valid URL." }),
+  published_at: z.string().min(1, { message: "Published date is required." }),
+  excerpt: z.string().optional(),
+});

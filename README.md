@@ -14,6 +14,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/programs/meal-delivery/delivery-signup` | Meal recipient signup form |
 | `/programs/meal-delivery/volunteer-signup` | Driver volunteer signup form |
 | `/events` | Upcoming and past community events |
+| `/news` | Articles about Purple Fireflies in the news |
 | `/donate` | Donations page (Venmo, PayPal, Cash App, Give Butter) |
 | `/contact` | Get Involved page |
 | `/login` | Admin login |
@@ -22,6 +23,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/admin/programs` | Programs management |
 | `/admin/programs/meal-delivery` | Meal delivery CRUD + driver assignment |
 | `/admin/events` | Events CRUD |
+| `/admin/news` | News articles CRUD |
 
 ## Features
 
@@ -29,7 +31,8 @@ A community mutual-aid website for programs such as food justice in Athens Count
 - **Driver Volunteer Signup** — Public form for volunteers to sign up for delivery dates and regions
 - **Signup Lookup** — Modal to look up existing signups by email
 - **Events** — Public `/events` page showing upcoming events and a collapsible past events section; admin CRUD at `/admin/events`
-- **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, and admin users; driver assignment management
+- **News** — Public `/news` page linking to news articles that mention Purple Fireflies; admin CRUD at `/admin/news`
+- **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management
 - **Authentication** — Email/password login with bcrypt, JWT sessions, HTTP-only cookies
 
 ## Tech Stack
