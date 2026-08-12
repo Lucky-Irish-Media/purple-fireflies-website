@@ -9,6 +9,7 @@ import { createEvent, deleteEvent, getEvents, updateEvent } from "@/app/lib/db";
 export type EventsActionState = {
   errors?: Record<string, string[]>;
   message?: string;
+  success?: boolean;
   events?: Event[];
 } | undefined;
 
@@ -44,7 +45,7 @@ export async function createEventAction(
     });
 
     if (!validated.success) {
-      return { errors: validated.error.flatten().fieldErrors };
+      return { success: false, errors: validated.error.flatten().fieldErrors };
     }
 
     const { title, event_date, start_time, end_time, location, description, url } = validated.data;
@@ -63,10 +64,10 @@ export async function createEventAction(
 
     revalidatePath("/admin/events");
 
-    return { message: `Event "${title}" created successfully.`, events };
+    return { success: true, message: `Event "${title}" created successfully.`, events };
   } catch (e) {
     console.error("createEvent action error:", e);
-    return { message: "Failed to create event." };
+    return { success: false, message: "Failed to create event." };
   }
 }
 
@@ -89,7 +90,7 @@ export async function updateEventAction(
     });
 
     if (!validated.success) {
-      return { errors: validated.error.flatten().fieldErrors };
+      return { success: false, errors: validated.error.flatten().fieldErrors };
     }
 
     const { id, title, event_date, start_time, end_time, location, description, url } = validated.data;
@@ -108,10 +109,10 @@ export async function updateEventAction(
 
     revalidatePath("/admin/events");
 
-    return { message: `Event "${title}" updated successfully.`, events };
+    return { success: true, message: `Event "${title}" updated successfully.`, events };
   } catch (e) {
     console.error("updateEvent action error:", e);
-    return { message: "Failed to update event." };
+    return { success: false, message: "Failed to update event." };
   }
 }
 
@@ -124,7 +125,7 @@ export async function deleteEventAction(
 
     const id = Number(formData.get("id"));
     if (!id) {
-      return { message: "Invalid event ID." };
+      return { success: false, message: "Invalid event ID." };
     }
 
     await deleteEvent(id);
@@ -133,9 +134,9 @@ export async function deleteEventAction(
 
     revalidatePath("/admin/events");
 
-    return { message: "Event deleted successfully.", events };
+    return { success: true, message: "Event deleted successfully.", events };
   } catch (e) {
     console.error("deleteEvent action error:", e);
-    return { message: "Failed to delete event." };
+    return { success: false, message: "Failed to delete event." };
   }
 }

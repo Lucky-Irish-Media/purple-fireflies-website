@@ -126,7 +126,7 @@ function EventFormFields({ state, event }: {
         </div>
       </div>
 
-      {state?.message && (
+      {state?.message && !state.success && (
         <p className="text-sm text-red-500">{state.message}</p>
       )}
     </>
@@ -144,6 +144,7 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
   const [events, setEvents] = useState(initialEvents);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [actionMessage, setActionMessage] = useState<{ text: string; success: boolean } | null>(null);
 
   const [createState, createAction, createPending] = useActionState<
     EventsActionState,
@@ -152,6 +153,8 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
     const result = await createEventAction(prev, formData);
     if (result?.events) {
       setEvents(result.events);
+      setModalOpen(false);
+      setActionMessage({ text: result.message || "", success: true });
     }
     return result;
   }, undefined);
@@ -164,17 +167,21 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
     if (result?.events) {
       setEvents(result.events);
       setModalOpen(false);
+      setActionMessage({ text: result.message || "", success: true });
     }
     return result;
   }, undefined);
 
-  const [deleteState, deleteAction, deletePending] = useActionState<
+  const [, deleteAction, deletePending] = useActionState<
     EventsActionState,
     FormData
   >(async (prev, formData) => {
     const result = await deleteEventAction(prev, formData);
     if (result?.events) {
       setEvents(result.events);
+      setActionMessage({ text: result.message || "", success: true });
+    } else if (result?.message) {
+      setActionMessage({ text: result.message, success: false });
     }
     return result;
   }, undefined);
@@ -321,13 +328,9 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
         </form>
       </Modal>
 
-      {deleteState?.message && (
-        <p
-          className={`text-sm ${
-            deleteState.message.includes("successfully") ? "text-green-600" : "text-red-500"
-          }`}
-        >
-          {deleteState.message}
+      {actionMessage && (
+        <p className={`text-sm ${actionMessage.success ? "text-green-600" : "text-red-500"}`}>
+          {actionMessage.text}
         </p>
       )}
 
