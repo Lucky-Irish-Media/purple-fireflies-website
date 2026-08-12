@@ -12,7 +12,7 @@ export default function LoginPage() {
     <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-xl border border-primary/10 bg-card p-8 shadow-sm">
         <h1 className="mb-6 text-2xl font-bold text-foreground text-center">
-          Admin Login
+          Sign in
         </h1>
 
         <form action={action} className="space-y-4">

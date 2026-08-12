@@ -7,11 +7,12 @@ import {
   updateUserAction,
   resetPasswordAction,
   deleteUserAction,
+  approveUserAction,
   type UsersActionState,
 } from "@/app/actions/users";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDateOnly, getRoleBadge } from "./lib/utils";
+import { formatDateOnly, getRoleBadge, getStatusBadge } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<User>();
@@ -69,6 +70,7 @@ function UserFormFields({ state, user }: {
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="member">Member</option>
+            <option value="volunteer">Volunteer</option>
             <option value="admin">Admin</option>
           </select>
           {state?.errors?.role && (
@@ -145,6 +147,17 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     return result;
   }, undefined);
 
+  const [approveState, approveAction, approvePending] = useActionState<
+    UsersActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await approveUserAction(prev, formData);
+    if (result?.users) {
+      setUsers(result.users);
+    }
+    return result;
+  }, undefined);
+
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
 
   const columns = useMemo(() => [
@@ -164,6 +177,12 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       id: "role",
       header: "Role",
       cell: (info) => getRoleBadge(info.getValue()),
+      filterFn: filterFns.equals,
+    }),
+    columnHelper.accessor((row) => row.status, {
+      id: "status",
+      header: "Status",
+      cell: (info) => getStatusBadge(info.getValue()),
       filterFn: filterFns.equals,
     }),
     columnHelper.accessor((row) => row.created_at, {
@@ -199,6 +218,19 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                 Reset Password
               </button>
             </form>
+
+            {user.status === "pending" && (
+              <form action={approveAction} className="inline">
+                <input type="hidden" name="userId" value={user.id} />
+                <button
+                  type="submit"
+                  disabled={approvePending}
+                  className="rounded-lg bg-green-100 px-3 py-1.5 text-xs font-medium text-green-800 transition-all hover:bg-green-200 disabled:opacity-50"
+                >
+                  Approve
+                </button>
+              </form>
+            )}
 
             <form
               action={deleteAction}
@@ -292,6 +324,16 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
           }`}
         >
           {deleteState.message}
+        </p>
+      )}
+
+      {approveState?.message && !approveState?.users && (
+        <p
+          className={`text-sm ${
+            approveState.message.includes("successfully") ? "text-green-600" : "text-red-500"
+          }`}
+        >
+          {approveState.message}
         </p>
       )}
 

@@ -13,6 +13,8 @@ import type {
   WaitlistEntryWithParticipant,
   Event,
   NewsArticle,
+  VolunteerDashboard,
+  VolunteerSignupWithDeliveries,
 } from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
@@ -288,12 +290,78 @@ export async function getDriverVolunteersByEmailOrPhone(email: string, phone: st
   return result.results || [];
 }
 
+export type UserRole = "admin" | "member" | "volunteer";
+export type UserStatus = "active" | "pending";
+
+export interface DriverAssignment {
+  meal_signup_id: number;
+  delivery_date: string;
+  delivery_day: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_address: string;
+  comments: string | null;
+}
+
+export async function getAssignmentsForDriver(volunteerId: number): Promise<DriverAssignment[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT ms.id as meal_signup_id, ms.delivery_date, ms.delivery_day,
+              p.name as recipient_name, p.phone as recipient_phone,
+              p.address1, p.address2, p.city, p.state, p.zip_code,
+              ms.comments
+       FROM delivery_assignments da
+       JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       JOIN participants p ON ms.participant_id = p.id
+       WHERE da.driver_volunteer_id = ?
+       ORDER BY ms.delivery_date ASC`
+    )
+    .bind(volunteerId)
+    .all<DriverAssignment & { address1: string; address2: string | null; city: string; state: string; zip_code: string }>();
+  return (result.results || []).map((row) => ({
+    meal_signup_id: row.meal_signup_id,
+    delivery_date: row.delivery_date,
+    delivery_day: row.delivery_day,
+    recipient_name: row.recipient_name,
+    recipient_phone: row.recipient_phone,
+    recipient_address: `${row.address1}${row.address2 ? `, ${row.address2}` : ""}, ${row.city}, ${row.state} ${row.zip_code}`,
+    comments: row.comments,
+  }));
+}
+
+export async function getVolunteerDashboard(email: string): Promise<VolunteerDashboard> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  const result = await db
+    .prepare(
+      `SELECT ${DRIVER_SELECT}, ${DRIVER_PARTICIPANT_SELECT}
+       FROM driver_volunteers dv
+       JOIN participants p ON dv.participant_id = p.id
+       WHERE LOWER(p.email) = LOWER(?) AND dv.delivery_date >= ?
+       ORDER BY dv.delivery_date ASC`
+    )
+    .bind(email.toLowerCase(), today)
+    .all<DriverVolunteerWithParticipant>();
+
+  const signups = result.results || [];
+  const withDeliveries: VolunteerSignupWithDeliveries[] = [];
+  for (const signup of signups) {
+    withDeliveries.push({
+      ...signup,
+      deliveries: await getAssignmentsForDriver(signup.id),
+    });
+  }
+  return { signups: withDeliveries };
+}
+
 export interface User {
   id: number;
   email: string;
   name: string;
   password_hash?: string;
-  role: "admin" | "member";
+  role: UserRole;
+  status: UserStatus;
   created_at: string;
 }
 
@@ -301,7 +369,7 @@ export async function getUsers(): Promise<User[]> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `SELECT id, email, name, role, created_at
+      `SELECT id, email, name, role, status, created_at
        FROM users
        ORDER BY created_at DESC`
     )
@@ -312,7 +380,7 @@ export async function getUsers(): Promise<User[]> {
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDB();
   const user = await db
-    .prepare("SELECT id, email, name, role, created_at, password_hash FROM users WHERE email = ?")
+    .prepare("SELECT id, email, name, role, status, created_at, password_hash FROM users WHERE email = ?")
     .bind(email)
     .first<User>();
   return user || null;
@@ -322,16 +390,17 @@ export async function createUser(data: {
   email: string;
   name: string;
   passwordHash: string;
-  role: "admin" | "member";
+  role: UserRole;
+  status?: UserStatus;
 }): Promise<User> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO users (email, name, password_hash, role)
-       VALUES (?, ?, ?, ?)
-       RETURNING id, email, name, role, created_at`
+      `INSERT INTO users (email, name, password_hash, role, status)
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING id, email, name, role, status, created_at`
     )
-    .bind(data.email, data.name, data.passwordHash, data.role)
+    .bind(data.email, data.name, data.passwordHash, data.role, data.status || "active")
     .first<User>();
   if (!result) {
     throw new Error("Failed to create user");
@@ -342,13 +411,13 @@ export async function createUser(data: {
 export async function updateUserRecord(id: number, data: {
   name: string;
   email: string;
-  role: "admin" | "member";
+  role: UserRole;
 }): Promise<User> {
   const db = await getDB();
   const result = await db
     .prepare(
       `UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?
-       RETURNING id, email, name, role, created_at`
+       RETURNING id, email, name, role, status, created_at`
     )
     .bind(data.name, data.email, data.role, id)
     .first<User>();
@@ -356,6 +425,47 @@ export async function updateUserRecord(id: number, data: {
     throw new Error("Failed to update user");
   }
   return result;
+}
+
+export async function updateUserStatus(id: number, status: UserStatus): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE users SET status = ? WHERE id = ?")
+    .bind(status, id)
+    .run();
+}
+
+export async function updateUserEmail(id: number, email: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE users SET email = ? WHERE id = ?")
+    .bind(email, id)
+    .run();
+}
+
+export async function updateVolunteerSignupContact(participantId: number, onSignal: "yes" | "no" | "willing", regions: string): Promise<void> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0];
+  await db
+    .prepare(
+      `UPDATE driver_volunteers
+       SET on_signal = ?, regions = ?
+       WHERE participant_id = ? AND delivery_date >= ?`
+    )
+    .bind(onSignal, regions, participantId, today)
+    .run();
+}
+
+export async function deleteDriverVolunteer(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM delivery_assignments WHERE driver_volunteer_id = ?")
+    .bind(id)
+    .run();
+  await db
+    .prepare("DELETE FROM driver_volunteers WHERE id = ?")
+    .bind(id)
+    .run();
 }
 
 export async function deleteUserRecord(id: number): Promise<void> {

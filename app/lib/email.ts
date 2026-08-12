@@ -58,6 +58,26 @@ export async function sendWaitlistNotification(entry: WaitlistEntryWithParticipa
   await sendEmail({ to: entry.participant_email, subject, text });
 }
 
+export async function sendVolunteerAccountEmail(to: string, name: string, tempPassword: string): Promise<void> {
+  const subject = "Your Purple Fireflies volunteer account";
+  const text = `Hi ${name},
+
+An account has been created for you to sign in and manage your meal delivery volunteer signups.
+
+Temporary password: ${tempPassword}
+
+Sign in at: https://purplefireflies.org/login
+
+Your account is awaiting approval from our coordinators. You'll be able to sign in once it has been approved.
+
+After signing in, you can change your password from the Volunteer Portal.
+
+Take care,
+Meal Delivery Coordinator
+Purple Fireflies`;
+  await sendEmail({ to, subject, text });
+}
+
 export async function sendEmail(params: {
   to: string;
   subject: string;

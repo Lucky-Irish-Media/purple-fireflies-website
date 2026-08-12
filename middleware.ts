@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decrypt } from "@/app/lib/session";
+import { getHomePathForRole } from "@/app/lib/auth-utils";
 
-const protectedRoutes = ["/admin"];
+const protectedRoutes = ["/admin", "/volunteer"];
 const publicRoutes = ["/login"];
 
 export default async function middleware(req: NextRequest) {
@@ -22,8 +23,14 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
+  if (path.startsWith("/admin") && session?.userId && session.role !== "admin") {
+    return NextResponse.redirect(new URL("/volunteer", req.nextUrl));
+  }
+
   if (isPublicRoute && session?.userId) {
-    return NextResponse.redirect(new URL("/admin", req.nextUrl));
+    return NextResponse.redirect(
+      new URL(getHomePathForRole(session.role), req.nextUrl)
+    );
   }
 
   return NextResponse.next();

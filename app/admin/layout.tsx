@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { verifySession } from "@/app/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { MobileSidebar } from "@/app/admin/components/MobileSidebar";
@@ -10,6 +11,10 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await verifySession();
+
+  if (session.role !== "admin") {
+    redirect("/volunteer");
+  }
 
   return (
     <div className="min-h-full flex flex-col bg-background">

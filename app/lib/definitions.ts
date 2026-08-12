@@ -63,7 +63,47 @@ export type MealSignupFormState =
   | undefined;
 
 export type DriverVolunteerFormState =
-  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; onSignal?: string[]; deliveryDates?: string[]; regions?: string[] }; message?: string; selectedDates?: string }
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; onSignal?: string[]; deliveryDates?: string[]; regions?: string[] }; message?: string; selectedDates?: string; accountCreated?: boolean }
+  | undefined;
+
+export const VolunteerProfileSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  onSignal: z.enum(["yes", "no", "willing"], { message: "Please select an option." }),
+  regions: z.array(z.enum(regions)).min(1, { message: "Please select at least one region." }),
+});
+
+export type VolunteerProfileFormState =
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; onSignal?: string[]; regions?: string[] }; message?: string; success?: boolean }
+  | undefined;
+
+export const VolunteerPasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, { message: "Current password is required." }),
+    newPassword: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters." })
+      .max(128, { message: "Password must be less than 128 characters." })
+      .regex(/[a-zA-Z]/, { message: "Password must contain at least one letter." })
+      .regex(/[0-9]/, { message: "Password must contain at least one number." })
+      .regex(/[^a-zA-Z0-9]/, {
+        message: "Password must contain at least one special character.",
+      })
+      .trim(),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ["confirmPassword"],
+  });
+
+export type VolunteerPasswordFormState =
+  | { errors?: { currentPassword?: string[]; newPassword?: string[]; confirmPassword?: string[] }; message?: string; success?: boolean }
+  | undefined;
+
+export type CancelVolunteerSignupState =
+  | { message?: string; success?: boolean }
   | undefined;
 
 export type LoginFormState =
@@ -142,6 +182,24 @@ export interface DriverVolunteerWithParticipant extends DriverVolunteer {
   participant_name: string;
   participant_email: string;
   participant_phone: string;
+}
+
+export interface VolunteerDelivery {
+  meal_signup_id: number;
+  delivery_date: string;
+  delivery_day: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_address: string;
+  comments: string | null;
+}
+
+export interface VolunteerSignupWithDeliveries extends DriverVolunteerWithParticipant {
+  deliveries: VolunteerDelivery[];
+}
+
+export interface VolunteerDashboard {
+  signups: VolunteerSignupWithDeliveries[];
 }
 
 export interface MealSignupWithAssignment extends MealSignupWithParticipant {
