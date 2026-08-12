@@ -1,23 +1,23 @@
 "use client";
 
 import { useState, useActionState, useMemo } from "react";
-import type { Event } from "@/app/lib/definitions";
+import type { NewsArticle } from "@/app/lib/definitions";
 import {
-  createEventAction,
-  updateEventAction,
-  deleteEventAction,
-  type EventsActionState,
-} from "@/app/actions/admin-events";
+  createNewsAction,
+  updateNewsArticleAction,
+  deleteNewsArticleAction,
+  type NewsActionState,
+} from "@/app/actions/admin-news";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
-const columnHelper = createColumnHelper<Event>();
+const columnHelper = createColumnHelper<NewsArticle>();
 
-function EventFormFields({ state, event }: {
-  state: EventsActionState;
-  event: Event | null;
+function ArticleFormFields({ state, article }: {
+  state: NewsActionState;
+  article: NewsArticle | null;
 }) {
   return (
     <>
@@ -31,7 +31,7 @@ function EventFormFields({ state, event }: {
             name="title"
             type="text"
             required
-            defaultValue={event?.title || ""}
+            defaultValue={article?.title || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.title && (
@@ -40,32 +40,51 @@ function EventFormFields({ state, event }: {
         </div>
 
         <div>
-          <label htmlFor="event_date" className="block text-sm font-medium text-foreground mb-1">
-            Date
+          <label htmlFor="source" className="block text-sm font-medium text-foreground mb-1">
+            Source
           </label>
           <input
-            id="event_date"
-            name="event_date"
-            type="date"
+            id="source"
+            name="source"
+            type="text"
             required
-            defaultValue={event?.event_date || ""}
+            placeholder="e.g. The Athens Messenger"
+            defaultValue={article?.source || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          {state?.errors?.event_date && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.event_date[0]}</p>
+          {state?.errors?.source && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.source[0]}</p>
           )}
         </div>
 
         <div>
+          <label htmlFor="published_at" className="block text-sm font-medium text-foreground mb-1">
+            Published Date
+          </label>
+          <input
+            id="published_at"
+            name="published_at"
+            type="date"
+            required
+            defaultValue={article?.published_at || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.published_at && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.published_at[0]}</p>
+          )}
+        </div>
+
+        <div className="sm:col-span-2">
           <label htmlFor="url" className="block text-sm font-medium text-foreground mb-1">
-            Event URL (optional)
+            Article URL
           </label>
           <input
             id="url"
             name="url"
             type="text"
+            required
             placeholder="https://..."
-            defaultValue={event?.url || ""}
+            defaultValue={article?.url || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {state?.errors?.url && (
@@ -73,54 +92,15 @@ function EventFormFields({ state, event }: {
           )}
         </div>
 
-        <div>
-          <label htmlFor="start_time" className="block text-sm font-medium text-foreground mb-1">
-            Start Time
-          </label>
-          <input
-            id="start_time"
-            name="start_time"
-            type="time"
-            defaultValue={event?.start_time || ""}
-            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="end_time" className="block text-sm font-medium text-foreground mb-1">
-            End Time
-          </label>
-          <input
-            id="end_time"
-            name="end_time"
-            type="time"
-            defaultValue={event?.end_time || ""}
-            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
         <div className="sm:col-span-2">
-          <label htmlFor="location" className="block text-sm font-medium text-foreground mb-1">
-            Location
-          </label>
-          <input
-            id="location"
-            name="location"
-            type="text"
-            defaultValue={event?.location || ""}
-            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div className="sm:col-span-2">
-          <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
-            Description
+          <label htmlFor="excerpt" className="block text-sm font-medium text-foreground mb-1">
+            Excerpt
           </label>
           <textarea
-            id="description"
-            name="description"
+            id="excerpt"
+            name="excerpt"
             rows={3}
-            defaultValue={event?.description || ""}
+            defaultValue={article?.excerpt || ""}
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -133,26 +113,19 @@ function EventFormFields({ state, event }: {
   );
 }
 
-function formatTimeRange(event: Event): string {
-  if (event.start_time && event.end_time) {
-    return `${event.start_time} – ${event.end_time}`;
-  }
-  return event.start_time || event.end_time || "";
-}
-
-export default function EventsTable({ initialEvents }: { initialEvents: Event[] }) {
-  const [events, setEvents] = useState(initialEvents);
+export default function NewsTable({ initialArticles }: { initialArticles: NewsArticle[] }) {
+  const [articles, setArticles] = useState(initialArticles);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; success: boolean } | null>(null);
 
   const [createState, createAction, createPending] = useActionState<
-    EventsActionState,
+    NewsActionState,
     FormData
   >(async (prev, formData) => {
-    const result = await createEventAction(prev, formData);
-    if (result?.events) {
-      setEvents(result.events);
+    const result = await createNewsAction(prev, formData);
+    if (result?.articles) {
+      setArticles(result.articles);
       setModalOpen(false);
       setActionMessage({ text: result.message || "", success: true });
     }
@@ -160,12 +133,12 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
   }, undefined);
 
   const [updateState, updateAction, updatePending] = useActionState<
-    EventsActionState,
+    NewsActionState,
     FormData
   >(async (prev, formData) => {
-    const result = await updateEventAction(prev, formData);
-    if (result?.events) {
-      setEvents(result.events);
+    const result = await updateNewsArticleAction(prev, formData);
+    if (result?.articles) {
+      setArticles(result.articles);
       setModalOpen(false);
       setActionMessage({ text: result.message || "", success: true });
     }
@@ -173,12 +146,12 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
   }, undefined);
 
   const [, deleteAction, deletePending] = useActionState<
-    EventsActionState,
+    NewsActionState,
     FormData
   >(async (prev, formData) => {
-    const result = await deleteEventAction(prev, formData);
-    if (result?.events) {
-      setEvents(result.events);
+    const result = await deleteNewsArticleAction(prev, formData);
+    if (result?.articles) {
+      setArticles(result.articles);
       setActionMessage({ text: result.message || "", success: true });
     } else if (result?.message) {
       setActionMessage({ text: result.message, success: false });
@@ -193,26 +166,16 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
       cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
       filterFn: filterFns.includesString,
     }),
-    columnHelper.accessor((row) => row.event_date, {
-      id: "event_date",
-      header: "Date",
+    columnHelper.accessor((row) => row.source, {
+      id: "source",
+      header: "Source",
+      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      filterFn: filterFns.includesString,
+    }),
+    columnHelper.accessor((row) => row.published_at, {
+      id: "published_at",
+      header: "Published",
       cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
-      filterFn: filterFns.includesString,
-    }),
-    columnHelper.accessor((row) => `${row.start_time || ""}${row.end_time ? "-" + row.end_time : ""}`, {
-      id: "time",
-      header: "Time",
-      cell: (info) => {
-        const event = info.row.original;
-        const time = formatTimeRange(event);
-        return time ? <span className="text-text-secondary">{time}</span> : <span className="text-text-secondary">—</span>;
-      },
-      filterFn: filterFns.includesString,
-    }),
-    columnHelper.accessor((row) => row.location, {
-      id: "location",
-      header: "Location",
-      cell: (info) => <span className="text-text-secondary">{info.getValue() || "—"}</span>,
       filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.url, {
@@ -220,7 +183,7 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
       header: "Link",
       cell: (info) => {
         const url = info.getValue();
-        return url ? (
+        return (
           <a
             href={url}
             target="_blank"
@@ -229,8 +192,6 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
           >
             Open
           </a>
-        ) : (
-          <span className="text-text-secondary">—</span>
         );
       },
       filterFn: filterFns.includesString,
@@ -239,12 +200,12 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
       id: "actions",
       header: "Actions",
       cell: (info) => {
-        const event = info.row.original;
+        const article = info.row.original;
         return (
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                setEditingEvent(event);
+                setEditingArticle(article);
                 setModalOpen(true);
               }}
               className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
@@ -256,12 +217,12 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
               action={deleteAction}
               className="inline"
               onSubmit={(e) => {
-                if (!confirm(`Delete event "${event.title}"? This cannot be undone.`)) {
+                if (!confirm(`Delete article "${article.title}"? This cannot be undone.`)) {
                   e.preventDefault();
                 }
               }}
             >
-              <input type="hidden" name="id" value={event.id} />
+              <input type="hidden" name="id" value={article.id} />
               <button
                 type="submit"
                 disabled={deletePending}
@@ -276,45 +237,45 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
     }),
   ] as const, [deletePending, deleteAction]);
 
-  const typedColumns = columns as unknown as ColumnDef<Event, unknown>[];
+  const typedColumns = columns as unknown as ColumnDef<NewsArticle, unknown>[];
 
-  const formState = editingEvent ? updateState : createState;
-  const formPending = editingEvent ? updatePending : createPending;
-  const formAction = editingEvent ? updateAction : createAction;
+  const formState = editingArticle ? updateState : createState;
+  const formPending = editingArticle ? updatePending : createPending;
+  const formAction = editingArticle ? updateAction : createAction;
 
   function handleCreateAddForm() {
-    setEditingEvent(null);
+    setEditingArticle(null);
     setModalOpen(true);
   }
 
   function handleModalClose() {
     setModalOpen(false);
-    setEditingEvent(null);
+    setEditingArticle(null);
   }
 
   return (
     <section className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-foreground">Events</h2>
+        <h2 className="text-xl font-bold text-foreground">News Articles</h2>
         <button
           onClick={handleCreateAddForm}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
         >
-          Add Event
+          Add Article
         </button>
       </div>
 
-      <p className="text-text-secondary">Total events: {events.length}</p>
+      <p className="text-text-secondary">Total articles: {articles.length}</p>
 
       <Modal
         open={modalOpen}
         onClose={handleModalClose}
-        title={editingEvent ? "Edit Event" : "New Event"}
+        title={editingArticle ? "Edit Article" : "New Article"}
       >
         <form action={formAction} className="space-y-4">
-          {editingEvent && <input type="hidden" name="id" value={editingEvent.id} />}
+          {editingArticle && <input type="hidden" name="id" value={editingArticle.id} />}
 
-          <EventFormFields state={formState} event={editingEvent} />
+          <ArticleFormFields state={formState} article={editingArticle} />
 
           <button
             type="submit"
@@ -322,8 +283,8 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
           >
             {formPending
-              ? (editingEvent ? "Saving..." : "Creating...")
-              : (editingEvent ? "Save Changes" : "Create Event")}
+              ? (editingArticle ? "Saving..." : "Creating...")
+              : (editingArticle ? "Save Changes" : "Create Article")}
           </button>
         </form>
       </Modal>
@@ -335,7 +296,7 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
       )}
 
       <DataTable
-        data={events}
+        data={articles}
         columns={typedColumns}
         enableSorting
         enableFiltering

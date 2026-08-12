@@ -12,6 +12,7 @@ import type {
   WaitlistEntry,
   WaitlistEntryWithParticipant,
   Event,
+  NewsArticle,
 } from "@/app/lib/definitions";
 
 async function getDB(): Promise<D1Database> {
@@ -870,6 +871,76 @@ export async function deleteEvent(id: number): Promise<void> {
   const db = await getDB();
   await db
     .prepare("DELETE FROM events WHERE id = ?")
+    .bind(id)
+    .run();
+}
+
+export async function getNewsArticles(): Promise<NewsArticle[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM news_articles ORDER BY published_at DESC, created_at DESC")
+    .all<NewsArticle>();
+  return result.results || [];
+}
+
+export async function getNewsArticleById(id: number): Promise<NewsArticle | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM news_articles WHERE id = ?")
+    .bind(id)
+    .first<NewsArticle>();
+  return result || null;
+}
+
+export async function createNewsArticle(data: {
+  title: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  excerpt?: string | null;
+}): Promise<NewsArticle> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO news_articles (title, source, url, published_at, excerpt)
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.title, data.source, data.url, data.publishedAt, data.excerpt || null)
+    .first<NewsArticle>();
+  if (!result) {
+    throw new Error("Failed to create news article");
+  }
+  return result;
+}
+
+export async function updateNewsArticle(id: number, data: {
+  title: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  excerpt?: string | null;
+}): Promise<NewsArticle> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE news_articles
+       SET title = ?, source = ?, url = ?, published_at = ?, excerpt = ?
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.title, data.source, data.url, data.publishedAt, data.excerpt || null, id)
+    .first<NewsArticle>();
+  if (!result) {
+    throw new Error("Failed to update news article");
+  }
+  return result;
+}
+
+export async function deleteNewsArticle(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM news_articles WHERE id = ?")
     .bind(id)
     .run();
 }
