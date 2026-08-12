@@ -8,6 +8,8 @@ const navLinks = [
   { href: "/admin", label: "Dashboard", section: false },
   { type: "heading", label: "Programs" },
   { href: "/admin/programs/meal-delivery", label: "Meal Delivery", section: true },
+  { type: "heading", label: "Community" },
+  { href: "/admin/events", label: "Events", section: true },
   { type: "heading", label: "Reports" },
   { href: "/admin/reports", label: "Meal Delivery Reports", section: true },
   { type: "heading", label: "Administration" },
