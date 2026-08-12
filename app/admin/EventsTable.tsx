@@ -344,7 +344,7 @@ export default function EventsTable({ initialEvents }: { initialEvents: Event[] 
         enableColumnPinning
         enableColumnResizing
         enableFacetedFilters
-        initialColumnPinning={{ left: ["title", "actions"] }}
+        initialColumnPinning={{ left: ["title"], right: ["actions"] }}
         pageSize={15}
       />
     </section>

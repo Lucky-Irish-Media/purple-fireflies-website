@@ -53,6 +53,7 @@ Import shared formatters and badge components from `app/admin/lib/utils.tsx` —
 - **Name / Driver columns**: `<span className="text-foreground font-medium">`
 - **Email, phone, date, address columns**: `<span className="text-text-secondary">`
 - **Editable action buttons**: `rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors`
+- **Actions column must always be the LAST column.** Define it last in the columns array AND pin it to the right so it stays visible last: `initialColumnPinning={{ left: ["<name-or-id-column>"], right: ["actions"] }}`. Never pin `actions` to the left.
 
 ## Heading Hierarchy
 

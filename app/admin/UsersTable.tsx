@@ -320,7 +320,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
         enableColumnPinning
         enableColumnResizing
         enableFacetedFilters
-        initialColumnPinning={{ left: ["name", "actions"] }}
+        initialColumnPinning={{ left: ["name"], right: ["actions"] }}
         pageSize={15}
       />
     </section>
