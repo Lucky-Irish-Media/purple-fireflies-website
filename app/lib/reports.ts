@@ -346,6 +346,80 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
+export interface ThisWeekDeliveryDay {
+  delivery_date: string;
+  delivery_day: "wednesday" | "thursday";
+  signup_count: number;
+  assigned_count: number;
+  regular_count: number;
+  vegan_count: number;
+  driver_count: number;
+}
+
+export async function getThisWeekDeliveries(): Promise<ThisWeekDeliveryDay[]> {
+  const db = await getDB();
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + (day === 0 ? -6 : 1 - day));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const formatDate = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const weekStart = formatDate(monday);
+  const weekEnd = formatDate(sunday);
+
+  const [mealRows, driverRows] = await Promise.all([
+    db
+      .prepare(
+        `SELECT ms.delivery_date, ms.delivery_day,
+                SUM(ms.regular_quantity + ms.vegan_quantity) as signup_count,
+                SUM(CASE WHEN da.id IS NOT NULL THEN ms.regular_quantity + ms.vegan_quantity ELSE 0 END) as assigned_count,
+                SUM(ms.regular_quantity) as regular_count,
+                SUM(ms.vegan_quantity) as vegan_count
+         FROM meal_signups ms
+         LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
+         WHERE ms.delivery_date >= ? AND ms.delivery_date <= ?
+         GROUP BY ms.delivery_date, ms.delivery_day
+         ORDER BY ms.delivery_date ASC`
+      )
+      .bind(weekStart, weekEnd)
+      .all<{
+        delivery_date: string;
+        delivery_day: "wednesday" | "thursday";
+        signup_count: number;
+        assigned_count: number;
+        regular_count: number;
+        vegan_count: number;
+      }>(),
+    db
+      .prepare(
+        `SELECT delivery_date, delivery_day, COUNT(*) as driver_count
+         FROM driver_volunteers
+         WHERE delivery_date >= ? AND delivery_date <= ?
+         GROUP BY delivery_date, delivery_day
+         ORDER BY delivery_date ASC`
+      )
+      .bind(weekStart, weekEnd)
+      .all<{ delivery_date: string; delivery_day: string; driver_count: number }>(),
+  ]);
+
+  const driverMap = new Map<string, number>();
+  for (const row of driverRows.results || []) {
+    driverMap.set(`${row.delivery_date}|${row.delivery_day}`, row.driver_count);
+  }
+
+  return (mealRows.results || []).map((row) => ({
+    delivery_date: row.delivery_date,
+    delivery_day: row.delivery_day,
+    signup_count: row.signup_count ?? 0,
+    assigned_count: row.assigned_count ?? 0,
+    regular_count: row.regular_count ?? 0,
+    vegan_count: row.vegan_count ?? 0,
+    driver_count: driverMap.get(`${row.delivery_date}|${row.delivery_day}`) ?? 0,
+  }));
+}
+
 export interface HomePageStats {
   total_meals_delivered: number;
   delivery_days: number;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardSummary, getUnassignedSignups, getCoverageGaps } from "@/app/lib/reports";
+import { getDashboardSummary, getUnassignedSignups, getCoverageGaps, getThisWeekDeliveries } from "@/app/lib/reports";
 import { getDeliveryDates, getReminderLogs } from "@/app/lib/db";
 import { SendRemindersButton } from "@/components/SendRemindersButton";
 
@@ -42,22 +42,16 @@ async function StatCard({
 }
 
 export default async function AdminDashboard() {
-  const [summary, unassigned, gaps, deliveryDates, reminderLogs] = await Promise.all([
+  const [summary, unassigned, gaps, deliveryDates, reminderLogs, thisWeek] = await Promise.all([
     getDashboardSummary(),
     getUnassignedSignups(),
     getCoverageGaps(),
     getDeliveryDates(),
     getReminderLogs(),
+    getThisWeekDeliveries(),
   ]);
 
   const gapDates = gaps.filter((g) => g.unassigned_count > 0);
-  const nextDateStr = summary.upcoming_date
-    ? new Date(summary.upcoming_date + "T00:00:00").toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-      })
-    : null;
 
   return (
     <div className="space-y-8">
@@ -105,28 +99,45 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      {nextDateStr && (
-        <div className="rounded-lg border border-primary/10 bg-card p-4">
-          <h2 className="text-lg font-semibold text-foreground">Next Delivery: {nextDateStr}</h2>
-          <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-            <div>
-              <span className="text-text-secondary">Signups</span>
-              <p className="font-semibold text-foreground">{summary.upcoming_signup_count ?? "—"}</p>
-            </div>
-            <div>
-              <span className="text-text-secondary">Assigned</span>
-              <p className="font-semibold text-foreground">{summary.upcoming_assigned_count ?? "—"}</p>
-            </div>
-            <div>
-              <span className="text-text-secondary">Wed. Drivers</span>
-              <p className="font-semibold text-foreground">{summary.next_wednesday_drivers}</p>
-            </div>
-            <div>
-              <span className="text-text-secondary">Thu. Drivers</span>
-              <p className="font-semibold text-foreground">{summary.next_thursday_drivers}</p>
-            </div>
+      {thisWeek.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground">This Week&apos;s Deliveries</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {thisWeek.map((day) => (
+              <div key={day.delivery_date} className="rounded-lg border border-primary/10 bg-card p-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  {new Date(day.delivery_date + "T00:00:00").toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </h3>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+                  <div>
+                    <span className="text-text-secondary">Signups</span>
+                    <p className="font-semibold text-foreground">{day.signup_count}</p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary">Assigned</span>
+                    <p className="font-semibold text-foreground">{day.assigned_count}</p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary">Regular</span>
+                    <p className="font-semibold text-foreground">{day.regular_count}</p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary">Vegan</span>
+                    <p className="font-semibold text-foreground">{day.vegan_count}</p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary">Drivers</span>
+                    <p className="font-semibold text-foreground">{day.driver_count}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
       )}
 
       <section className="space-y-4">
