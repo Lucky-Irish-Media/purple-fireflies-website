@@ -78,6 +78,28 @@ Purple Fireflies`;
   await sendEmail({ to, subject, text });
 }
 
+export async function sendInviteEmail(to: string, name: string, tempPassword: string, status: string): Promise<void> {
+  const subject = "Your Purple Fireflies account";
+  const approvalNote =
+    status === "pending"
+      ? "\nYour account is awaiting approval from our coordinators. You'll be able to sign in once it has been approved.\n"
+      : "";
+  const text = `Hi ${name},
+
+Your password has been reset. Here is your new temporary password to sign in to your Purple Fireflies account:
+
+Temporary password: ${tempPassword}
+
+Sign in at: https://purplefireflies.org/login
+${approvalNote}
+After signing in, you can change your password from your account settings.
+
+Take care,
+Meal Delivery Coordinator
+Purple Fireflies`;
+  await sendEmail({ to, subject, text });
+}
+
 export async function sendEmail(params: {
   to: string;
   subject: string;

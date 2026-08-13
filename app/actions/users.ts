@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, updateUserRecord, updateUserStatus, getUsers, type User } from "@/app/lib/db";
+import { createUser, deleteUserRecord, getUserByEmail, getUserById, updateUserPassword, updateUserRecord, updateUserStatus, getUsers, type User } from "@/app/lib/db";
 import { generateRandomPassword } from "@/app/lib/password";
+import { sendInviteEmail } from "@/app/lib/email";
 
 const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required.").trim(),
@@ -169,6 +170,49 @@ export async function resetPasswordAction(
   } catch (e) {
     console.error("resetPassword action error:", e);
     return { message: "Failed to reset password." };
+  }
+}
+
+export async function resendInviteAction(
+  _prevState: UsersActionState,
+  formData: FormData,
+): Promise<UsersActionState> {
+  try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { message: "Unauthorized. Only admins can manage users." };
+    }
+
+    const userId = Number(formData.get("userId"));
+    if (!userId) {
+      return { message: "Invalid user ID." };
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return { message: "User not found." };
+    }
+
+    const plainPassword = generateRandomPassword();
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(plainPassword, salt);
+
+    await updateUserPassword(userId, passwordHash);
+
+    let message = `Invite re-sent to "${user.name}".`;
+    try {
+      await sendInviteEmail(user.email, user.name, plainPassword, user.status);
+    } catch (e) {
+      console.error("resendInvite email error:", e);
+      message = `Invite email failed to send to "${user.name}". Share the password below manually.`;
+    }
+
+    revalidatePath("/admin/users");
+
+    return { message, generatedPassword: plainPassword };
+  } catch (e) {
+    console.error("resendInvite action error:", e);
+    return { message: "Failed to resend invite." };
   }
 }
 

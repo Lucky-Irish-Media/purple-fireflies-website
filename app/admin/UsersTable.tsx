@@ -6,6 +6,7 @@ import {
   createUserAction,
   updateUserAction,
   resetPasswordAction,
+  resendInviteAction,
   deleteUserAction,
   approveUserAction,
   type UsersActionState,
@@ -136,6 +137,11 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     FormData
   >(resetPasswordAction, undefined);
 
+  const [resendState, resendAction, resendPending] = useActionState<
+    UsersActionState,
+    FormData
+  >(resendInviteAction, undefined);
+
   const [deleteState, deleteAction, deletePending] = useActionState<
     UsersActionState,
     FormData
@@ -207,6 +213,17 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
             >
               Edit
             </button>
+
+            <form action={resendAction} className="inline">
+              <input type="hidden" name="userId" value={user.id} />
+              <button
+                type="submit"
+                disabled={resendPending}
+                className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
+              >
+                Resend Invite
+              </button>
+            </form>
 
             <form action={resetAction} className="inline">
               <input type="hidden" name="userId" value={user.id} />
@@ -350,6 +367,27 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
 
       {resetState?.message && !resetState?.generatedPassword && (
         <p className="text-sm text-green-600">{resetState.message}</p>
+      )}
+
+      {resendState?.message && (
+        <p
+          className={`text-sm ${
+            resendState.message.includes("failed") ? "text-red-500" : "text-green-600"
+          }`}
+        >
+          {resendState.message}
+        </p>
+      )}
+
+      {resendState?.generatedPassword && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+          <p className="text-sm font-semibold text-amber-800">
+            New password (save this now — it won&apos;t be shown again):
+          </p>
+          <code className="mt-1 block text-lg font-mono text-amber-900 select-all">
+            {resendState.generatedPassword}
+          </code>
+        </div>
       )}
 
       <DataTable

@@ -386,6 +386,15 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return user || null;
 }
 
+export async function getUserById(id: number): Promise<User | null> {
+  const db = await getDB();
+  const user = await db
+    .prepare("SELECT id, email, name, role, status, created_at, password_hash FROM users WHERE id = ?")
+    .bind(id)
+    .first<User>();
+  return user || null;
+}
+
 export async function createUser(data: {
   email: string;
   name: string;
