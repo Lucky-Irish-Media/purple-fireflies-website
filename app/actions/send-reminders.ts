@@ -2,6 +2,7 @@
 
 import { verifySession } from "@/app/lib/dal";
 import { getAssignmentsForDate, getWaitlistEntriesByDate, logReminderSent } from "@/app/lib/db";
+import type { DateDriver } from "@/app/lib/db";
 import { sendEmail, sendDeliverySummaryEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
@@ -28,6 +29,8 @@ export async function sendDriverReminders(
       return { success: false, message: "Please select a date.", sent: 0, results: [] };
     }
 
+    const summaryOnly = formData.get("mode") === "summary-only";
+
     const drivers = await getAssignmentsForDate(date);
 
     const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
@@ -42,6 +45,14 @@ export async function sendDriverReminders(
     }
 
     const results: SendRemindersState["results"] = [];
+
+    if (summaryOnly) {
+      const summarySent = await sendSummaryEmail(date, drivers);
+      if (!summarySent) {
+        return { success: false, message: "Failed to send the summary email. Please try again.", sent: 0, results: [] };
+      }
+      return { success: true, message: `Sent summary email for ${formattedDate} only.`, sent: 1, results: [] };
+    }
 
     for (const driver of drivers) {
       const isWednesday = driver.delivery_day === "wednesday";
@@ -102,12 +113,7 @@ export async function sendDriverReminders(
     const sent = results.filter((r) => r.status === "sent").length;
     const failed = results.filter((r) => r.status !== "sent").length;
 
-    try {
-      const waitlistEntries = await getWaitlistEntriesByDate(date);
-      await sendDeliverySummaryEmail(date, drivers, waitlistEntries);
-    } catch (err) {
-      console.error("Failed to send delivery summary email:", err);
-    }
+    await sendSummaryEmail(date, drivers);
 
     await logReminderSent(date, sent, failed);
 
@@ -123,5 +129,16 @@ export async function sendDriverReminders(
       message: "Failed to send reminders. Please try again.",
       sent: 0,
     };
+  }
+}
+
+async function sendSummaryEmail(date: string, drivers: DateDriver[]): Promise<boolean> {
+  try {
+    const waitlistEntries = await getWaitlistEntriesByDate(date);
+    await sendDeliverySummaryEmail(date, drivers, waitlistEntries);
+    return true;
+  } catch (err) {
+    console.error("Failed to send delivery summary email:", err);
+    return false;
   }
 }

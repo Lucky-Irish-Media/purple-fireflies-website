@@ -49,6 +49,15 @@ export function SendRemindersButton({
             </option>
           ))}
         </select>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="mode"
+            value="summary-only"
+            className="h-4 w-4 rounded border-primary/20 accent-primary"
+          />
+          Summary email only (skip driver reminders)
+        </label>
         <button
           type="submit"
           disabled={isPending || dates.length === 0}
