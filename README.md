@@ -65,6 +65,7 @@ This project uses Cloudflare Workers Builds. Push to `main` and Cloudflare autom
 
 - Build command: `npm run cf:build`
 - Database migrations: `wrangler d1 execute purple-fireflies-db --file=migrations/XXXX_name.sql`
+- Volunteer account backfill (after deploying the volunteer portal): `node scripts/backfill-volunteer-accounts.mjs --env preview` — generates SQL + temp passwords for recent volunteers without an account (see script header for usage; defaults to `--days 14 --status active`)
 
 ## Design Choices
 
