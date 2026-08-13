@@ -12,7 +12,7 @@ import fs from "fs";
 
 function usage() {
   console.log(`Usage: node scripts/backfill-volunteer-accounts.mjs [options]
-  --env <env>      wrangler env to read from (default: preview)
+  --env <env>      wrangler env to target (default: the default/main env, e.g. production)
   --days <n>       only volunteers with a signup in the last n days (default: 14)
   --status <s>     status for new accounts: active | pending (default: active)
   --help           show this help`);
@@ -20,7 +20,7 @@ function usage() {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const opts = { env: "preview", days: 14, status: "active" };
+  const opts = { env: null, days: 14, status: "active" };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--env") opts.env = args[++i];
     else if (args[i] === "--days") opts.days = Number(args[++i]);
@@ -75,7 +75,7 @@ function generateRandomPassword() {
 
 function queryParticipants(opts) {
   const sql = `SELECT p.id, p.name, p.email, COUNT(dv.id) AS signup_count FROM participants p JOIN driver_volunteers dv ON dv.participant_id = p.id WHERE dv.delivery_date >= date('now', '-${opts.days} days') AND NOT EXISTS (SELECT 1 FROM users u WHERE LOWER(u.email) = LOWER(p.email)) GROUP BY p.id ORDER BY p.name`;
-  const cmd = `npx wrangler d1 execute purple-fireflies-db --env ${opts.env} --remote --command ${JSON.stringify(sql)} --json`;
+  const cmd = `npx wrangler d1 execute purple-fireflies-db${opts.env ? ` --env ${opts.env}` : ""} --remote --command ${JSON.stringify(sql)} --json`;
   const stdout = execSync(cmd, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
   const parsed = JSON.parse(stdout.trim());
   const block = Array.isArray(parsed) ? parsed[0] : parsed;
@@ -86,8 +86,9 @@ function queryParticipants(opts) {
 }
 
 const opts = parseArgs();
+const envFlag = opts.env ? ` --env ${opts.env}` : "";
 
-console.log(`Scanning ${opts.env} D1 for volunteers with signups in the last ${opts.days} days...`);
+console.log(`Scanning ${opts.env ? opts.env + " " : ""}D1 for volunteers with signups in the last ${opts.days} days...`);
 
 let participants;
 try {
@@ -119,7 +120,7 @@ for (const p of participants) {
 const header = `-- Backfill volunteer accounts
 -- Generated: ${new Date().toISOString()}
 -- Apply with:
---   npx wrangler d1 execute purple-fireflies-db --env ${opts.env} --remote --file /tmp/backfill_volunteer_accounts.sql
+--   npx wrangler d1 execute purple-fireflies-db${envFlag} --remote --file /tmp/backfill_volunteer_accounts.sql
 -- New accounts: role='volunteer', status='${opts.status}', emails lowercased.
 `;
 const inserts = accounts.map(
@@ -134,4 +135,4 @@ console.log("Email | Name | Signups | Temporary password");
 for (const a of accounts) {
   console.log(`${a.email} | ${a.name} | ${a.signupCount} | ${a.tempPassword}`);
 }
-console.log(`\nTo apply: npx wrangler d1 execute purple-fireflies-db --env ${opts.env} --remote --file /tmp/backfill_volunteer_accounts.sql`);
+console.log(`\nTo apply: npx wrangler d1 execute purple-fireflies-db${envFlag} --remote --file /tmp/backfill_volunteer_accounts.sql`);
