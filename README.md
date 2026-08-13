@@ -19,7 +19,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/contact` | Get Involved page |
 | `/login` | Sign in (admins and volunteers) |
 | `/admin` | Admin dashboard |
-| `/admin/users` | Admin user management (incl. volunteer approval) |
+| `/admin/users` | Admin user management (volunteer approval, password reset, resend invite) |
 | `/admin/programs` | Programs management |
 | `/admin/programs/meal-delivery` | Meal delivery CRUD + driver assignment |
 | `/admin/events` | Events CRUD |
