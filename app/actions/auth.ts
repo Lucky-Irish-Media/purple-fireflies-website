@@ -6,6 +6,7 @@ import { LoginFormSchema, type LoginFormState } from "@/app/lib/definitions";
 import { createSession, deleteSession } from "@/app/lib/session";
 import { getUserByEmail } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
+import { getHomePathForRole } from "@/app/lib/auth-utils";
 
 const DUMMY_HASH = "$2b$10$EbPYDqi57Pm.r1vTRkNGmu5yC2oKp628cFhQjtV/nsRKWBfobjo4q";
 
@@ -29,6 +30,7 @@ export async function login(
   _state: LoginFormState,
   formData: FormData
 ): Promise<LoginFormState> {
+  let homePath = "/volunteer";
   try {
     const validatedFields = LoginFormSchema.safeParse({
       email: formData.get("email"),
@@ -54,13 +56,18 @@ export async function login(
       return { message: "Invalid email or password." };
     }
 
+    if (user.status === "pending") {
+      return { message: "Your account is awaiting approval. Please try again later." };
+    }
+
     await createSession(user.id, user.email, user.role);
+    homePath = getHomePathForRole(user.role);
   } catch (e) {
     console.error("login action error:", e);
     return { message: getErrorMessage(e) };
   }
 
-  redirect("/admin");
+  redirect(homePath);
 }
 
 export async function logout() {

@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, updateUserRecord, getUsers, type User } from "@/app/lib/db";
+import { createUser, deleteUserRecord, getUserByEmail, updateUserPassword, updateUserRecord, updateUserStatus, getUsers, type User } from "@/app/lib/db";
+import { generateRandomPassword } from "@/app/lib/password";
 
 const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required.").trim(),
   email: z.string().email("Please enter a valid email.").trim(),
-  role: z.enum(["admin", "member"], "Please select a role."),
+  role: z.enum(["admin", "member", "volunteer"], "Please select a role."),
 });
 
 export type UsersActionState = {
@@ -19,39 +20,11 @@ export type UsersActionState = {
   users?: User[];
 } | undefined;
 
-function generateRandomPassword(): string {
-  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const lowercase = "abcdefghijklmnopqrstuvwxyz";
-  const digits = "0123456789";
-  const special = "!@#$%^&*()_+-=";
-  const all = uppercase + lowercase + digits + special;
-
-  const array = new Uint8Array(20);
-  crypto.getRandomValues(array);
-
-  const password: string[] = [];
-  password.push(uppercase[array[0] % uppercase.length]);
-  password.push(lowercase[array[1] % lowercase.length]);
-  password.push(digits[array[2] % digits.length]);
-  password.push(special[array[3] % special.length]);
-
-  for (let i = 4; i < 20; i++) {
-    password.push(all[array[i] % all.length]);
-  }
-
-  for (let i = password.length - 1; i > 0; i--) {
-    const j = array[i] % (i + 1);
-    [password[i], password[j]] = [password[j], password[i]];
-  }
-
-  return password.join("");
-}
-
 const UpdateUserSchema = z.object({
   id: z.coerce.number(),
   name: z.string().min(1, "Name is required.").trim(),
   email: z.string().email("Please enter a valid email.").trim(),
-  role: z.enum(["admin", "member"], "Please select a role."),
+  role: z.enum(["admin", "member", "volunteer"], "Please select a role."),
 });
 
 export async function updateUserAction(
@@ -135,6 +108,34 @@ export async function createUserAction(
   } catch (e) {
     console.error("createUser action error:", e);
     return { message: "Failed to create user." };
+  }
+}
+
+export async function approveUserAction(
+  _prevState: UsersActionState,
+  formData: FormData,
+): Promise<UsersActionState> {
+  try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { message: "Unauthorized. Only admins can manage users." };
+    }
+
+    const userId = Number(formData.get("userId"));
+    if (!userId) {
+      return { message: "Invalid user ID." };
+    }
+
+    await updateUserStatus(userId, "active");
+
+    const users = await getUsers();
+
+    revalidatePath("/admin/users");
+
+    return { message: "User approved successfully.", users };
+  } catch (e) {
+    console.error("approveUser action error:", e);
+    return { message: "Failed to approve user." };
   }
 }
 

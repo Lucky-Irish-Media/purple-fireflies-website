@@ -58,6 +58,12 @@ export function DriverVolunteerForm() {
         </button>
       </p>
 
+      <p className="mb-8">
+        <a href="/login" className="text-sm font-medium text-primary hover:underline">
+          Already have an account? Sign in to manage your signups →
+        </a>
+      </p>
+
       <form action={formAction} className="space-y-6" noValidate>
         <div className="space-y-2">
           <label htmlFor="name" className="block text-sm font-medium text-foreground">
@@ -226,6 +232,11 @@ export function DriverVolunteerForm() {
         {state?.message === "success" && (
           <div className="rounded-lg bg-green-50 p-4 text-green-600" role="status">
             Thank you for volunteering! You&apos;re signed up for: {state.selectedDates}. We&apos;ll be in touch soon with details.
+            {state.accountCreated && (
+              <p className="mt-2">
+                We also created an account for you to manage your signups. Check your email for a temporary password — an admin must approve your account before you can sign in.
+              </p>
+            )}
           </div>
         )}
 

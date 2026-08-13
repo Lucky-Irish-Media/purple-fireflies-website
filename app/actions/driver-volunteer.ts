@@ -1,8 +1,11 @@
 "use server";
 
+import bcrypt from "bcryptjs";
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
-import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone } from "@/app/lib/db";
+import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone, getUserByEmail, createUser } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
+import { generateRandomPassword } from "@/app/lib/password";
+import { sendVolunteerAccountEmail } from "@/app/lib/email";
 
 function getErrorMessage(): string {
   return "An unexpected error occurred. Please try again.";
@@ -80,6 +83,23 @@ export async function submitDriverVolunteer(
       signups.push(signup);
     }
 
+    let accountCreated = false;
+    const existingUser = await getUserByEmail(data.email);
+    if (!existingUser) {
+      const tempPassword = generateRandomPassword();
+      const salt = await bcrypt.genSalt(12);
+      const passwordHash = await bcrypt.hash(tempPassword, salt);
+      await createUser({
+        email: data.email,
+        name: data.name,
+        passwordHash,
+        role: "volunteer",
+        status: "pending",
+      });
+      await sendVolunteerAccountEmail(data.email, data.name, tempPassword);
+      accountCreated = true;
+    }
+
     let message = "success";
     let selectedDates = newDates
       .map((d) => new Date(d).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }))
@@ -99,7 +119,7 @@ export async function submitDriverVolunteer(
         .join(", ");
     }
 
-    return { message, selectedDates };
+    return { message, selectedDates, accountCreated };
   } catch (e) {
     console.error("driver volunteer action error:", e);
     return { message: getErrorMessage() };

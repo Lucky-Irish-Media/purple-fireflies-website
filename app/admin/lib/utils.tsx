@@ -102,10 +102,26 @@ export function getRoleBadge(role: string) {
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
         role === "admin"
           ? "bg-purple-100 text-purple-800"
+          : role === "volunteer"
+          ? "bg-green-100 text-green-800"
           : "bg-blue-100 text-blue-800"
       }`}
     >
       {role}
+    </span>
+  );
+}
+
+export function getStatusBadge(status: string) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        status === "active"
+          ? "bg-green-100 text-green-800"
+          : "bg-amber-100 text-amber-800"
+      }`}
+    >
+      {status}
     </span>
   );
 }

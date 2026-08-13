@@ -17,18 +17,20 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/news` | Articles about Purple Fireflies in the news |
 | `/donate` | Donations page (Venmo, PayPal, Cash App, Give Butter) |
 | `/contact` | Get Involved page |
-| `/login` | Admin login |
+| `/login` | Sign in (admins and volunteers) |
 | `/admin` | Admin dashboard |
-| `/admin/users` | Admin user management |
+| `/admin/users` | Admin user management (incl. volunteer approval) |
 | `/admin/programs` | Programs management |
 | `/admin/programs/meal-delivery` | Meal delivery CRUD + driver assignment |
 | `/admin/events` | Events CRUD |
 | `/admin/news` | News articles CRUD |
+| `/volunteer` | Volunteer portal (sign-ins only) |
 
 ## Features
 
 - **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date
 - **Driver Volunteer Signup** — Public form for volunteers to sign up for delivery dates and regions
+- **Volunteer Portal** — `/volunteer` portal where signed-in volunteers view and cancel their signups, update contact info, and see assigned deliveries; accounts are auto-created from the volunteer form with an emailed temporary password and require admin approval
 - **Signup Lookup** — Modal to look up existing signups by email
 - **Events** — Public `/events` page showing upcoming events and a collapsible past events section; admin CRUD at `/admin/events`
 - **News** — Public `/news` page linking to news articles that mention Purple Fireflies; admin CRUD at `/admin/news`
@@ -63,6 +65,7 @@ This project uses Cloudflare Workers Builds. Push to `main` and Cloudflare autom
 
 - Build command: `npm run cf:build`
 - Database migrations: `wrangler d1 execute purple-fireflies-db --file=migrations/XXXX_name.sql`
+- Volunteer account backfill (after deploying the volunteer portal): `node scripts/backfill-volunteer-accounts.mjs --env preview` — generates SQL + temp passwords for recent volunteers without an account (see script header for usage; defaults to `--days 14 --status active`)
 
 ## Design Choices
 
