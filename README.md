@@ -28,14 +28,14 @@ A community mutual-aid website for programs such as food justice in Athens Count
 
 ## Features
 
-- **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date
+- **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date; admins can close any upcoming delivery day early, routing new signups to the waitlist even before the 15-meal cap is reached
 - **Driver Volunteer Signup** — Public form for volunteers to sign up for delivery dates and regions
 - **Volunteer Portal** — `/volunteer` portal where signed-in volunteers view and cancel their signups, update contact info, and see assigned deliveries; accounts are auto-created from the volunteer form with an emailed temporary password and require admin approval
 - **Signup Lookup** — Modal to look up existing signups by email
 - **Driver Reminder Emails** — Admin dashboard action to email drivers their delivery assignments for a selected date and email the coordinator a summary; supports sending the summary email only via a checkbox
 - **Events** — Public `/events` page showing upcoming events and a collapsible past events section; admin CRUD at `/admin/events`
 - **News** — Public `/news` page linking to news articles that mention Purple Fireflies; admin CRUD at `/admin/news`
-- **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management
+- **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management; a Delivery Days tab lists upcoming Wed/Thu dates with signup counts and Close/Reopen toggles
 - **Authentication** — Email/password login with bcrypt, JWT sessions, HTTP-only cookies
 
 ## Tech Stack

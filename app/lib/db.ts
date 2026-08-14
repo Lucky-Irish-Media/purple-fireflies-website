@@ -819,6 +819,39 @@ export async function getMealSignupCountForDate(deliveryDate: string): Promise<n
   return result?.count ?? 0;
 }
 
+export async function getClosedDeliveryDates(): Promise<string[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT delivery_date FROM closed_delivery_dates WHERE delivery_date >= date('now')")
+    .all<{ delivery_date: string }>();
+  return (result.results || []).map((row) => row.delivery_date);
+}
+
+export async function isDeliveryDateClosed(deliveryDate: string): Promise<boolean> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT 1 FROM closed_delivery_dates WHERE delivery_date = ?")
+    .bind(deliveryDate)
+    .first();
+  return !!result;
+}
+
+export async function closeDeliveryDate(deliveryDate: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("INSERT INTO closed_delivery_dates (delivery_date) VALUES (?) ON CONFLICT(delivery_date) DO NOTHING")
+    .bind(deliveryDate)
+    .run();
+}
+
+export async function reopenDeliveryDate(deliveryDate: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("DELETE FROM closed_delivery_dates WHERE delivery_date = ?")
+    .bind(deliveryDate)
+    .run();
+}
+
 export async function addToWaitlist(data: {
   participantId: number;
   deliveryDate: string;
