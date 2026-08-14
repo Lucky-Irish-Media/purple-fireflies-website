@@ -1,5 +1,5 @@
 import { MealSignupForm } from "@/components/MealSignupForm";
-import { getMealSignupCountsByDate } from "@/app/lib/db";
+import { getMealSignupCountsByDate, getClosedDeliveryDates } from "@/app/lib/db";
 
 export const metadata = {
   title: "Meal Delivery Signup | Purple Fireflies",
@@ -9,10 +9,13 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function DeliverySignupPage() {
-  const dateCounts = await getMealSignupCountsByDate();
+  const [dateCounts, closedDates] = await Promise.all([
+    getMealSignupCountsByDate(),
+    getClosedDeliveryDates(),
+  ]);
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
-      <MealSignupForm dateCounts={dateCounts} />
+      <MealSignupForm dateCounts={dateCounts} closedDates={closedDates} />
     </main>
   );
 }

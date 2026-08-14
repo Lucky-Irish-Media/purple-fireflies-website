@@ -59,7 +59,7 @@ function isFirstWednesday(dateStr: string): boolean {
 
 const MAX_SIGNUPS_PER_DATE = 15;
 
-export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string, number> }) {
+export function MealSignupForm({ dateCounts = {}, closedDates = [] }: { dateCounts?: Record<string, number>; closedDates?: string[] }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
   const [showLookup, setShowLookup] = useState(false);
   const [regularQty, setRegularQty] = useState(1);
@@ -374,7 +374,8 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
             {deliveryDateOptions.map((option) => {
               const count = dateCounts[option.value] ?? 0;
               const spacesLeft = MAX_SIGNUPS_PER_DATE - count;
-              const isFull = spacesLeft <= 0;
+              const isClosed = closedDates.includes(option.value);
+              const isFull = isClosed || spacesLeft <= 0;
               const isFirstWed = isFirstWednesday(option.value);
               const veganRestricted = veganQty > 0 && isFirstWed;
               const disabled = isFull || veganRestricted;
@@ -401,8 +402,8 @@ export function MealSignupForm({ dateCounts = {} }: { dateCounts?: Record<string
                     <span className={disabled ? "text-text-secondary line-through" : "text-foreground"}>
                       {option.label}
                     </span>
-                    <span className={`text-xs ${isFull ? "text-red-400" : veganRestricted ? "text-amber-600" : "text-text-secondary"}`}>
-                      {isFull ? "Full" : veganRestricted ? "Not available for Vegan / GF" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
+                    <span className={`text-xs ${isClosed ? "text-red-400" : isFull ? "text-red-400" : veganRestricted ? "text-amber-600" : "text-text-secondary"}`}>
+                      {isClosed ? "Closed" : isFull ? "Full" : veganRestricted ? "Not available for Vegan / GF" : `${spacesLeft} space${spacesLeft === 1 ? "" : "s"} left`}
                     </span>
                   </label>
                   {isFull && (
