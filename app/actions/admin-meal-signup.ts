@@ -25,8 +25,8 @@ const AdminMealSignupSchema = z.object({
   city: z.string().min(1, "City is required.").trim(),
   state: z.enum(stateAbbreviations, "Please select a valid state."),
   zipCode: z.string().min(5, "ZIP code is required.").max(10).trim(),
-  regularQuantity: z.coerce.number().int().min(0).max(2),
-  veganQuantity: z.coerce.number().int().min(0).max(2),
+  regularQuantity: z.coerce.number().int().min(0).max(10),
+  veganQuantity: z.coerce.number().int().min(0).max(10),
   contactMethod: z.enum(["call", "text", "email"], "Please select a contact method."),
   deliveryDate: z.string().min(1, "Delivery date is required."),
   comments: z.string().optional(),
@@ -34,8 +34,8 @@ const AdminMealSignupSchema = z.object({
   internalNotes: z.string().optional(),
 }).refine((data) => {
   const total = data.regularQuantity + data.veganQuantity;
-  return total >= 1 && total <= 2;
-}, { message: "Total meals must be 1 or 2.", path: ["regularQuantity"] });
+  return total >= 1;
+}, { message: "Total meals must be at least 1.", path: ["regularQuantity"] });
 
 export type AdminMealSignupActionState = {
   errors?: Record<string, string[]>;
@@ -53,8 +53,8 @@ const AdminMealSignupUpdateSchema = z.object({
   city: z.string().min(1, "City is required.").trim(),
   state: z.enum(stateAbbreviations, "Please select a valid state."),
   zipCode: z.string().min(5, "ZIP code is required.").max(10).trim(),
-  regularQuantity: z.coerce.number().int().min(0).max(2),
-  veganQuantity: z.coerce.number().int().min(0).max(2),
+  regularQuantity: z.coerce.number().int().min(0).max(10),
+  veganQuantity: z.coerce.number().int().min(0).max(10),
   contactMethod: z.enum(["call", "text", "email"], "Please select a contact method."),
   deliveryDate: z.string().min(1, "Delivery date is required."),
   comments: z.string().optional(),
@@ -62,8 +62,8 @@ const AdminMealSignupUpdateSchema = z.object({
   internalNotes: z.string().optional(),
 }).refine((data) => {
   const total = data.regularQuantity + data.veganQuantity;
-  return total >= 1 && total <= 2;
-}, { message: "Total meals must be 1 or 2.", path: ["regularQuantity"] });
+  return total >= 1;
+}, { message: "Total meals must be at least 1.", path: ["regularQuantity"] });
 
 export async function updateMealSignupAction(
   _prevState: AdminMealSignupActionState,

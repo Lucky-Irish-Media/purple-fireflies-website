@@ -28,7 +28,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 
 ## Features
 
-- **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date; admins can close any upcoming delivery day early, routing new signups to the waitlist even before the 15-meal cap is reached
+- **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date; admins can close any upcoming delivery day early, routing new signups to the waitlist even before the 15-meal cap is reached; admins can apply more than the standard 2 meals per signup (up to 10 per meal type, 20 total) from the admin panel while the public form keeps the 1-2 meal limit
 - **Driver Volunteer Signup** — Public form for volunteers to sign up for delivery dates and regions
 - **Volunteer Portal** — `/volunteer` portal where signed-in volunteers view and cancel their signups, update contact info, and see assigned deliveries; accounts are auto-created from the volunteer form with an emailed temporary password and require admin approval
 - **Signup Lookup** — Modal to look up existing signups by email
