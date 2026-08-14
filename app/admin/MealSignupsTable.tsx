@@ -177,7 +177,7 @@ function SignupFormFields({ state, signup, formPending, editing }: {
   const [regularQty, setRegularQty] = useState(signup?.regular_quantity ?? 1);
   const [veganQty, setVeganQty] = useState(signup?.vegan_quantity ?? 0);
   const totalMeals = regularQty + veganQty;
-  const totalInvalid = totalMeals < 1 || totalMeals > 2;
+  const totalInvalid = totalMeals < 1;
 
   return (
     <>
@@ -260,55 +260,37 @@ function SignupFormFields({ state, signup, formPending, editing }: {
         <legend className="block text-sm font-medium text-foreground mb-1">Meals Requested</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-text-secondary mb-2">Regular meals:</p>
-            <div className="flex gap-4">
-              {[0, 1, 2].map((n) => {
-                const disabled = n + veganQty > 2;
-                return (
-                  <label key={`reg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
-                    <input
-                      type="radio"
-                      name="regularQuantity"
-                      value={n}
-                      required
-                      checked={regularQty === n}
-                      disabled={disabled}
-                      onChange={(e) => setRegularQty(Number(e.target.value))}
-                      className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
-                    />
-                    <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <label htmlFor="ms-regularQty" className="block text-sm text-text-secondary mb-2">Regular meals:</label>
+            <input
+              id="ms-regularQty"
+              name="regularQuantity"
+              type="number"
+              min={0}
+              max={10}
+              required
+              value={regularQty}
+              onChange={(e) => setRegularQty(Math.max(0, Math.min(10, Number(e.target.value))))}
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
           <div>
-            <p className="text-sm text-text-secondary mb-2">Vegan / GF meals:</p>
-            <div className="flex gap-4">
-              {[0, 1, 2].map((n) => {
-                const disabled = n + regularQty > 2;
-                return (
-                  <label key={`vg-${n}`} className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
-                    <input
-                      type="radio"
-                      name="veganQuantity"
-                      value={n}
-                      required
-                      checked={veganQty === n}
-                      disabled={disabled}
-                      onChange={(e) => setVeganQty(Number(e.target.value))}
-                      className="h-4 w-4 text-primary border-input focus:ring-primary disabled:opacity-40"
-                    />
-                    <span className={`${disabled ? "text-text-secondary line-through" : "text-foreground"}`}>{n}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <label htmlFor="ms-veganQty" className="block text-sm text-text-secondary mb-2">Vegan / GF meals:</label>
+            <input
+              id="ms-veganQty"
+              name="veganQuantity"
+              type="number"
+              min={0}
+              max={10}
+              required
+              value={veganQty}
+              onChange={(e) => setVeganQty(Math.max(0, Math.min(10, Number(e.target.value))))}
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
         </div>
         {totalInvalid && (
           <p className="text-sm text-red-500" role="alert">
-            Total meals must be 1 or 2.
+            Total meals must be at least 1.
           </p>
         )}
         {state?.errors?.regularQuantity && (
