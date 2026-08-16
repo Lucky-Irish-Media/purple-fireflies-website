@@ -139,6 +139,7 @@ export async function submitMealSignup(
         deliveryDate,
         regularQuantity: data.regularQuantity,
         veganQuantity: data.veganQuantity,
+        comments: data.comments,
       });
       waitlisted.push(deliveryDate);
     }

@@ -35,7 +35,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 - **Driver Reminder Emails** — Admin dashboard action to email drivers their delivery assignments for a selected date and email the coordinator a summary; supports sending the summary email only via a checkbox
 - **Events** — Public `/events` page showing upcoming events and a collapsible past events section; admin CRUD at `/admin/events`
 - **News** — Public `/news` page linking to news articles that mention Purple Fireflies; admin CRUD at `/admin/news`
-- **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management; a Delivery Days tab lists upcoming Wed/Thu dates with signup counts and Close/Reopen toggles; the Waitlist tab uses the same column format as the Meal Signups table (combined requester with address, meal quantities, delivery date + weekday, status, and pinned actions)
+- **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management; a Delivery Days tab lists upcoming Wed/Thu dates with signup counts and Close/Reopen toggles; the Waitlist tab uses the same column format as the Meal Signups table (combined requester with address, meal quantities, delivery date + weekday, status, comments, and pinned actions)
 - **Authentication** — Email/password login with bcrypt, JWT sessions, HTTP-only cookies
 
 ## Tech Stack

@@ -218,6 +218,7 @@ export interface WaitlistEntry {
   delivery_date: string;
   regular_quantity: number;
   vegan_quantity: number;
+  comments: string | null;
   status: WaitlistStatus;
   created_at: string;
 }

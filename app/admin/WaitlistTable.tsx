@@ -131,6 +131,30 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
       meta: { filterComponent: StatusFilter },
       cell: (info) => getWaitlistStatusBadge(info.getValue()),
     }),
+    columnHelper.display({
+      id: "comments",
+      header: "Comments",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const value = info.row.original.comments;
+        if (!value) return <span className="text-text-secondary">—</span>;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              info.row.toggleExpanded();
+            }}
+            className="text-left w-full cursor-pointer"
+          >
+            {info.row.getIsExpanded() ? (
+              <span className="text-text-secondary whitespace-pre-wrap max-w-md">{value}</span>
+            ) : (
+              <span className="text-text-secondary max-w-xs truncate block">{value} <span className="text-xs text-text-secondary/50">▶</span></span>
+            )}
+          </button>
+        );
+      },
+    }),
     columnHelper.accessor((row) => row.created_at, {
       id: "created_at",
       header: "Added",

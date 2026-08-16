@@ -39,6 +39,7 @@ export async function convertWaitlistToSignupAction(formData: FormData): Promise
       regularQuantity,
       veganQuantity,
       deliveryDate: entry.delivery_date,
+      comments: entry.comments ?? undefined,
     });
 
     await updateWaitlistStatus(waitlistId, "converted");
