@@ -226,6 +226,11 @@ export interface WaitlistEntryWithParticipant extends WaitlistEntry {
   participant_name: string;
   participant_email: string;
   participant_phone: string;
+  participant_address1: string;
+  participant_address2: string | null;
+  participant_city: string;
+  participant_state: string;
+  participant_zip_code: string;
 }
 
 export const WaitlistSchema = z.object({

@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import type { WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, getMealTypeLabel, getMealTypeBadge, getWaitlistStatusBadge, DeliveryDateFilter, deliveryDateFilterFn } from "./lib/utils";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { formatDate, formatPhone, formatDateTime, getDeliveryDayBadge, getWaitlistStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
+import { getDeliveryDay } from "@/app/lib/delivery-day";
 import { convertWaitlistToSignupAction, notifyWaitlistEntryAction, removeWaitlistEntryAction } from "@/app/actions/admin-waitlist";
 
 const columnHelper = createColumnHelper<WaitlistEntryWithParticipant>();
@@ -31,7 +32,7 @@ function StatusFilter({ column }: { column: any }) {
   );
 }
 
-function NameFilter({ column }: { column: any }) {
+function RequesterFilter({ column }: { column: any }) {
   return (
     <input
       type="text"
@@ -47,6 +48,24 @@ function NameFilter({ column }: { column: any }) {
   );
 }
 
+function MealsFilter({ column }: { column: any }) {
+  return (
+    <select
+      value={(column.getFilterValue() as string) || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All</option>
+      <option value="regular">Regular Only</option>
+      <option value="vegan">Vegan Only</option>
+      <option value="both">Both</option>
+    </select>
+  );
+}
+
 export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithParticipant[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -54,43 +73,71 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const columns = useMemo<ColumnDef<WaitlistEntryWithParticipant, any>[]>(() => [
-    columnHelper.accessor("participant_name", {
-      header: "Name",
-      filterFn: "includesString",
-      meta: { filterComponent: NameFilter },
-      cell: (info) => <span className="text-foreground font-medium">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("participant_email", {
-      header: "Email",
-      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("participant_phone", {
-      header: "Phone",
-      cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
-    }),
-    columnHelper.accessor("delivery_date", {
-      header: "Delivery Date",
-      filterFn: deliveryDateFilterFn,
-      meta: { filterComponent: DeliveryDateFilter },
-      cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
-    }),
-    columnHelper.accessor("regular_quantity", {
-      header: "Meals",
-      enableColumnFilter: false,
+    columnHelper.display({
+      id: "requester",
+      header: "Requester",
+      filterFn: requesterFilterFn,
+      meta: { filterComponent: RequesterFilter },
       cell: (info) => {
-        const row = info.row.original;
-        return getMealTypeBadge(getMealTypeLabel(row.regular_quantity, row.vegan_quantity));
+        const r = info.row.original;
+        return (
+          <div className="space-y-0.5 max-w-[220px]">
+            <div className="text-foreground font-medium text-sm">{r.participant_name}</div>
+            <div className="text-text-secondary text-xs truncate">{r.participant_email}</div>
+            <div className="text-text-secondary text-xs truncate">
+              {r.participant_address1}
+              {r.participant_address2 && `, ${r.participant_address2}`}
+              {`, ${r.participant_city}, ${r.participant_state} ${r.participant_zip_code}`}
+            </div>
+            <div className="text-text-secondary text-xs">{formatPhone(r.participant_phone)}</div>
+          </div>
+        );
       },
     }),
-    columnHelper.accessor("status", {
+    columnHelper.display({
+      id: "meals",
+      header: "Meals",
+      filterFn: mealsFilterFn,
+      meta: { filterComponent: MealsFilter },
+      cell: (info) => {
+        const r = info.row.original;
+        const parts: string[] = [];
+        if (r.regular_quantity > 0) parts.push(`${r.regular_quantity} Regular`);
+        if (r.vegan_quantity > 0) parts.push(`${r.vegan_quantity} Vegan`);
+        return (
+          <span className="text-foreground font-medium">{parts.join(" / ") || "—"}</span>
+        );
+      },
+    }),
+    columnHelper.accessor((row) => row.delivery_date, {
+      id: "delivery",
+      header: "Delivery",
+      filterFn: deliveryDateFilterFn,
+      meta: { filterComponent: DeliveryDateFilter },
+      cell: (info) => {
+        const r = info.row.original;
+        return (
+          <div className="space-y-0.5">
+            <div className="text-text-secondary text-sm">{formatDate(r.delivery_date)}</div>
+            <div className="text-xs">{getDeliveryDayBadge(getDeliveryDay(r.delivery_date))}</div>
+          </div>
+        );
+      },
+    }),
+    columnHelper.accessor((row) => row.status, {
+      id: "status",
       header: "Status",
+      filterFn: filterFns.equals,
       meta: { filterComponent: StatusFilter },
       cell: (info) => getWaitlistStatusBadge(info.getValue()),
     }),
-    columnHelper.accessor("created_at", {
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
       header: "Added",
-      enableColumnFilter: false,
-      cell: (info) => <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>,
+      cell: (info) => (
+        <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>
+      ),
+      filterFn: filterFns.includesString,
     }),
     columnHelper.display({
       id: "actions",
@@ -164,7 +211,24 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
           {actionMessage}
         </div>
       )}
-      <DataTable columns={columns} data={initialData} />
+      <DataTable
+        columns={columns}
+        data={initialData}
+        enableSorting
+        enableFiltering
+        enablePagination
+        enableExpanding
+        enableColumnVisibility
+        enableGlobalFilter
+        enableColumnPinning
+        enableColumnResizing
+        enableFacetedFilters
+        initialVisibility={{ created_at: false }}
+        initialColumnPinning={{ left: ["requester"], right: ["actions"] }}
+        initialSorting={[{ id: "delivery", desc: true }]}
+        pageSize={15}
+        storageKey="waitlist-column-visibility"
+      />
 
       {selectedEntry && (
         <Modal open={true} onClose={() => setSelectedEntry(null)} title="Convert to Signup">

@@ -871,7 +871,7 @@ export async function getWaitlistEntries(): Promise<WaitlistEntryWithParticipant
   const result = await db
     .prepare(
       `SELECT ${WAITLIST_SELECT},
-              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+              ${PARTICIPANT_SELECT}
        FROM waitlist wl
        JOIN participants p ON wl.participant_id = p.id
        WHERE wl.delivery_date >= date('now', '-30 days')
@@ -886,7 +886,7 @@ export async function getWaitlistEntriesByDate(deliveryDate: string): Promise<Wa
   const result = await db
     .prepare(
       `SELECT ${WAITLIST_SELECT},
-              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+              ${PARTICIPANT_SELECT}
        FROM waitlist wl
        JOIN participants p ON wl.participant_id = p.id
        WHERE wl.delivery_date = ? AND wl.status = 'waiting'
@@ -902,7 +902,7 @@ export async function getWaitlistEntryById(id: number): Promise<WaitlistEntryWit
   const result = await db
     .prepare(
       `SELECT ${WAITLIST_SELECT},
-              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+              ${PARTICIPANT_SELECT}
        FROM waitlist wl
        JOIN participants p ON wl.participant_id = p.id
        WHERE wl.id = ?`
