@@ -3,6 +3,7 @@
 import { verifySession } from "@/app/lib/dal";
 import { getDriverById } from "@/app/lib/db";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDeliveryDaySchedule, type DeliveryDay } from "@/app/lib/delivery-day";
 import { sendEmail } from "@/app/lib/email";
 
 export interface SendDriverLoadEmailState {
@@ -63,22 +64,21 @@ export async function sendDriverLoadEmail(
       return { success: false, message: "No deliveries found for this driver on that date." };
     }
 
-    const isWednesday = deliveryDay === "wednesday";
-    const location = isWednesday
-      ? "Episcopal Church of the Good Shepherd, 64 University Terrace, Athens, OH 45701"
-      : "United Campus Ministries, 18 N College St, Athens, OH 45701";
-    const time = isWednesday ? "12:00pm" : "5:00pm";
-    const shortLocation = isWednesday ? "Episcopal Church" : "UCM";
+    const schedule = getDeliveryDaySchedule(deliveryDay as DeliveryDay);
 
     const formattedDate = new Date(deliveryDate + "T00:00:00").toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
     });
-    const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
+    const subject = schedule.shortLocation
+      ? `Meal Delivery ${formattedDate} ${schedule.time} at ${schedule.shortLocation}`
+      : `Meal Delivery ${formattedDate}`;
 
     let body = `Hi ${driver.participant_name},\n\n`;
-    body += `Please arrive at the ${location} at ${time} to pickup the meals.\n\n`;
+    body += schedule.location
+      ? `Please arrive at the ${schedule.location} at ${schedule.time} to pickup the meals.\n\n`
+      : `Pickup details will be provided by the meal delivery coordinator.\n\n`;
     body += `Persons you are delivering to:\n`;
 
     for (const delivery of deliveries) {

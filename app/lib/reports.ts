@@ -1,4 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { DeliveryDay } from "@/app/lib/delivery-day";
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
@@ -10,7 +11,7 @@ export interface WeeklyAssignmentRow {
   week_start: string;
   week_end: string;
   delivery_date: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   signup_id: number;
   recipient_name: string;
   address1: string;
@@ -78,7 +79,7 @@ export interface UnassignedSignup {
   regular_quantity: number;
   vegan_quantity: number;
   delivery_date: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   comments: string | null;
   created_at: string;
 }
@@ -110,7 +111,7 @@ export interface DriverLoadRow {
   driver_phone: string;
   driver_email: string;
   delivery_date: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   assignment_count: number;
 }
 
@@ -164,7 +165,7 @@ export async function getMealTypeBreakdown(): Promise<MealTypeBreakdownRow[]> {
 
 export interface CoverageGapRow {
   delivery_date: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   signup_count: number;
   assigned_count: number;
   driver_count: number;
@@ -194,7 +195,7 @@ export async function getCoverageGaps(): Promise<CoverageGapRow[]> {
 
 export interface VolunteerAvailabilityRow {
   on_signal: "yes" | "no" | "willing";
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   delivery_date: string;
   count: number;
 }
@@ -348,7 +349,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
 export interface ThisWeekDeliveryDay {
   delivery_date: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   signup_count: number;
   assigned_count: number;
   regular_count: number;
@@ -386,7 +387,7 @@ export async function getThisWeekDeliveries(): Promise<ThisWeekDeliveryDay[]> {
       .bind(weekStart, weekEnd)
       .all<{
         delivery_date: string;
-        delivery_day: "wednesday" | "thursday";
+        delivery_day: DeliveryDay;
         signup_count: number;
         assigned_count: number;
         regular_count: number;

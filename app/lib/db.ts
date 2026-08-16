@@ -16,16 +16,11 @@ import type {
   VolunteerDashboard,
   VolunteerSignupWithDeliveries,
 } from "@/app/lib/definitions";
+import { getDeliveryDay, type DeliveryDay } from "@/app/lib/delivery-day";
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
   return env.purple_fireflies_db;
-}
-
-function getDeliveryDay(dateStr: string): "wednesday" | "thursday" {
-  const date = new Date(dateStr);
-  const day = date.getDay();
-  return day === 3 ? "wednesday" : "thursday";
 }
 
 const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.status, ms.created_at`;
@@ -594,7 +589,7 @@ export interface DateDriver {
   driver_name: string;
   driver_email: string;
   driver_phone: string;
-  delivery_day: string;
+  delivery_day: DeliveryDay;
   delivery_date: string;
   deliveries: DateDelivery[];
 }
@@ -737,7 +732,7 @@ export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver
       internal_notes: string | null;
       regular_quantity: number;
       vegan_quantity: number;
-      delivery_day: string;
+      delivery_day: DeliveryDay;
       delivery_date: string;
     }>();
 

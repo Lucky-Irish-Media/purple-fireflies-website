@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { DeliveryDay } from "@/app/lib/delivery-day";
 
 export const LoginFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }).trim(),
@@ -138,7 +139,7 @@ export interface MealSignup {
   participant_id: number;
   regular_quantity: number;
   vegan_quantity: number;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   delivery_date: string;
   comments: string | null;
   bag_number: string | null;
@@ -151,7 +152,7 @@ export interface DriverVolunteer {
   participant_id: number;
   on_signal: "yes" | "no" | "willing";
   regions: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   delivery_date: string;
   created_at: string;
 }

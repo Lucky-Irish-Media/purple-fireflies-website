@@ -6,12 +6,13 @@ import { DataTable } from "../../components/DataTable";
 import { formatDate, getDeliveryDayBadge, getDeliveryDateStatusBadge } from "../../lib/utils";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { setDeliveryDateClosedAction } from "@/app/actions/admin-delivery-dates";
+import type { DeliveryDay } from "@/app/lib/delivery-day";
 
 export const DELIVERY_DAY_CAP = 15;
 
 export interface DeliveryDayOverview {
   delivery_date: string;
-  delivery_day: "wednesday" | "thursday";
+  delivery_day: DeliveryDay;
   count: number;
   closed: boolean;
 }
