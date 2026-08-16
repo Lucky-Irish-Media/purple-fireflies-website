@@ -2,6 +2,7 @@
 
 import { verifySession } from "@/app/lib/dal";
 import { getMealSignupById, getDriverById } from "@/app/lib/db";
+import { getDeliveryDaySchedule } from "@/app/lib/delivery-day";
 import { sendEmail } from "@/app/lib/email";
 
 export interface SendAssignmentEmailState {
@@ -38,28 +39,27 @@ export async function sendAssignmentEmail(
     });
 
     const address = `${signup.participant_address1}${signup.participant_address2 ? ", " + signup.participant_address2 : ""}, ${signup.participant_city}, ${signup.participant_state} ${signup.participant_zip_code}`;
-    const isWednesday = signup.delivery_day === "wednesday";
-    const location = isWednesday
-      ? "Episcopal Church of the Good Shepherd, 64 University Terrace, Athens, OH 45701"
-      : "United Campus Ministries, 18 N College St, Athens, OH 45701";
-    const time = isWednesday ? "12:00pm" : "5:00pm";
-    const shortLocation = isWednesday ? "Episcopal Church" : "UCM";
-    const dayLabel = isWednesday ? "Wednesday" : "Thursday";
+    const schedule = getDeliveryDaySchedule(signup.delivery_day);
     const mealParts: string[] = [];
     if (signup.regular_quantity > 0) mealParts.push(`${signup.regular_quantity} Regular`);
     if (signup.vegan_quantity > 0) mealParts.push(`${signup.vegan_quantity} Vegan/GF`);
-    const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
+    const subject = schedule.shortLocation
+      ? `Meal Delivery ${formattedDate} ${schedule.time} at ${schedule.shortLocation}`
+      : `Meal Delivery ${formattedDate}`;
+    const pickupLine = schedule.location
+      ? `Please arrive at the ${schedule.location} at ${schedule.time} to pickup the meals.`
+      : "Pickup details will be provided by the meal delivery coordinator.";
     const text = `Hi ${driver.participant_name},
 
 You have been assigned a meal delivery.
 
-Delivery: ${formattedDate} (${dayLabel})
+Delivery: ${formattedDate}
 Recipient: ${signup.participant_name}
 Address: ${address}
 Meals: ${mealParts.join(" + ")}
 Comments: ${signup.comments || "None"}
 
-Please arrive at the ${location} at ${time} to pickup the meals.
+${pickupLine}
 
 Take care,
 Meal Delivery Coordinator

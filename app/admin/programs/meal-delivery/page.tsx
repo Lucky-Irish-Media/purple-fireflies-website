@@ -1,21 +1,20 @@
 import MealDeliveryTabs from "./MealDeliveryTabs";
 import { getMealSignupsWithAssignments, getDriverVolunteers, getWaitlistEntries, getMealSignupCountsByDate, getClosedDeliveryDates } from "@/app/lib/db";
+import { getDeliveryDay } from "@/app/lib/delivery-day";
 import type { DeliveryDayOverview } from "./DeliveryDaysTable";
 
-function getUpcomingDeliveryDays(weeksAhead = 10): Omit<DeliveryDayOverview, "count" | "closed">[] {
+function getUpcomingDeliveryDays(weeksAhead = 4): Omit<DeliveryDayOverview, "count" | "closed">[] {
   const days: Omit<DeliveryDayOverview, "count" | "closed">[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const max = new Date(today);
   max.setDate(today.getDate() + weeksAhead * 7);
   for (let d = new Date(today); d <= max; d.setDate(d.getDate() + 1)) {
-    const day = d.getDay();
-    if (day === 3 || day === 4) {
-      days.push({
-        delivery_date: d.toISOString().split("T")[0],
-        delivery_day: day === 3 ? "wednesday" : "thursday",
-      });
-    }
+    const deliveryDate = d.toISOString().split("T")[0];
+    days.push({
+      delivery_date: deliveryDate,
+      delivery_day: getDeliveryDay(deliveryDate),
+    });
   }
   return days;
 }

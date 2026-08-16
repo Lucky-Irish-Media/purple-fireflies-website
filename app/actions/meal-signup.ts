@@ -4,6 +4,7 @@ import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definition
 import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupsByEmail, getMealSignupCountForDate, isDeliveryDateClosed, MAX_SIGNUPS_PER_DATE, addToWaitlist } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 import { checkRateLimit } from "@/app/lib/rate-limit";
+import { isStandardDeliveryDay } from "@/app/lib/delivery-day";
 
 function isFirstWednesday(dateStr: string): boolean {
   const date = new Date(dateStr + "T00:00:00");
@@ -50,6 +51,11 @@ export async function submitMealSignup(
     }
 
     const data = validatedFields.data;
+
+    const nonStandardDates = data.deliveryDates.filter((d) => !isStandardDeliveryDay(d));
+    if (nonStandardDates.length > 0) {
+      return { message: "Meal delivery signups are only available on Wednesdays and Thursdays." };
+    }
 
     if (data.veganQuantity > 0) {
       const invalidDates = data.deliveryDates.filter((d) => isFirstWednesday(d));

@@ -6,6 +6,7 @@ import { createDriverVolunteer, getParticipantByEmail, createParticipant, update
 import { checkRateLimit } from "@/app/lib/rate-limit";
 import { generateRandomPassword } from "@/app/lib/password";
 import { sendVolunteerAccountEmail } from "@/app/lib/email";
+import { isStandardDeliveryDay } from "@/app/lib/delivery-day";
 
 function getErrorMessage(): string {
   return "An unexpected error occurred. Please try again.";
@@ -38,6 +39,11 @@ export async function submitDriverVolunteer(
     }
 
     const data = validatedFields.data;
+
+    const nonStandardDates = data.deliveryDates.filter((d) => !isStandardDeliveryDay(d));
+    if (nonStandardDates.length > 0) {
+      return { message: "Driver volunteer signups are only available on Wednesdays and Thursdays." };
+    }
 
     let participant = await getParticipantByEmail(data.email);
     if (participant) {

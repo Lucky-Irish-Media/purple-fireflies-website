@@ -1,5 +1,6 @@
 import type { Participant, MealSignup, WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import type { DateDriver } from "@/app/lib/db";
+import { formatDeliveryDay, getDeliveryDay } from "@/app/lib/delivery-day";
 
 export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant, waitlistedDates?: string[]): Promise<void> {
   if (signups.length === 0 && (!waitlistedDates || waitlistedDates.length === 0)) return;
@@ -16,7 +17,7 @@ export async function sendMealSignupConfirmation(signups: MealSignup[], particip
     if (s.regular_quantity > 0) parts.push(`${s.regular_quantity} Regular`);
     if (s.vegan_quantity > 0) parts.push(`${s.vegan_quantity} Vegan / GF`);
     const formatted = new Date(s.delivery_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-    const day = new Date(s.delivery_date).getDay() === 3 ? "Wednesday" : "Thursday";
+    const day = formatDeliveryDay(s.delivery_day);
     mealLines.push(`${formatted} (${day}): ${parts.join(" + ")}`);
   }
 
@@ -34,7 +35,7 @@ export async function sendMealSignupConfirmation(signups: MealSignup[], particip
   if (waitlistedDates && waitlistedDates.length > 0) {
     const waitlistedFormatted = waitlistedDates.map((d) => {
       const formatted = new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-      const day = new Date(d).getDay() === 3 ? "Wednesday" : "Thursday";
+      const day = formatDeliveryDay(getDeliveryDay(d));
       return `${formatted} (${day}): ${parts.join(" + ") || "None"}`;
     }).join("\n");
 

@@ -3,6 +3,7 @@
 import { verifySession } from "@/app/lib/dal";
 import { getAssignmentsForDate, getWaitlistEntriesByDate, logReminderSent } from "@/app/lib/db";
 import type { DateDriver } from "@/app/lib/db";
+import { getDeliveryDaySchedule } from "@/app/lib/delivery-day";
 import { sendEmail, sendDeliverySummaryEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
@@ -55,21 +56,20 @@ export async function sendDriverReminders(
     }
 
     for (const driver of drivers) {
-      const isWednesday = driver.delivery_day === "wednesday";
-      const location = isWednesday
-        ? "Episcopal Church of the Good Shepherd, 64 University Terrace, Athens, OH 45701"
-        : "United Campus Ministries, 18 N College St, Athens, OH 45701";
-      const time = isWednesday ? "12:00pm" : "5:00pm";
-      const shortLocation = isWednesday ? "Episcopal Church" : "UCM";
+      const schedule = getDeliveryDaySchedule(driver.delivery_day);
 
       const formattedDate = new Date(driver.delivery_date + "T00:00:00").toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
       });
-      const subject = `Meal Delivery ${formattedDate} ${time} at ${shortLocation}`;
+      const subject = schedule.shortLocation
+        ? `Meal Delivery ${formattedDate} ${schedule.time} at ${schedule.shortLocation}`
+        : `Meal Delivery ${formattedDate}`;
 
-      let body = `Please arrive at the ${location} at ${time} to pickup the meals.\n\n`;
+      let body = schedule.location
+        ? `Please arrive at the ${schedule.location} at ${schedule.time} to pickup the meals.\n\n`
+        : `Pickup details will be provided by the meal delivery coordinator.\n\n`;
       body += `Persons you are delivering to:\n`;
 
       for (const delivery of driver.deliveries) {
