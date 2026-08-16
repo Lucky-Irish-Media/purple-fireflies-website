@@ -27,7 +27,7 @@ const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.ve
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
 const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method, p.internal_notes as participant_internal_notes`;
 const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone`;
-const WAITLIST_SELECT = `wl.id, wl.participant_id, wl.delivery_date, wl.regular_quantity, wl.vegan_quantity, wl.status, wl.created_at`;
+const WAITLIST_SELECT = `wl.id, wl.participant_id, wl.delivery_date, wl.regular_quantity, wl.vegan_quantity, wl.comments, wl.status, wl.created_at`;
 
 export async function getParticipantByEmail(email: string): Promise<Participant | null> {
   const db = await getDB();
@@ -852,15 +852,16 @@ export async function addToWaitlist(data: {
   deliveryDate: string;
   regularQuantity: number;
   veganQuantity: number;
+  comments?: string;
 }): Promise<WaitlistEntry> {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO waitlist (participant_id, delivery_date, regular_quantity, vegan_quantity)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO waitlist (participant_id, delivery_date, regular_quantity, vegan_quantity, comments)
+       VALUES (?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.participantId, data.deliveryDate, data.regularQuantity, data.veganQuantity)
+    .bind(data.participantId, data.deliveryDate, data.regularQuantity, data.veganQuantity, data.comments || null)
     .first<WaitlistEntry>();
   if (!result) throw new Error("Failed to add to waitlist");
   return result;
@@ -871,7 +872,7 @@ export async function getWaitlistEntries(): Promise<WaitlistEntryWithParticipant
   const result = await db
     .prepare(
       `SELECT ${WAITLIST_SELECT},
-              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+              ${PARTICIPANT_SELECT}
        FROM waitlist wl
        JOIN participants p ON wl.participant_id = p.id
        WHERE wl.delivery_date >= date('now', '-30 days')
@@ -886,7 +887,7 @@ export async function getWaitlistEntriesByDate(deliveryDate: string): Promise<Wa
   const result = await db
     .prepare(
       `SELECT ${WAITLIST_SELECT},
-              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+              ${PARTICIPANT_SELECT}
        FROM waitlist wl
        JOIN participants p ON wl.participant_id = p.id
        WHERE wl.delivery_date = ? AND wl.status = 'waiting'
@@ -902,7 +903,7 @@ export async function getWaitlistEntryById(id: number): Promise<WaitlistEntryWit
   const result = await db
     .prepare(
       `SELECT ${WAITLIST_SELECT},
-              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+              ${PARTICIPANT_SELECT}
        FROM waitlist wl
        JOIN participants p ON wl.participant_id = p.id
        WHERE wl.id = ?`
