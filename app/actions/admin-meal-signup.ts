@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate, getMealSignupCountForDate, isDeliveryDateClosed, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -134,10 +134,6 @@ export async function updateMealSignupAction(
       return { message: "This participant already has a signup for the selected date." };
     }
 
-    if (await isDeliveryDateClosed(data.deliveryDate)) {
-      return { message: "This date is closed. Reopen it in Delivery Days to add signups." };
-    }
-
     await updateMealSignup(data.id, {
       participantId: participant.id,
       regularQuantity: data.regularQuantity,
@@ -193,10 +189,6 @@ export async function createMealSignupAction(
     if (count >= MAX_SIGNUPS_PER_DATE) {
       return { message: "This date is at capacity. Consider using the waitlist instead." };
     }
-    if (await isDeliveryDateClosed(data.deliveryDate)) {
-      return { message: "This date is closed. Reopen it in Delivery Days to add signups." };
-    }
-
     let participant = await getParticipantByEmail(data.email);
     if (participant) {
       participant = await updateParticipant(participant.id, {
