@@ -22,6 +22,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - When in doubt, default to the preview environment (`--env preview`)
 <!-- END:deployment-rules -->
 
+<!-- BEGIN:project-tracking-rules -->
+# Project Tracking Rules
+
+- Document EVERY feature in the Obsidian project tracker at `~/Nextcloud/Obsidian/Projects/purple-fireflies-website/` as soon as planning starts — before writing any code
+- Follow the `tracker-*` skill conventions from the streamlist repo (`.opencode/skills/tracker-*`):
+  - Create a feature note in `Features/` (PascalCase filename, e.g. `AdminAnyDayDelivery.md`) with the standard frontmatter (`type: feature`, `area`, `status`, `priority`, `created`, `description`) and the documented structure (Overview, Progress, User Stories, Technical Notes, Acceptance Criteria, Related)
+  - Create related `Tasks/` notes for implementation work and `Decisions/` notes for significant decisions
+  - Update `MOC.md` (bump `updated:` frontmatter and add a "Recent Changes" entry) whenever a feature lands or a major milestone completes
+- Set the feature `status` to `planned`/`in-progress` when starting and `done` when merged to `main`
+- If a feature was built without a tracker note, create the note retroactively as part of completing it
+<!-- END:project-tracking-rules -->
+
 # Verification
 
 - BEFORE pushing any changes, run `npm run build` to type-check and compile. `npx tsc --noEmit` is unreliable in this project (it fails on `@cloudflare/workers-types`).
