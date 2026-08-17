@@ -380,11 +380,29 @@ export default function MealSignupsTable({
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [duplicatingSignup, setDuplicatingSignup] = useState<MealSignupWithAssignment | null>(null);
 
+  const [capacityWarning, setCapacityWarning] = useState<{
+    open: boolean;
+    message: string;
+    currentCount: number;
+    pendingFormData: FormData | null;
+    actionType: "create" | "duplicate";
+  }>({ open: false, message: "", currentCount: 0, pendingFormData: null, actionType: "create" });
+
   const [createState, createAction, createPending] = useActionState<
     AdminMealSignupActionState,
     FormData
   >(async (prev, formData) => {
     const result = await createMealSignupAction(prev, formData);
+    if (result?.capacityWarning && result.currentCount !== undefined) {
+      setCapacityWarning({
+        open: true,
+        message: `This date is at capacity (${result.currentCount}/15 meals). Adding this signup will exceed the limit.`,
+        currentCount: result.currentCount,
+        pendingFormData: formData,
+        actionType: "create",
+      });
+      return prev;
+    }
     if (result?.signups) {
       setSignups(result.signups);
       setModalOpen(false);
@@ -409,6 +427,16 @@ export default function MealSignupsTable({
     FormData
   >(async (prev, formData) => {
     const result = await duplicateMealSignupAction(prev, formData);
+    if (result?.capacityWarning && result.currentCount !== undefined) {
+      setCapacityWarning({
+        open: true,
+        message: `This date is at capacity (${result.currentCount}/15 meals). Adding this signup will exceed the limit.`,
+        currentCount: result.currentCount,
+        pendingFormData: formData,
+        actionType: "duplicate",
+      });
+      return prev;
+    }
     if (result?.signups) {
       setSignups(result.signups);
       setDuplicateModalOpen(false);
@@ -436,6 +464,18 @@ export default function MealSignupsTable({
       await statusAction(formData);
       router.refresh();
     });
+  }
+
+  function handleCapacityOverrideConfirm() {
+    if (!capacityWarning.pendingFormData) return;
+    const formData = capacityWarning.pendingFormData;
+    formData.set("overrideCapacity", "true");
+    setCapacityWarning((prev) => ({ ...prev, open: false }));
+    if (capacityWarning.actionType === "create") {
+      createAction(formData);
+    } else {
+      duplicateAction(formData);
+    }
   }
 
   function handleAssignment(mealSignupId: number, driverVolunteerId: string) {
@@ -718,6 +758,42 @@ export default function MealSignupsTable({
             {duplicatePending ? "Duplicating..." : "Duplicate Signup"}
           </button>
         </form>
+      </Modal>
+
+      <Modal
+        open={capacityWarning.open}
+        onClose={() => setCapacityWarning((prev) => ({ ...prev, open: false }))}
+        title="Capacity Warning"
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-amber-800">{capacityWarning.message}</p>
+                <p className="mt-1 text-sm text-amber-700">
+                  Only proceed if you have approval to exceed the meal limit for this date.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setCapacityWarning((prev) => ({ ...prev, open: false }))}
+              className="rounded-lg border border-primary/10 px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCapacityOverrideConfirm}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-700"
+            >
+              Yes, Add Anyway
+            </button>
+          </div>
+        </div>
       </Modal>
 
       <DataTable

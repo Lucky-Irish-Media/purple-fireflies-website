@@ -41,6 +41,8 @@ export type AdminMealSignupActionState = {
   errors?: Record<string, string[]>;
   message?: string;
   signups?: MealSignupWithAssignment[];
+  capacityWarning?: boolean;
+  currentCount?: number;
 } | undefined;
 
 const AdminMealSignupUpdateSchema = z.object({
@@ -184,10 +186,11 @@ export async function createMealSignupAction(
     }
 
     const data = validated.data;
+    const overrideCapacity = formData.get("overrideCapacity") === "true";
 
     const count = await getMealSignupCountForDate(data.deliveryDate);
-    if (count >= MAX_SIGNUPS_PER_DATE) {
-      return { message: "This date is at capacity. Consider using the waitlist instead." };
+    if (count >= MAX_SIGNUPS_PER_DATE && !overrideCapacity) {
+      return { capacityWarning: true, currentCount: count };
     }
     let participant = await getParticipantByEmail(data.email);
     if (participant) {
@@ -265,6 +268,12 @@ export async function duplicateMealSignupAction(
     const existingForDate = await getMealSignupsByParticipantAndDate(existingSignup.participant_id, deliveryDate);
     if (existingForDate.length > 0) {
       return { message: "This participant already has a signup for the selected date." };
+    }
+
+    const overrideCapacity = formData.get("overrideCapacity") === "true";
+    const count = await getMealSignupCountForDate(deliveryDate);
+    if (count >= MAX_SIGNUPS_PER_DATE && !overrideCapacity) {
+      return { capacityWarning: true, currentCount: count };
     }
 
     await createMealSignup({
