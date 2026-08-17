@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, getWaitlistEntryById, updateWaitlistStatus, deleteWaitlistEntry, getMealSignupCountForDate, isDeliveryDateClosed, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
+import { createMealSignup, getWaitlistEntryById, updateWaitlistStatus, deleteWaitlistEntry, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
 import { sendWaitlistNotification } from "@/app/lib/email";
 
 export async function convertWaitlistToSignupAction(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -30,10 +30,6 @@ export async function convertWaitlistToSignupAction(formData: FormData): Promise
     if (count >= MAX_SIGNUPS_PER_DATE) {
       return { success: false, message: "This date is still at capacity. Cannot convert." };
     }
-    if (await isDeliveryDateClosed(entry.delivery_date)) {
-      return { success: false, message: "This date is closed. Cannot convert." };
-    }
-
     await createMealSignup({
       participantId: entry.participant_id,
       regularQuantity,
