@@ -374,8 +374,8 @@ export async function getThisWeekDeliveries(): Promise<ThisWeekDeliveryDay[]> {
     db
       .prepare(
         `SELECT ms.delivery_date, ms.delivery_day,
-                SUM(ms.regular_quantity + ms.vegan_quantity) as signup_count,
-                SUM(CASE WHEN da.id IS NOT NULL THEN ms.regular_quantity + ms.vegan_quantity ELSE 0 END) as assigned_count,
+                COUNT(*) as signup_count,
+                COUNT(CASE WHEN da.id IS NOT NULL THEN 1 END) as assigned_count,
                 SUM(ms.regular_quantity) as regular_count,
                 SUM(ms.vegan_quantity) as vegan_count
          FROM meal_signups ms
