@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useTransition, useState } from "react";
+import { useMemo, useTransition, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import type { WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import { DataTable } from "./components/DataTable";
@@ -8,7 +8,7 @@ import { Modal } from "./components/Modal";
 import { formatDate, formatPhone, formatDateTime, getDeliveryDayBadge, getWaitlistStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 import { getDeliveryDay } from "@/app/lib/delivery-day";
-import { convertWaitlistToSignupAction, notifyWaitlistEntryAction, removeWaitlistEntryAction } from "@/app/actions/admin-waitlist";
+import { convertWaitlistToSignupAction, notifyWaitlistEntryAction, removeWaitlistEntryAction, duplicateWaitlistEntryAction } from "@/app/actions/admin-waitlist";
 
 const columnHelper = createColumnHelper<WaitlistEntryWithParticipant>();
 
@@ -71,6 +71,21 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
   const [isPending, startTransition] = useTransition();
   const [selectedEntry, setSelectedEntry] = useState<WaitlistEntryWithParticipant | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [duplicatingEntry, setDuplicatingEntry] = useState<WaitlistEntryWithParticipant | null>(null);
+
+  const [duplicateState, duplicateAction, duplicatePending] = useActionState<
+    { success: boolean; message: string },
+    FormData
+  >(async (prev, formData) => {
+    const result = await duplicateWaitlistEntryAction(prev, formData);
+    if (result.success) {
+      setDuplicateModalOpen(false);
+      setDuplicatingEntry(null);
+      router.refresh();
+    }
+    return result;
+  }, { success: false, message: "" });
 
   const columns = useMemo<ColumnDef<WaitlistEntryWithParticipant, any>[]>(() => [
     columnHelper.display({
@@ -177,6 +192,15 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
               className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
             >
               Convert to Signup
+            </button>
+            <button
+              onClick={() => {
+                setDuplicatingEntry(entry);
+                setDuplicateModalOpen(true);
+              }}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Duplicate
             </button>
             <button
               onClick={() => handleNotify(entry)}
@@ -304,6 +328,54 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
               </div>
             </form>
           </div>
+        </Modal>
+      )}
+
+      {duplicateModalOpen && duplicatingEntry && (
+        <Modal
+          open={true}
+          onClose={() => {
+            setDuplicateModalOpen(false);
+            setDuplicatingEntry(null);
+          }}
+          title="Duplicate Waitlist Entry"
+        >
+          <form action={duplicateAction} className="space-y-4">
+            <input type="hidden" name="id" value={duplicatingEntry.id} />
+            <p className="text-sm text-text-secondary">
+              Duplicate the waitlist entry for <strong>{duplicatingEntry.participant_name}</strong> ({duplicatingEntry.regular_quantity} regular, {duplicatingEntry.vegan_quantity} vegan) to a new date.
+            </p>
+            <div>
+              <label htmlFor="dup-waitlist-deliveryDate" className="block text-sm font-medium text-foreground mb-1">
+                New Delivery Date
+              </label>
+              <input id="dup-waitlist-deliveryDate" name="deliveryDate" type="date" required
+                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            {duplicateState?.message && !duplicateState?.success && (
+              <p className="text-sm text-red-500">{duplicateState.message}</p>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicateModalOpen(false);
+                  setDuplicatingEntry(null);
+                }}
+                className="rounded-lg border border-primary/10 px-4 py-2 text-sm text-foreground hover:bg-primary/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={duplicatePending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                {duplicatePending ? "Duplicating..." : "Duplicate Entry"}
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
     </section>
