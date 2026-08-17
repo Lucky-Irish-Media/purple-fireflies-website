@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, getWaitlistEntryById, updateWaitlistStatus, deleteWaitlistEntry, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
+import { createMealSignup, getWaitlistEntryById, updateWaitlistStatus, deleteWaitlistEntry, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE, addToWaitlist, getWaitlistEntriesByDate } from "@/app/lib/db";
 import { sendWaitlistNotification } from "@/app/lib/email";
 
 export async function convertWaitlistToSignupAction(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -91,5 +91,49 @@ export async function removeWaitlistEntryAction(id: number): Promise<{ success: 
   } catch (e) {
     console.error("removeWaitlist action error:", e);
     return { success: false, message: "Failed to remove waitlist entry." };
+  }
+}
+
+export async function duplicateWaitlistEntryAction(
+  _prevState: { success: boolean; message: string },
+  formData: FormData,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    await verifySession();
+
+    const id = Number(formData.get("id"));
+    const deliveryDate = formData.get("deliveryDate") as string;
+
+    if (!id || !deliveryDate) {
+      return { success: false, message: "Missing required fields." };
+    }
+
+    const original = await getWaitlistEntryById(id);
+    if (!original) {
+      return { success: false, message: "Original waitlist entry not found." };
+    }
+
+    const existingForDate = await getWaitlistEntriesByDate(deliveryDate);
+    const duplicateExists = existingForDate.some(
+      (e) => e.participant_id === original.participant_id,
+    );
+    if (duplicateExists) {
+      return { success: false, message: "This participant already has a waitlist entry for the selected date." };
+    }
+
+    await addToWaitlist({
+      participantId: original.participant_id,
+      deliveryDate,
+      regularQuantity: original.regular_quantity,
+      veganQuantity: original.vegan_quantity,
+      comments: original.comments ?? undefined,
+    });
+
+    revalidatePath("/admin/programs/meal-delivery");
+
+    return { success: true, message: "Waitlist entry duplicated successfully." };
+  } catch (e) {
+    console.error("duplicateWaitlist action error:", e);
+    return { success: false, message: "Failed to duplicate waitlist entry." };
   }
 }
