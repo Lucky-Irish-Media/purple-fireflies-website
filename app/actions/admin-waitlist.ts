@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, getWaitlistEntryById, updateWaitlistStatus, deleteWaitlistEntry, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE, addToWaitlist, getWaitlistEntriesByDate } from "@/app/lib/db";
+import { createMealSignup, getWaitlistEntryById, updateWaitlistStatus, deleteWaitlistEntry, getMealSignupCountForDate, addToWaitlist, getWaitlistEntriesByDate } from "@/app/lib/db";
+import { getMealsCapForDate } from "@/app/lib/delivery-day";
 import { sendWaitlistNotification } from "@/app/lib/email";
 
 export async function convertWaitlistToSignupAction(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -27,7 +28,7 @@ export async function convertWaitlistToSignupAction(formData: FormData): Promise
     }
 
     const count = await getMealSignupCountForDate(entry.delivery_date);
-    if (count >= MAX_SIGNUPS_PER_DATE) {
+    if (count >= getMealsCapForDate(entry.delivery_date)) {
       return { success: false, message: "This date is still at capacity. Cannot convert." };
     }
     await createMealSignup({

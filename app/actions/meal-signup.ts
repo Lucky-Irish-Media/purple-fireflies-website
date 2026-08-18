@@ -1,10 +1,10 @@
 "use server";
 
 import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definitions";
-import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupsByEmail, getMealSignupCountForDate, isDeliveryDateClosed, MAX_SIGNUPS_PER_DATE, addToWaitlist } from "@/app/lib/db";
+import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupsByEmail, getMealSignupCountForDate, isDeliveryDateClosed, addToWaitlist } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 import { checkRateLimit } from "@/app/lib/rate-limit";
-import { isStandardDeliveryDay } from "@/app/lib/delivery-day";
+import { isStandardDeliveryDay, getMealsCapForDate } from "@/app/lib/delivery-day";
 
 function isFirstWednesday(dateStr: string): boolean {
   const date = new Date(dateStr + "T00:00:00");
@@ -80,7 +80,7 @@ export async function submitMealSignup(
     for (const date of newDates) {
       const closed = await isDeliveryDateClosed(date);
       const count = await getMealSignupCountForDate(date);
-      if (closed || count >= MAX_SIGNUPS_PER_DATE) {
+      if (closed || count >= getMealsCapForDate(date)) {
         return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} ${closed ? "is now closed" : "is now full"}. Please add it to the waitlist instead.` };
       }
     }
@@ -88,7 +88,7 @@ export async function submitMealSignup(
     for (const date of newWaitlistDates) {
       const closed = await isDeliveryDateClosed(date);
       const count = await getMealSignupCountForDate(date);
-      if (!closed && count < MAX_SIGNUPS_PER_DATE) {
+      if (!closed && count < getMealsCapForDate(date)) {
         return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} still has space available. Please sign up instead of joining the waitlist.` };
       }
     }

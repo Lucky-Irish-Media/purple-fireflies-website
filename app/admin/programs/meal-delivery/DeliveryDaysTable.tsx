@@ -6,9 +6,9 @@ import { DataTable } from "../../components/DataTable";
 import { formatDate, getDeliveryDayBadge, getDeliveryDateStatusBadge } from "../../lib/utils";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { setDeliveryDateClosedAction } from "@/app/actions/admin-delivery-dates";
+import { getMealsCapForDay } from "@/app/lib/delivery-day";
 import type { DeliveryDay } from "@/app/lib/delivery-day";
 
-export const DELIVERY_DAY_CAP = 15;
 
 export interface DeliveryDayOverview {
   delivery_date: string;
@@ -51,7 +51,7 @@ export function DeliveryDaysTable({ initialData }: { initialData: DeliveryDayOve
         const row = info.row.original;
         return (
           <span className={`text-sm ${row.closed ? "text-text-secondary" : "text-foreground font-medium"}`}>
-            {row.count} / {DELIVERY_DAY_CAP}
+            {row.count} / {getMealsCapForDay(row.delivery_day)}
           </span>
         );
       },
@@ -93,7 +93,7 @@ export function DeliveryDaysTable({ initialData }: { initialData: DeliveryDayOve
         </div>
       )}
       <p className="mb-4 text-sm text-text-secondary">
-        Closing a day routes new signups to the waitlist, even if the {DELIVERY_DAY_CAP}-meal cap hasn&apos;t been reached yet.
+        Closing a day routes new signups to the waitlist, even if the meal cap hasn&apos;t been reached yet.
       </p>
       <DataTable
         columns={columns}

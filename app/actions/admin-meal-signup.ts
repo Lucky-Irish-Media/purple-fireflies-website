@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate, getMealSignupCountForDate, MAX_SIGNUPS_PER_DATE } from "@/app/lib/db";
+import { createMealSignup, updateMealSignup, getMealSignupsWithAssignments, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupById, getMealSignupsByParticipantAndDate, getMealSignupCountForDate } from "@/app/lib/db";
+import { getMealsCapForDate } from "@/app/lib/delivery-day";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -189,7 +190,7 @@ export async function createMealSignupAction(
     const overrideCapacity = formData.get("overrideCapacity") === "true";
 
     const count = await getMealSignupCountForDate(data.deliveryDate);
-    if (count >= MAX_SIGNUPS_PER_DATE && !overrideCapacity) {
+    if (count >= getMealsCapForDate(data.deliveryDate) && !overrideCapacity) {
       return { capacityWarning: true, currentCount: count };
     }
     let participant = await getParticipantByEmail(data.email);
@@ -272,7 +273,7 @@ export async function duplicateMealSignupAction(
 
     const overrideCapacity = formData.get("overrideCapacity") === "true";
     const count = await getMealSignupCountForDate(deliveryDate);
-    if (count >= MAX_SIGNUPS_PER_DATE && !overrideCapacity) {
+    if (count >= getMealsCapForDate(deliveryDate) && !overrideCapacity) {
       return { capacityWarning: true, currentCount: count };
     }
 

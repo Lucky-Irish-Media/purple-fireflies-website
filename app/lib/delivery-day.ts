@@ -68,3 +68,21 @@ export function getDeliveryDaySchedule(day: DeliveryDay): DeliveryDaySchedule {
     SCHEDULED_DAYS[day] ?? { location: null, shortLocation: null, time: null }
   );
 }
+
+const CAP_BY_DAY: Record<DeliveryDay, number> = {
+  monday: 40,
+  friday: 40,
+  tuesday: 15,
+  wednesday: 15,
+  thursday: 15,
+  saturday: 15,
+  sunday: 15,
+};
+
+export function getMealsCapForDay(day: DeliveryDay): number {
+  return CAP_BY_DAY[day];
+}
+
+export function getMealsCapForDate(dateStr: string): number {
+  return getMealsCapForDay(getDeliveryDay(dateStr));
+}

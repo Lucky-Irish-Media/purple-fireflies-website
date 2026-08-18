@@ -10,6 +10,7 @@ import { createMealSignupAction, updateMealSignupAction, duplicateMealSignupActi
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, getDeliveryStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
+import { getMealsCapForDate } from "@/app/lib/delivery-day";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const STATE_OPTIONS = [
@@ -394,9 +395,11 @@ export default function MealSignupsTable({
   >(async (prev, formData) => {
     const result = await createMealSignupAction(prev, formData);
     if (result?.capacityWarning && result.currentCount !== undefined) {
+      const deliveryDate = formData.get("deliveryDate") as string;
+      const cap = getMealsCapForDate(deliveryDate);
       setCapacityWarning({
         open: true,
-        message: `This date is at capacity (${result.currentCount}/15 meals). Adding this signup will exceed the limit.`,
+        message: `This date is at capacity (${result.currentCount}/${cap} meals). Adding this signup will exceed the limit.`,
         currentCount: result.currentCount,
         pendingFormData: formData,
         actionType: "create",
@@ -428,9 +431,11 @@ export default function MealSignupsTable({
   >(async (prev, formData) => {
     const result = await duplicateMealSignupAction(prev, formData);
     if (result?.capacityWarning && result.currentCount !== undefined) {
+      const deliveryDate = formData.get("deliveryDate") as string;
+      const cap = getMealsCapForDate(deliveryDate);
       setCapacityWarning({
         open: true,
-        message: `This date is at capacity (${result.currentCount}/15 meals). Adding this signup will exceed the limit.`,
+        message: `This date is at capacity (${result.currentCount}/${cap} meals). Adding this signup will exceed the limit.`,
         currentCount: result.currentCount,
         pendingFormData: formData,
         actionType: "duplicate",
