@@ -16,7 +16,7 @@ import type {
   VolunteerDashboard,
   VolunteerSignupWithDeliveries,
 } from "@/app/lib/definitions";
-import { getDeliveryDay, type DeliveryDay } from "@/app/lib/delivery-day";
+import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
@@ -803,7 +803,6 @@ export async function getReminderLogs(): Promise<ReminderLog[]> {
   return result.results;
 }
 
-export const MAX_SIGNUPS_PER_DATE = 15;
 
 export async function getMealSignupCountForDate(deliveryDate: string): Promise<number> {
   const db = await getDB();

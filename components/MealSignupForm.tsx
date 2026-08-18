@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { submitMealSignup } from "@/app/actions/meal-signup";
 import type { MealSignupFormState } from "@/app/lib/definitions";
 import { LookupModal } from "@/components/LookupModal";
+import { getMealsCapForDate } from "@/app/lib/delivery-day";
 
 const stateOptions = [
   { value: "AL", label: "AL" }, { value: "AK", label: "AK" }, { value: "AZ", label: "AZ" }, { value: "AR", label: "AR" },
@@ -57,7 +58,6 @@ function isFirstWednesday(dateStr: string): boolean {
   return date.getDay() === 3 && date.getDate() <= 7;
 }
 
-const MAX_SIGNUPS_PER_DATE = 15;
 
 export function MealSignupForm({ dateCounts = {}, closedDates = [] }: { dateCounts?: Record<string, number>; closedDates?: string[] }) {
   const [state, formAction, isPending] = useActionState(submitMealSignup, undefined as MealSignupFormState);
@@ -373,7 +373,7 @@ export function MealSignupForm({ dateCounts = {}, closedDates = [] }: { dateCoun
           <div className="space-y-2">
             {deliveryDateOptions.map((option) => {
               const count = dateCounts[option.value] ?? 0;
-              const spacesLeft = MAX_SIGNUPS_PER_DATE - count;
+              const spacesLeft = getMealsCapForDate(option.value) - count;
               const isClosed = closedDates.includes(option.value);
               const isFull = isClosed || spacesLeft <= 0;
               const isFirstWed = isFirstWednesday(option.value);
