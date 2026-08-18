@@ -30,6 +30,18 @@ export function deliveryDateFilterFn(row: any, columnId: string, value: string):
       return date < today;
     case "today":
       return date === today;
+    case "thisWeek": {
+      const now = new Date();
+      const day = now.getDay();
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diffToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const mondayStr = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+      const sundayStr = `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, "0")}-${String(sunday.getDate()).padStart(2, "0")}`;
+      return date >= mondayStr && date <= sundayStr;
+    }
     case "nextWeek": {
       const now = new Date();
       const day = now.getDay();
@@ -188,10 +200,11 @@ export function DeliveryDateFilter({ column }: { column: any }) {
       className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
     >
       <option value="">All</option>
+      <option value="today">Today</option>
+      <option value="thisWeek">This Week</option>
+      <option value="nextWeek">Next Week</option>
       <option value="future">Future Dates Only</option>
       <option value="past">Past Dates Only</option>
-      <option value="today">Today</option>
-      <option value="nextWeek">Next Week</option>
     </select>
   );
 }
