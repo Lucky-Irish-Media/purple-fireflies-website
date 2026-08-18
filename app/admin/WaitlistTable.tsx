@@ -8,7 +8,15 @@ import { Modal } from "./components/Modal";
 import { formatDate, formatPhone, formatDateTime, getDeliveryDayBadge, getWaitlistStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 import { getDeliveryDay } from "@/app/lib/delivery-day";
-import { convertWaitlistToSignupAction, notifyWaitlistEntryAction, removeWaitlistEntryAction, duplicateWaitlistEntryAction } from "@/app/actions/admin-waitlist";
+import { convertWaitlistToSignupAction, notifyWaitlistEntryAction, removeWaitlistEntryAction, duplicateWaitlistEntryAction, createWaitlistEntryAction, type AdminWaitlistActionState } from "@/app/actions/admin-waitlist";
+
+const STATE_OPTIONS = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+];
 
 const columnHelper = createColumnHelper<WaitlistEntryWithParticipant>();
 
@@ -66,6 +74,174 @@ function MealsFilter({ column }: { column: any }) {
   );
 }
 
+function WaitlistFormFields({ state, entry, formPending, editing }: {
+  state: AdminWaitlistActionState;
+  entry: WaitlistEntryWithParticipant | null;
+  formPending: boolean;
+  editing: boolean;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label htmlFor="wl-name" className="block text-sm font-medium text-foreground mb-1">Name</label>
+          <input id="wl-name" name="name" type="text" required defaultValue={entry?.participant_name || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.name && <p className="mt-1 text-sm text-red-500">{state.errors.name[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-email" className="block text-sm font-medium text-foreground mb-1">Email</label>
+          <input id="wl-email" name="email" type="email" required defaultValue={entry?.participant_email || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.email && <p className="mt-1 text-sm text-red-500">{state.errors.email[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-phone" className="block text-sm font-medium text-foreground mb-1">Phone</label>
+          <input id="wl-phone" name="phone" type="text" required defaultValue={entry?.participant_phone || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.phone && <p className="mt-1 text-sm text-red-500">{state.errors.phone[0]}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="wl-address1" className="block text-sm font-medium text-foreground mb-1">Address Line 1</label>
+          <input id="wl-address1" name="address1" type="text" required defaultValue={entry?.participant_address1 || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.address1 && <p className="mt-1 text-sm text-red-500">{state.errors.address1[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-address2" className="block text-sm font-medium text-foreground mb-1">Address Line 2</label>
+          <input id="wl-address2" name="address2" type="text" defaultValue={entry?.participant_address2 || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.address2 && <p className="mt-1 text-sm text-red-500">{state.errors.address2[0]}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div>
+          <label htmlFor="wl-city" className="block text-sm font-medium text-foreground mb-1">City</label>
+          <input id="wl-city" name="city" type="text" required defaultValue={entry?.participant_city || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.city && <p className="mt-1 text-sm text-red-500">{state.errors.city[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-state" className="block text-sm font-medium text-foreground mb-1">State</label>
+          <select id="wl-state" name="state" required defaultValue={entry?.participant_state || "OH"}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Select</option>
+            {STATE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {state?.errors?.state && <p className="mt-1 text-sm text-red-500">{state.errors.state[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-zipCode" className="block text-sm font-medium text-foreground mb-1">ZIP Code</label>
+          <input id="wl-zipCode" name="zipCode" type="text" required defaultValue={entry?.participant_zip_code || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.zipCode && <p className="mt-1 text-sm text-red-500">{state.errors.zipCode[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-deliveryDate" className="block text-sm font-medium text-foreground mb-1">Delivery Date</label>
+          <input id="wl-deliveryDate" name="deliveryDate" type="date" required defaultValue={entry?.delivery_date || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.deliveryDate && <p className="mt-1 text-sm text-red-500">{state.errors.deliveryDate[0]}</p>}
+        </div>
+      </div>
+
+      <fieldset className="space-y-2">
+        <legend className="block text-sm font-medium text-foreground mb-1">Meals Requested</legend>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="wl-regularQty" className="block text-sm text-text-secondary mb-2">Regular meals:</label>
+            <input
+              id="wl-regularQty"
+              name="regularQuantity"
+              type="number"
+              min={0}
+              max={10}
+              required
+              defaultValue={entry?.regular_quantity ?? 1}
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="wl-veganQty" className="block text-sm text-text-secondary mb-2">Vegan / GF meals:</label>
+            <input
+              id="wl-veganQty"
+              name="veganQuantity"
+              type="number"
+              min={0}
+              max={10}
+              required
+              defaultValue={entry?.vegan_quantity ?? 0}
+              className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+        {state?.errors?.regularQuantity && (
+          <p className="text-sm text-red-500" role="alert">
+            {state.errors.regularQuantity[0]}
+          </p>
+        )}
+        {state?.errors?.veganQuantity && (
+          <p className="text-sm text-red-500" role="alert">
+            {state.errors.veganQuantity[0]}
+          </p>
+        )}
+      </fieldset>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div>
+          <label htmlFor="wl-contactMethod" className="block text-sm font-medium text-foreground mb-1">Contact Method</label>
+          <select id="wl-contactMethod" name="contactMethod" required defaultValue="call"
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="call">Call</option>
+            <option value="text">Text</option>
+            <option value="email">Email</option>
+          </select>
+          {state?.errors?.contactMethod && <p className="mt-1 text-sm text-red-500">{state.errors.contactMethod[0]}</p>}
+        </div>
+        <div>
+          <label htmlFor="wl-comments" className="block text-sm font-medium text-foreground mb-1">Comments</label>
+          <textarea id="wl-comments" name="comments" rows={1} defaultValue={entry?.comments || ""}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label htmlFor="wl-internalNotes" className="block text-sm font-medium text-foreground mb-1">Internal Notes</label>
+          <input id="wl-internalNotes" name="internalNotes" type="text" defaultValue=""
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
+
+      {state?.message && !state?.errors && (
+        <p className="text-sm text-green-600">{state.message}</p>
+      )}
+
+      <div className="flex justify-end gap-2 pt-2">
+        <button
+          type="submit"
+          disabled={formPending}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+        >
+          {formPending ? "Adding..." : "Add to Waitlist"}
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithParticipant[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -73,6 +249,19 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [duplicatingEntry, setDuplicatingEntry] = useState<WaitlistEntryWithParticipant | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  const [createState, createAction, createPending] = useActionState<
+    AdminWaitlistActionState,
+    FormData
+  >(async (prev, formData) => {
+    const result = await createWaitlistEntryAction(prev, formData);
+    if (result?.success) {
+      setCreateModalOpen(false);
+      router.refresh();
+    }
+    return result;
+  }, undefined);
 
   const [duplicateState, duplicateAction, duplicatePending] = useActionState<
     { success: boolean; message: string },
@@ -253,7 +442,15 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-foreground mb-4">Waitlist</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+        <h2 className="text-xl font-bold text-foreground">Waitlist</h2>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
+        >
+          Add to Waitlist
+        </button>
+      </div>
       {actionMessage && (
         <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-700" role="alert">
           {actionMessage}
@@ -375,6 +572,14 @@ export function WaitlistTable({ initialData }: { initialData: WaitlistEntryWithP
                 {duplicatePending ? "Duplicating..." : "Duplicate Entry"}
               </button>
             </div>
+          </form>
+        </Modal>
+      )}
+
+      {createModalOpen && (
+        <Modal open={true} onClose={() => setCreateModalOpen(false)} title="Add to Waitlist">
+          <form action={createAction} className="space-y-4">
+            <WaitlistFormFields state={createState} entry={null} formPending={createPending} editing={false} />
           </form>
         </Modal>
       )}
