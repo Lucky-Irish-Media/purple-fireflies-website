@@ -8,6 +8,13 @@ const programs = [
     href: "/programs/meal-delivery",
     cta: "Learn more",
   },
+  {
+    icon: "👁️",
+    title: "Legal Observers",
+    desc: "Trained volunteers who document government conduct at protests and support First Amendment activity. Join the legal support network.",
+    href: "/programs/legal-observers",
+    cta: "Learn more",
+  },
 ];
 
 export default function ProgramsPage() {

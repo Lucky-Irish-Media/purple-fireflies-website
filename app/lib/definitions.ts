@@ -277,3 +277,55 @@ export const NewsArticleSchema = z.object({
   published_at: z.string().min(1, { message: "Published date is required." }),
   excerpt: z.string().optional(),
 });
+
+export const LegalObserverSignupSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  background: z.string().optional(),
+  motivation: z.string().optional(),
+  skills: z.string().optional(),
+});
+
+export const LegalObserverRequestSchema = z.object({
+  contact_name: z.string().min(1, { message: "Contact name is required." }).trim(),
+  contact_email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  contact_phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  event_date: z.string().min(1, { message: "Event date is required." }),
+  event_time: z.string().optional(),
+  event_location: z.string().min(1, { message: "Event location is required." }).trim(),
+  event_type: z.string().optional(),
+  special_notes: z.string().optional(),
+});
+
+export type LegalObserverSignupFormState =
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; background?: string[]; motivation?: string[]; skills?: string[] }; message?: string }
+  | undefined;
+
+export type LegalObserverRequestFormState =
+  | { errors?: { contact_name?: string[]; contact_email?: string[]; contact_phone?: string[]; event_date?: string[]; event_time?: string[]; event_location?: string[]; event_type?: string[]; special_notes?: string[] }; message?: string }
+  | undefined;
+
+export interface LegalObserverSignup {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  background: string | null;
+  motivation: string | null;
+  skills: string | null;
+  created_at: string;
+}
+
+export interface LegalObserverRequest {
+  id: number;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  event_date: string;
+  event_time: string | null;
+  event_location: string;
+  event_type: string | null;
+  special_notes: string | null;
+  created_at: string;
+}

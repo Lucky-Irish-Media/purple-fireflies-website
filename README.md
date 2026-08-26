@@ -13,6 +13,9 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/programs/meal-delivery` | Meal Delivery program info |
 | `/programs/meal-delivery/delivery-signup` | Meal recipient signup form |
 | `/programs/meal-delivery/volunteer-signup` | Driver volunteer signup form |
+| `/programs/legal-observers` | Legal Observers program info |
+| `/programs/legal-observers/signup` | Legal Observer signup form |
+| `/programs/legal-observers/request` | Coverage request form |
 | `/events` | Upcoming and past community events |
 | `/news` | Articles about Purple Fireflies in the news |
 | `/donate` | Donations page (Venmo, PayPal, Cash App, Give Butter) |
@@ -22,6 +25,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/admin/users` | Admin user management (volunteer approval, password reset, resend invite) |
 | `/admin/programs` | Programs management |
 | `/admin/programs/meal-delivery` | Meal delivery CRUD + driver assignment |
+| `/admin/programs/legal-observers` | Legal observer signups and coverage requests |
 | `/admin/events` | Events CRUD |
 | `/admin/news` | News articles CRUD |
 | `/volunteer` | Volunteer portal (sign-ins only) |
@@ -35,6 +39,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 - **Driver Reminder Emails** — Admin dashboard action to email drivers their delivery assignments for a selected date and email the coordinator a summary; supports sending the summary email only via a checkbox
 - **Events** — Public `/events` page showing upcoming events and a collapsible past events section; admin CRUD at `/admin/events`
 - **News** — Public `/news` page linking to news articles that mention Purple Fireflies; admin CRUD at `/admin/news`
+- **Legal Observers Program** — Public program page (`/programs/legal-observers`) explaining what Legal Observers do, who can become one, Know Your Rights info, and NLG resources; observer signup form and coverage request form; admin panel at `/admin/programs/legal-observers` with tabbed views for signups and requests; D1 storage via migration `0029`
 - **Admin Panel** — JWT-authenticated dashboard with CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management; a Delivery Days tab lists upcoming Wed/Thu dates with signup counts and Close/Reopen toggles; the Waitlist tab uses the same column format as the Meal Signups table (combined requester with address, meal quantities, delivery date + weekday, status, comments, and pinned actions); admins can add waitlist entries directly via a full participant form (name, email, phone, address, delivery date, meals, contact method, comments, internal notes); all three admin tables (meal signups, driver volunteers, waitlist) support a **Duplicate** action that copies an entry to a new delivery date via a modal with date picker
 - **Authentication** — Email/password login with bcrypt, JWT sessions, HTTP-only cookies
 
@@ -98,4 +103,4 @@ This project uses Cloudflare Workers Builds. Push to `main` and Cloudflare autom
 
 - **Framework:** Tailwind CSS 4 with CSS custom properties
 - **Component Structure:** Next.js App Router with shared layout (Navbar, Footer)
-- **Pages:** Home, Programs (meal delivery signup + volunteer signup), Donate, Contact, Admin (dashboard, users, programs)
+- **Pages:** Home, Programs (meal delivery signup + volunteer signup, legal observers signup + coverage request), Donate, Contact, Admin (dashboard, users, programs)

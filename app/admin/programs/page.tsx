@@ -16,6 +16,17 @@ export default function AdminProgramsPage() {
             View meal signups and driver volunteer data.
           </p>
         </Link>
+        <Link
+          href="/admin/programs/legal-observers"
+          className="rounded-lg border border-primary/10 bg-card p-4 sm:p-6 hover:border-primary/30 transition-colors"
+        >
+          <h2 className="text-lg font-semibold text-foreground">
+            Legal Observers
+          </h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            View observer signups and coverage requests.
+          </p>
+        </Link>
       </div>
     </div>
   );

@@ -56,6 +56,12 @@ export default function Navbar() {
                     >
                       Meal Delivery
                     </Link>
+                    <Link
+                      href="/programs/legal-observers"
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      Legal Observers
+                    </Link>
                   </div>
                 </div>
               )}
@@ -115,6 +121,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Programs — Meal Delivery
+            </Link>
+            <Link
+              href="/programs/legal-observers"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Programs — Legal Observers
             </Link>
             <Link
               href="/news"
