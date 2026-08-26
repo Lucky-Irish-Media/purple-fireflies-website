@@ -9,6 +9,13 @@ const programs = [
     cta: "Sign up",
   },
   {
+    icon: "👁️",
+    title: "Legal Observers",
+    desc: "Trained volunteers documenting government conduct at protests.",
+    href: "/programs/legal-observers",
+    cta: "Learn more",
+  },
+  {
     icon: "🤝",
     title: "Community",
     desc: "Events and resources that connect neighbors and build shared purpose.",

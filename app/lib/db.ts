@@ -15,6 +15,8 @@ import type {
   NewsArticle,
   VolunteerDashboard,
   VolunteerSignupWithDeliveries,
+  LegalObserverSignup,
+  LegalObserverRequest,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -1090,4 +1092,70 @@ export async function deleteNewsArticle(id: number): Promise<void> {
     .prepare("DELETE FROM news_articles WHERE id = ?")
     .bind(id)
     .run();
+}
+
+export async function createLegalObserverSignup(data: {
+  name: string;
+  email: string;
+  phone: string;
+  background?: string;
+  motivation?: string;
+  skills?: string;
+}): Promise<LegalObserverSignup> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO legal_observer_signups (name, email, phone, background, motivation, skills)
+       VALUES (?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.name, data.email, data.phone, data.background || null, data.motivation || null, data.skills || null)
+    .first<LegalObserverSignup>();
+  if (!result) throw new Error("Failed to create legal observer signup");
+  return result;
+}
+
+export async function getLegalObserverSignups(): Promise<LegalObserverSignup[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM legal_observer_signups
+       ORDER BY created_at DESC`
+    )
+    .all<LegalObserverSignup>();
+  return result.results || [];
+}
+
+export async function createLegalObserverRequest(data: {
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  eventDate: string;
+  eventTime?: string;
+  eventLocation: string;
+  eventType?: string;
+  specialNotes?: string;
+}): Promise<LegalObserverRequest> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO legal_observer_requests (contact_name, contact_email, contact_phone, event_date, event_time, event_location, event_type, special_notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.contactName, data.contactEmail, data.contactPhone, data.eventDate, data.eventTime || null, data.eventLocation, data.eventType || null, data.specialNotes || null)
+    .first<LegalObserverRequest>();
+  if (!result) throw new Error("Failed to create legal observer request");
+  return result;
+}
+
+export async function getLegalObserverRequests(): Promise<LegalObserverRequest[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM legal_observer_requests
+       ORDER BY event_date ASC, created_at DESC`
+    )
+    .all<LegalObserverRequest>();
+  return result.results || [];
 }
