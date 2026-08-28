@@ -10,6 +10,9 @@ export default function Footer() {
           <a href="mailto:info@purplefireflies.org" className="text-sm text-white/80 hover:text-white transition-colors">
             info@purplefireflies.org
           </a>
+          <a href="tel:+17408194003" className="text-sm text-white/80 hover:text-white transition-colors">
+            (740) 819-4003
+          </a>
         </div>
         <p className="text-white/50 text-xs">© 2026 Purple Fireflies</p>
       </div>
