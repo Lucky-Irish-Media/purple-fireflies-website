@@ -269,6 +269,12 @@ export default function DriverVolunteersTable({
       cell: (info) => <span className="text-text-secondary">{formatPhone(info.getValue())}</span>,
       filterFn: filterFns.includesString,
     }),
+    columnHelper.accessor((row) => row.days[0]?.on_signal ?? "", {
+      id: "signal",
+      header: "Signal",
+      cell: (info) => getSignalBadge(info.getValue()),
+      enableGlobalFilter: false,
+    }),
     columnHelper.accessor((row) => row.days.length, {
       id: "day_count",
       header: "# of Days",
