@@ -194,6 +194,7 @@ function VolunteerFormFields({ state, volunteer }: {
 }
 
 const columnHelper = createColumnHelper<GroupedVolunteer>();
+const dayColumnHelper = createColumnHelper<DriverVolunteerWithParticipant>();
 
 export default function DriverVolunteersTable({
   initialData,
@@ -301,6 +302,66 @@ export default function DriverVolunteersTable({
 
   const typedColumns = columns as unknown as ColumnDef<GroupedVolunteer, unknown>[];
 
+  const dayColumns = useMemo(() => [
+    dayColumnHelper.accessor((row) => row.delivery_date, {
+      id: "delivery_date",
+      header: "Delivery Date",
+      cell: (info) => <span className="text-text-secondary">{formatDate(info.getValue())}</span>,
+      enableGlobalFilter: false,
+    }),
+    dayColumnHelper.accessor((row) => row.on_signal, {
+      id: "on_signal",
+      header: "Signal",
+      cell: (info) => getSignalBadge(info.getValue()),
+      enableGlobalFilter: false,
+    }),
+    dayColumnHelper.accessor((row) => row.regions, {
+      id: "regions",
+      header: "Regions",
+      cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
+      enableGlobalFilter: false,
+    }),
+    dayColumnHelper.accessor((row) => row.created_at, {
+      id: "signed_up",
+      header: "Signed Up",
+      cell: (info) => <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>,
+      enableGlobalFilter: false,
+    }),
+    dayColumnHelper.display({
+      id: "actions",
+      enableHiding: false,
+      enableGlobalFilter: false,
+      header: "",
+      cell: (info) => {
+        const day = info.row.original;
+        return (
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setEditingVolunteer(day);
+                setModalOpen(true);
+              }}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => {
+                setDuplicatingVolunteer(day);
+                setDuplicateModalOpen(true);
+              }}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Duplicate
+            </button>
+          </div>
+        );
+      },
+    }),
+  ] as const, [setEditingVolunteer, setDuplicateModalOpen, setModalOpen]);
+
+  const typedDayColumns = dayColumns as unknown as ColumnDef<DriverVolunteerWithParticipant, unknown>[];
+
   const formState = editingVolunteer ? updateState : createState;
   const formPending = editingVolunteer ? updatePending : createPending;
   const formAction = editingVolunteer ? updateAction : createAction;
@@ -402,58 +463,16 @@ export default function DriverVolunteersTable({
               </button>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-primary/10">
-              <table className="w-full text-sm text-left">
-                <thead>
-                  <tr className="border-b border-primary/10">
-                    <th className="py-3 px-4 font-semibold text-foreground">Delivery Date</th>
-                    <th className="py-3 px-4 font-semibold text-foreground">Signal</th>
-                    <th className="py-3 px-4 font-semibold text-foreground">Regions</th>
-                    <th className="py-3 px-4 font-semibold text-foreground">Signed Up</th>
-                    <th className="py-3 px-4 font-semibold text-foreground text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-primary/10">
-                  {selectedGroup.days.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-text-secondary">
-                        No days signed up yet.
-                      </td>
-                    </tr>
-                  ) : (
-                    selectedGroup.days.map((day) => (
-                      <tr key={day.id} className="hover:bg-primary/5 transition-colors">
-                        <td className="py-3 px-4 text-text-secondary">{formatDate(day.delivery_date)}</td>
-                        <td className="py-3 px-4">{getSignalBadge(day.on_signal)}</td>
-                        <td className="py-3 px-4 text-text-secondary">{day.regions}</td>
-                        <td className="py-3 px-4 text-text-secondary">{formatDateTime(day.created_at)}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingVolunteer(day);
-                                setModalOpen(true);
-                              }}
-                              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                setDuplicatingVolunteer(day);
-                                setDuplicateModalOpen(true);
-                              }}
-                              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-                            >
-                              Duplicate
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="rounded-lg border border-primary/10 p-2">
+              <DataTable
+                data={selectedGroup.days}
+                columns={typedDayColumns}
+                enableSorting
+                enableColumnPinning
+                initialColumnPinning={{ right: ["actions"] }}
+                initialSorting={[{ id: "delivery_date", desc: true }]}
+                pageSize={selectedGroup.days.length}
+              />
             </div>
           </div>
         )}
