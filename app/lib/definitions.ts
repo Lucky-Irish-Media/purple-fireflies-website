@@ -130,6 +130,7 @@ export interface Participant {
   zip_code: string;
   contact_method: "call" | "text" | "email";
   internal_notes: string | null;
+  bag_number: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -183,6 +184,7 @@ export interface DriverVolunteerWithParticipant extends DriverVolunteer {
   participant_name: string;
   participant_email: string;
   participant_phone: string;
+  participant_bag_number: string | null;
 }
 
 export interface VolunteerDelivery {

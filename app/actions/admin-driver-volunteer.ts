@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getDriverById, getDriverVolunteersByParticipantAndDate, getParticipantByEmail, createParticipant, updateParticipant } from "@/app/lib/db";
+import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getDriverById, getDriverVolunteersByParticipantAndDate, getParticipantByEmail, createParticipant, updateParticipant, updateDriverBag } from "@/app/lib/db";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -208,5 +208,26 @@ export async function duplicateDriverVolunteerAction(
   } catch (e) {
     console.error("duplicateDriverVolunteer action error:", e);
     return { message: "Failed to duplicate volunteer. Please try again." };
+  }
+}
+
+export async function updateDriverBagAction(formData: FormData): Promise<{ success: boolean; message: string }> {
+  try {
+    await verifySession();
+
+    const participantId = Number(formData.get("participantId"));
+    const bagNumber = formData.get("bagNumber") as string | null;
+
+    if (!participantId) {
+      return { success: false, message: "Invalid participant ID." };
+    }
+
+    await updateDriverBag(participantId, bagNumber?.trim() ? bagNumber.trim() : null);
+
+    revalidatePath("/admin/programs/meal-delivery");
+    return { success: true, message: "Bag updated." };
+  } catch (e) {
+    console.error("updateDriverBag action error:", e);
+    return { success: false, message: "Failed to update bag." };
   }
 }

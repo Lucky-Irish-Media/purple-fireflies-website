@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useActionState } from "react";
+import { useMemo, useState, useActionState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
-import { createDriverVolunteerAction, updateDriverVolunteerAction, duplicateDriverVolunteerAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
+import { createDriverVolunteerAction, updateDriverVolunteerAction, duplicateDriverVolunteerAction, updateDriverBagAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate, formatPhone, formatDateTime, getSignalBadge } from "./lib/utils";
@@ -47,6 +48,40 @@ function groupVolunteers(volunteers: DriverVolunteerWithParticipant[]): GroupedV
   }
   return Array.from(map.values()).sort((a, b) =>
     a.participant_name.localeCompare(b.participant_name)
+  );
+}
+
+function BagCell({ group }: { group: GroupedVolunteer }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const currentValue = group.days[0]?.participant_bag_number ?? "";
+  const [value, setValue] = useState(currentValue);
+
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue]);
+
+  function handleBlur() {
+    if (value === currentValue) return;
+    const formData = new FormData();
+    formData.set("participantId", String(group.participant_id));
+    formData.set("bagNumber", value);
+    startTransition(async () => {
+      await updateDriverBagAction(formData);
+      router.refresh();
+    });
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={handleBlur}
+      disabled={isPending}
+      placeholder="Bag #"
+      className="w-full bg-transparent border-b border-transparent hover:border-primary/30 focus:border-primary text-sm text-foreground outline-none px-1 py-0.5 disabled:opacity-50"
+    />
   );
 }
 
@@ -238,6 +273,12 @@ export default function DriverVolunteersTable({
       header: "# of Days",
       cell: (info) => <span className="text-text-secondary">{info.getValue()}</span>,
       enableGlobalFilter: false,
+    }),
+    columnHelper.display({
+      id: "bag",
+      header: "Bag #",
+      enableGlobalFilter: false,
+      cell: (info) => <BagCell group={info.row.original} />,
     }),
     columnHelper.display({
       id: "actions",
