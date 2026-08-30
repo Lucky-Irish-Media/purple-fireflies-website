@@ -388,6 +388,46 @@ export default function DriverVolunteersTable({
       </div>
 
       <Modal
+        open={dayModalOpen}
+        onClose={() => {
+          setDayModalOpen(false);
+          setSelectedGroup(null);
+        }}
+        title={selectedGroup ? `${selectedGroup.participant_name} — Signed Up Days` : "Signed Up Days"}
+      >
+        {selectedGroup && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-text-secondary">
+                {formatPhone(selectedGroup.participant_phone)}
+              </div>
+              <button
+                onClick={() => {
+                  setDuplicatingVolunteer(selectedGroup.days[0]);
+                  setDuplicateModalOpen(true);
+                }}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
+              >
+                Add Day
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-primary/10 p-2">
+              <DataTable
+                data={selectedGroup.days}
+                columns={typedDayColumns}
+                enableSorting
+                enableColumnPinning
+                initialColumnPinning={{ right: ["actions"] }}
+                initialSorting={[{ id: "delivery_date", desc: true }]}
+                pageSize={selectedGroup.days.length}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);
@@ -437,51 +477,11 @@ export default function DriverVolunteersTable({
           <button
             type="submit"
             disabled={duplicatePending}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
           >
             {duplicatePending ? "Adding..." : "Add Day"}
           </button>
         </form>
-      </Modal>
-
-      <Modal
-        open={dayModalOpen}
-        onClose={() => {
-          setDayModalOpen(false);
-          setSelectedGroup(null);
-        }}
-        title={selectedGroup ? `${selectedGroup.participant_name} — Signed Up Days` : "Signed Up Days"}
-      >
-        {selectedGroup && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm text-text-secondary">
-                {formatPhone(selectedGroup.participant_phone)}
-              </div>
-              <button
-                onClick={() => {
-                  setDuplicatingVolunteer(selectedGroup.days[0]);
-                  setDuplicateModalOpen(true);
-                }}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
-              >
-                Add Day
-              </button>
-            </div>
-
-            <div className="rounded-lg border border-primary/10 p-2">
-              <DataTable
-                data={selectedGroup.days}
-                columns={typedDayColumns}
-                enableSorting
-                enableColumnPinning
-                initialColumnPinning={{ right: ["actions"] }}
-                initialSorting={[{ id: "delivery_date", desc: true }]}
-                pageSize={selectedGroup.days.length}
-              />
-            </div>
-          </div>
-        )}
       </Modal>
 
       <DataTable
