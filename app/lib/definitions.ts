@@ -131,6 +131,8 @@ export interface Participant {
   contact_method: "call" | "text" | "email";
   internal_notes: string | null;
   bag_number: string | null;
+  driver_liability: number;
+  driver_status: "active" | "inactive";
   created_at: string;
   updated_at: string;
 }
@@ -185,6 +187,8 @@ export interface DriverVolunteerWithParticipant extends DriverVolunteer {
   participant_email: string;
   participant_phone: string;
   participant_bag_number: string | null;
+  participant_driver_liability: number;
+  participant_driver_status: "active" | "inactive";
 }
 
 export interface VolunteerDelivery {

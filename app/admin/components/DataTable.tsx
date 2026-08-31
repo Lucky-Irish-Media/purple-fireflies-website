@@ -45,6 +45,7 @@ type DataTableProps<TData extends RowData> = {
   enableFacetedFilters?: boolean;
   initialVisibility?: VisibilityState;
   initialSorting?: SortingState;
+  initialColumnFilters?: ColumnFiltersState;
   initialColumnPinning?: ColumnPinningState;
   columnResizeMode?: ColumnResizeMode;
   pageSize?: number;
@@ -68,6 +69,7 @@ export function DataTable<TData extends RowData>({
   enableFacetedFilters = false,
   initialVisibility = {},
   initialSorting = [],
+  initialColumnFilters = [],
   initialColumnPinning = {},
   columnResizeMode = "onChange",
   pageSize = 10,
@@ -77,7 +79,7 @@ export function DataTable<TData extends RowData>({
 }: DataTableProps<TData>) {
   const [showFilters, setShowFilters] = useState(false);
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters);
   const [globalFilter, setGlobalFilter] = useState<any>(undefined);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,

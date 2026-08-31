@@ -138,6 +138,34 @@ export function getStatusBadge(status: string) {
   );
 }
 
+export function getDriverStatusBadge(status: string) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+        status === "active"
+          ? "bg-green-100 text-green-800"
+          : "bg-gray-100 text-gray-800"
+      }`}
+    >
+      {status === "active" ? "Active" : "Inactive"}
+    </span>
+  );
+}
+
+export function getLiabilityBadge(liability: number) {
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        liability
+          ? "bg-green-100 text-green-800"
+          : "bg-red-100 text-red-800"
+      }`}
+    >
+      {liability ? "Signed" : "Not Signed"}
+    </span>
+  );
+}
+
 export function getDeliveryDayBadge(day: string) {
   return (
     <span className="capitalize text-text-secondary">{day}</span>
