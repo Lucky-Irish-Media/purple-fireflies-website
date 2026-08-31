@@ -28,7 +28,7 @@ async function getDB(): Promise<D1Database> {
 const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.status, ms.created_at`;
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
 const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method, p.internal_notes as participant_internal_notes`;
-const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.bag_number as participant_bag_number`;
+const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.bag_number as participant_bag_number, p.driver_liability as participant_driver_liability, p.driver_status as participant_driver_status`;
 const WAITLIST_SELECT = `wl.id, wl.participant_id, wl.delivery_date, wl.regular_quantity, wl.vegan_quantity, wl.comments, wl.status, wl.created_at`;
 
 export async function getParticipantByEmail(email: string): Promise<Participant | null> {
@@ -110,6 +110,29 @@ export async function updateDriverBag(participantId: number, bagNumber: string |
   await db
     .prepare("UPDATE participants SET bag_number = ?, updated_at = datetime('now') WHERE id = ?")
     .bind(bagNumber, participantId)
+    .run();
+}
+
+export async function updateDriverParticipantStatus(
+  participantId: number,
+  data: { driver_liability?: number; driver_status?: "active" | "inactive" },
+): Promise<void> {
+  const db = await getDB();
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  if (data.driver_liability !== undefined) {
+    sets.push("driver_liability = ?");
+    values.push(data.driver_liability);
+  }
+  if (data.driver_status !== undefined) {
+    sets.push("driver_status = ?");
+    values.push(data.driver_status);
+  }
+  if (sets.length === 0) return;
+  values.push(participantId);
+  await db
+    .prepare(`UPDATE participants SET ${sets.join(", ")}, updated_at = datetime('now') WHERE id = ?`)
+    .bind(...values as never[])
     .run();
 }
 

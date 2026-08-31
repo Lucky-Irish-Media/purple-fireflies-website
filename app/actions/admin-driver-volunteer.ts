@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySession } from "@/app/lib/dal";
-import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getDriverById, getDriverVolunteersByParticipantAndDate, getParticipantByEmail, createParticipant, updateParticipant, updateDriverBag } from "@/app/lib/db";
+import { createDriverVolunteer, updateDriverVolunteer, getDriverVolunteers, getDriverById, getDriverVolunteersByParticipantAndDate, getParticipantByEmail, createParticipant, updateParticipant, updateDriverBag, updateDriverParticipantStatus } from "@/app/lib/db";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 
 const phoneRegex = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
@@ -229,5 +229,39 @@ export async function updateDriverBagAction(formData: FormData): Promise<{ succe
   } catch (e) {
     console.error("updateDriverBag action error:", e);
     return { success: false, message: "Failed to update bag." };
+  }
+}
+
+export async function updateDriverStatusAction(formData: FormData): Promise<{ success: boolean; message: string }> {
+  try {
+    await verifySession();
+
+    const participantId = Number(formData.get("participantId"));
+    if (!participantId) {
+      return { success: false, message: "Invalid participant ID." };
+    }
+
+    const updates: { driver_liability?: number; driver_status?: "active" | "inactive" } = {};
+
+    // Liability is sent as an explicit "on"/"" value from the checkbox cell.
+    if (formData.has("liability")) {
+      updates.driver_liability = formData.get("liability") === "on" ? 1 : 0;
+    }
+    // Status is only sent from the status toggle cell.
+    if (formData.has("status")) {
+      updates.driver_status = formData.get("status") === "active" ? "active" : "inactive";
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { success: false, message: "No changes provided." };
+    }
+
+    await updateDriverParticipantStatus(participantId, updates);
+
+    revalidatePath("/admin/programs/meal-delivery");
+    return { success: true, message: "Driver status updated." };
+  } catch (e) {
+    console.error("updateDriverStatus action error:", e);
+    return { success: false, message: "Failed to update driver status." };
   }
 }
