@@ -216,6 +216,26 @@ export interface MealSignupWithAssignment extends MealSignupWithParticipant {
   driver_phone: string | null;
 }
 
+export interface AssignedRecipient {
+  meal_signup_id: number;
+  recipient_name: string;
+  recipient_phone: string;
+  address: string;
+  regular_quantity: number;
+  vegan_quantity: number;
+  comments: string | null;
+}
+
+export interface DeliverySignupOverview {
+  driver_volunteer_id: number;
+  driver_name: string;
+  driver_phone: string;
+  delivery_day: DeliveryDay;
+  delivery_date: string;
+  assigned_count: number;
+  assigned_recipients: AssignedRecipient[];
+}
+
 export type WaitlistStatus = "waiting" | "notified" | "converted" | "expired";
 
 export interface WaitlistEntry {

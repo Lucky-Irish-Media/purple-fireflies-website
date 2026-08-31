@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { MealSignupWithAssignment, DriverVolunteerWithParticipant, WaitlistEntryWithParticipant } from "@/app/lib/definitions";
+import type { MealSignupWithAssignment, DriverVolunteerWithParticipant, WaitlistEntryWithParticipant, DeliverySignupOverview } from "@/app/lib/definitions";
 import MealSignupsTable from "../../MealSignupsTable";
 import DriverVolunteersTable from "../../DriverVolunteersTable";
 import { WaitlistTable } from "../../WaitlistTable";
+import DeliverySignupsTable from "../../DeliverySignupsTable";
 import { DeliveryDaysTable, type DeliveryDayOverview } from "./DeliveryDaysTable";
 
-type TabKey = "signups" | "volunteers" | "waitlist" | "delivery-days";
+type TabKey = "signups" | "volunteers" | "delivery-signups" | "waitlist" | "delivery-days";
 
 interface Tab {
   key: TabKey;
@@ -17,6 +18,7 @@ interface Tab {
 const tabs: Tab[] = [
   { key: "signups", label: "Meal Signups" },
   { key: "volunteers", label: "Driver Volunteers" },
+  { key: "delivery-signups", label: "Delivery Signups" },
   { key: "waitlist", label: "Waitlist" },
   { key: "delivery-days", label: "Delivery Days" },
 ];
@@ -24,11 +26,12 @@ const tabs: Tab[] = [
 interface Props {
   mealSignups: MealSignupWithAssignment[];
   driverVolunteers: DriverVolunteerWithParticipant[];
+  deliverySignups: DeliverySignupOverview[];
   waitlistEntries: WaitlistEntryWithParticipant[];
   deliveryDays: DeliveryDayOverview[];
 }
 
-export default function MealDeliveryTabs({ mealSignups, driverVolunteers, waitlistEntries, deliveryDays }: Props) {
+export default function MealDeliveryTabs({ mealSignups, driverVolunteers, deliverySignups, waitlistEntries, deliveryDays }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("signups");
 
   return (
@@ -64,6 +67,12 @@ export default function MealDeliveryTabs({ mealSignups, driverVolunteers, waitli
       {activeTab === "waitlist" && (
         <section>
           <WaitlistTable initialData={waitlistEntries} />
+        </section>
+      )}
+
+      {activeTab === "delivery-signups" && (
+        <section>
+          <DeliverySignupsTable initialData={deliverySignups} />
         </section>
       )}
 

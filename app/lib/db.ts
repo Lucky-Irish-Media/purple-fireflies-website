@@ -9,6 +9,7 @@ import type {
   MealSignupWithParticipant,
   DriverVolunteerWithParticipant,
   MealSignupWithAssignment,
+  DeliverySignupOverview,
   WaitlistEntry,
   WaitlistEntryWithParticipant,
   Event,
@@ -799,6 +800,85 @@ export async function getAssignmentsForDate(dateStr: string): Promise<DateDriver
   }
 
   return Array.from(driverMap.values());
+}
+
+export async function getDeliverySignups(): Promise<DeliverySignupOverview[]> {
+  const db = await getDB();
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  const cutoff = ninetyDaysAgo.toISOString().split("T")[0];
+
+  const result = await db
+    .prepare(
+      `SELECT dv.id as driver_volunteer_id, dp.name as driver_name, dp.phone as driver_phone,
+              dv.delivery_day, dv.delivery_date,
+              ms.id as meal_signup_id, mp.name as recipient_name, mp.phone as recipient_phone,
+              mp.address1, mp.address2, mp.city, mp.state, mp.zip_code,
+              ms.regular_quantity, ms.vegan_quantity, ms.comments
+       FROM driver_volunteers dv
+       JOIN participants dp ON dv.participant_id = dp.id
+       LEFT JOIN delivery_assignments da ON da.driver_volunteer_id = dv.id
+       LEFT JOIN meal_signups ms ON da.meal_signup_id = ms.id
+       LEFT JOIN participants mp ON ms.participant_id = mp.id
+       WHERE dv.delivery_date >= ?
+       ORDER BY dv.delivery_date DESC, dp.name, mp.name`
+    )
+    .bind(cutoff)
+    .all<{
+      driver_volunteer_id: number;
+      driver_name: string;
+      driver_phone: string;
+      delivery_day: DeliveryDay;
+      delivery_date: string;
+      meal_signup_id: number | null;
+      recipient_name: string | null;
+      recipient_phone: string | null;
+      address1: string | null;
+      address2: string | null;
+      city: string | null;
+      state: string | null;
+      zip_code: string | null;
+      regular_quantity: number | null;
+      vegan_quantity: number | null;
+      comments: string | null;
+    }>();
+
+  if (!result.results || result.results.length === 0) {
+    return [];
+  }
+
+  const signupMap = new Map<string, DeliverySignupOverview>();
+
+  for (const row of result.results) {
+    const key = `${row.driver_volunteer_id}-${row.delivery_date}`;
+    if (!signupMap.has(key)) {
+      signupMap.set(key, {
+        driver_volunteer_id: row.driver_volunteer_id,
+        driver_name: row.driver_name,
+        driver_phone: row.driver_phone,
+        delivery_day: row.delivery_day,
+        delivery_date: row.delivery_date,
+        assigned_count: 0,
+        assigned_recipients: [],
+      });
+    }
+    const overview = signupMap.get(key)!;
+    if (row.meal_signup_id !== null && row.recipient_name !== null) {
+      overview.assigned_count++;
+      const address = `${row.address1 ?? ""}${row.address2 ? ", " + row.address2 : ""}, ${row.city ?? ""}, ${row.state ?? ""} ${row.zip_code ?? ""}`;
+      overview.assigned_recipients.push({
+        meal_signup_id: row.meal_signup_id,
+        recipient_name: row.recipient_name,
+        recipient_phone: row.recipient_phone ?? "",
+        address,
+        regular_quantity: row.regular_quantity ?? 0,
+        vegan_quantity: row.vegan_quantity ?? 0,
+        comments: row.comments,
+      });
+    }
+  }
+
+  return Array.from(signupMap.values());
 }
 
 export interface ReminderLog {
