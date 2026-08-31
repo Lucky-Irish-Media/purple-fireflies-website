@@ -354,6 +354,7 @@ export default function DriverVolunteersTable({
       header: "Status",
       cell: (info) => <StatusCell group={info.row.original} />,
       enableGlobalFilter: false,
+      filterFn: filterFns.equals,
     }),
     columnHelper.accessor(
       (row) => (row.days[0]?.participant_driver_liability ? "Signed" : "Not Signed"),
