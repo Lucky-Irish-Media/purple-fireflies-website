@@ -91,17 +91,18 @@ function LiabilityCell({ group }: { group: GroupedVolunteer }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const currentValue = Boolean(group.days[0]?.participant_driver_liability);
-  const [checked, setChecked] = useState(currentValue);
+  const [signed, setSigned] = useState(currentValue);
 
   useEffect(() => {
-    setChecked(currentValue);
+    setSigned(currentValue);
   }, [currentValue]);
 
-  function handleChange(on: boolean) {
-    setChecked(on);
+  function toggle() {
+    const next = !signed;
+    setSigned(next);
     const formData = new FormData();
     formData.set("participantId", String(group.participant_id));
-    formData.set("liability", on ? "on" : "");
+    formData.set("liability", next ? "on" : "");
     startTransition(async () => {
       await updateDriverStatusAction(formData);
       router.refresh();
@@ -109,15 +110,15 @@ function LiabilityCell({ group }: { group: GroupedVolunteer }) {
   }
 
   return (
-    <label className="inline-flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => handleChange(e.target.checked)}
-        disabled={isPending}
-        className="h-4 w-4 text-primary border-input focus:ring-primary rounded disabled:opacity-50"
-      />
-    </label>
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={isPending}
+      className="disabled:opacity-50"
+      aria-label={`Toggle liability status`}
+    >
+      {getLiabilityBadge(signed ? 1 : 0)}
+    </button>
   );
 }
 
@@ -359,12 +360,7 @@ export default function DriverVolunteersTable({
       {
         id: "liability",
         header: "Liability",
-        cell: (info) => (
-          <div className="flex items-center gap-2">
-            <LiabilityCell group={info.row.original} />
-            {getLiabilityBadge(info.row.original.days[0]?.participant_driver_liability ? 1 : 0)}
-          </div>
-        ),
+        cell: (info) => <LiabilityCell group={info.row.original} />,
         enableGlobalFilter: false,
       },
     ),
