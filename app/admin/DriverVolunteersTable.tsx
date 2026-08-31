@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useActionState, useTransition, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { createDriverVolunteerAction, updateDriverVolunteerAction, duplicateDriverVolunteerAction, updateDriverBagAction, updateDriverStatusAction, type AdminDriverVolunteerActionState } from "@/app/actions/admin-driver-volunteer";
 import { DataTable } from "./components/DataTable";
@@ -53,8 +52,7 @@ function groupVolunteers(volunteers: DriverVolunteerWithParticipant[]): GroupedV
   );
 }
 
-function BagCell({ group }: { group: GroupedVolunteer }) {
-  const router = useRouter();
+function BagCell({ group, onChanged }: { group: GroupedVolunteer; onChanged: (participantId: number, updates: { bag_number?: string }) => void }) {
   const [isPending, startTransition] = useTransition();
   const currentValue = group.days[0]?.participant_bag_number ?? "";
   const [value, setValue] = useState(currentValue);
@@ -70,7 +68,7 @@ function BagCell({ group }: { group: GroupedVolunteer }) {
     formData.set("bagNumber", value);
     startTransition(async () => {
       await updateDriverBagAction(formData);
-      router.refresh();
+      onChanged(group.participant_id, { bag_number: value });
     });
   }
 
@@ -87,8 +85,7 @@ function BagCell({ group }: { group: GroupedVolunteer }) {
   );
 }
 
-function LiabilityCell({ group }: { group: GroupedVolunteer }) {
-  const router = useRouter();
+function LiabilityCell({ group, onChanged }: { group: GroupedVolunteer; onChanged: (participantId: number, updates: { driver_liability?: number }) => void }) {
   const [isPending, startTransition] = useTransition();
   const currentValue = Boolean(group.days[0]?.participant_driver_liability);
   const [signed, setSigned] = useState(currentValue);
@@ -105,7 +102,7 @@ function LiabilityCell({ group }: { group: GroupedVolunteer }) {
     formData.set("liability", next ? "on" : "");
     startTransition(async () => {
       await updateDriverStatusAction(formData);
-      router.refresh();
+      onChanged(group.participant_id, { driver_liability: next ? 1 : 0 });
     });
   }
 
@@ -122,8 +119,7 @@ function LiabilityCell({ group }: { group: GroupedVolunteer }) {
   );
 }
 
-function StatusCell({ group }: { group: GroupedVolunteer }) {
-  const router = useRouter();
+function StatusCell({ group, onChanged }: { group: GroupedVolunteer; onChanged: (participantId: number, updates: { driver_status?: "active" | "inactive" }) => void }) {
   const [isPending, startTransition] = useTransition();
   const currentValue: "active" | "inactive" = group.days[0]?.participant_driver_status === "inactive" ? "inactive" : "active";
   const [value, setValue] = useState<"active" | "inactive">(currentValue);
@@ -140,7 +136,7 @@ function StatusCell({ group }: { group: GroupedVolunteer }) {
     formData.set("status", next);
     startTransition(async () => {
       await updateDriverStatusAction(formData);
-      router.refresh();
+      onChanged(group.participant_id, { driver_status: next });
     });
   }
 
@@ -324,6 +320,19 @@ export default function DriverVolunteersTable({
 
   const groups = useMemo(() => groupVolunteers(volunteers), [volunteers]);
 
+  function handleParticipantChange(
+    participantId: number,
+    updates: { driver_status?: "active" | "inactive"; driver_liability?: number; bag_number?: string },
+  ) {
+    const mapped: Partial<DriverVolunteerWithParticipant> = {};
+    if (updates.driver_status !== undefined) mapped.participant_driver_status = updates.driver_status;
+    if (updates.driver_liability !== undefined) mapped.participant_driver_liability = updates.driver_liability;
+    if (updates.bag_number !== undefined) mapped.participant_bag_number = updates.bag_number;
+    setVolunteers((prev) =>
+      prev.map((v) => (v.participant_id === participantId ? { ...v, ...mapped } : v)),
+    );
+  }
+
   const columns = useMemo(() => [
     columnHelper.accessor((row) => row.participant_name, {
       id: "name",
@@ -352,7 +361,7 @@ export default function DriverVolunteersTable({
     columnHelper.accessor((row) => row.participant_driver_status, {
       id: "status",
       header: "Status",
-      cell: (info) => <StatusCell group={info.row.original} />,
+      cell: (info) => <StatusCell group={info.row.original} onChanged={handleParticipantChange} />,
       enableGlobalFilter: false,
       filterFn: filterFns.equals,
     }),
@@ -361,7 +370,7 @@ export default function DriverVolunteersTable({
       {
         id: "liability",
         header: "Liability",
-        cell: (info) => <LiabilityCell group={info.row.original} />,
+        cell: (info) => <LiabilityCell group={info.row.original} onChanged={handleParticipantChange} />,
         enableGlobalFilter: false,
       },
     ),
@@ -375,7 +384,7 @@ export default function DriverVolunteersTable({
       id: "bag",
       header: "Bag #",
       enableGlobalFilter: false,
-      cell: (info) => <BagCell group={info.row.original} />,
+      cell: (info) => <BagCell group={info.row.original} onChanged={handleParticipantChange} />,
     }),
     columnHelper.display({
       id: "actions",
