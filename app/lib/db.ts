@@ -115,12 +115,24 @@ export async function updateDriverBag(participantId: number, bagNumber: string |
 
 export async function updateDriverParticipantStatus(
   participantId: number,
-  data: { driver_liability: number; driver_status: "active" | "inactive" },
+  data: { driver_liability?: number; driver_status?: "active" | "inactive" },
 ): Promise<void> {
   const db = await getDB();
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  if (data.driver_liability !== undefined) {
+    sets.push("driver_liability = ?");
+    values.push(data.driver_liability);
+  }
+  if (data.driver_status !== undefined) {
+    sets.push("driver_status = ?");
+    values.push(data.driver_status);
+  }
+  if (sets.length === 0) return;
+  values.push(participantId);
   await db
-    .prepare("UPDATE participants SET driver_liability = ?, driver_status = ?, updated_at = datetime('now') WHERE id = ?")
-    .bind(data.driver_liability, data.driver_status, participantId)
+    .prepare(`UPDATE participants SET ${sets.join(", ")}, updated_at = datetime('now') WHERE id = ?`)
+    .bind(...values as never[])
     .run();
 }
 

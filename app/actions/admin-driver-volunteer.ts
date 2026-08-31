@@ -237,14 +237,26 @@ export async function updateDriverStatusAction(formData: FormData): Promise<{ su
     await verifySession();
 
     const participantId = Number(formData.get("participantId"));
-    const liability = formData.get("liability") === "on" ? 1 : 0;
-    const status = formData.get("status") === "active" ? "active" : "inactive";
-
     if (!participantId) {
       return { success: false, message: "Invalid participant ID." };
     }
 
-    await updateDriverParticipantStatus(participantId, { driver_liability: liability, driver_status: status });
+    const updates: { driver_liability?: number; driver_status?: "active" | "inactive" } = {};
+
+    // Liability is sent as an explicit "on"/"" value from the checkbox cell.
+    if (formData.has("liability")) {
+      updates.driver_liability = formData.get("liability") === "on" ? 1 : 0;
+    }
+    // Status is only sent from the status toggle cell.
+    if (formData.has("status")) {
+      updates.driver_status = formData.get("status") === "active" ? "active" : "inactive";
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { success: false, message: "No changes provided." };
+    }
+
+    await updateDriverParticipantStatus(participantId, updates);
 
     revalidatePath("/admin/programs/meal-delivery");
     return { success: true, message: "Driver status updated." };
