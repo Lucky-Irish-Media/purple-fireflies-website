@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Springfield Neighbors | Purple Fireflies",
   description:
-    "A community collaboration hosted by Purple Fireflies — drop off shelf-stable pantry staples at our Athens collection spots to help neighbors in Springfield. A volunteer carries donations down each week.",
+    "Supporting Haitian families in Springfield who are afraid to leave their homes — drop off shelf-stable pantry staples at our Athens collection spots and a volunteer carries donations down each week.",
 };
 
 const dropOffSpots = [
@@ -84,8 +84,8 @@ export default function SpringfieldNeighborsPage() {
               Springfield Neighbors
             </h1>
             <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 560, margin: "0 auto 2.5rem" }}>
-              A mutual aid food program for Springfield — drop off shelf-stable pantry staples
-              at one of our Athens collection spots, and a volunteer brings them down each week.
+              Supporting Haitian families in Springfield who are afraid to leave their homes —
+              drop off shelf-stable pantry staples and a volunteer brings them down each week.
             </p>
           </div>
         </div>
@@ -110,10 +110,10 @@ export default function SpringfieldNeighborsPage() {
           </div>
           <div className="space-y-5 text-lg text-text-secondary leading-relaxed mb-12">
             <p>
-              Springfield Neighbors is a mutual aid food program supporting people in the
-              Springfield community. When a neighbor is going through a rough stretch — an
-              unexpected expense, an illness, or a week when the budget just won&apos;t stretch
-              — we help fill their pantry.
+              Springfield Neighbors is a mutual aid food program supporting the Haitian community
+              in Springfield. Many Haitian families are afraid to leave their homes due to the
+              ongoing events in their county. This program helps ensure they have food and
+              essentials without having to take that risk.
             </p>
             <p>
               The program runs entirely on community generosity. Drop off shelf-stable pantry
@@ -123,7 +123,8 @@ export default function SpringfieldNeighborsPage() {
             </p>
             <p>
               Nothing is too small. A single box of cereal or a roll of toilet paper might seem
-              modest on its own, but together these donations keep pantries full all year round.
+              modest on its own, but together these donations keep pantries full and families
+              fed.
             </p>
           </div>
 
