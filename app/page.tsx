@@ -16,6 +16,13 @@ const programs = [
     cta: "Learn more",
   },
   {
+    icon: "🛒",
+    title: "Springfield Neighbors",
+    desc: "Pantry staples and Walmart eGift cards for neighbors in Springfield.",
+    href: "/programs/springfield-neighbors",
+    cta: "Learn more",
+  },
+  {
     icon: "🤝",
     title: "Community",
     desc: "Events and resources that connect neighbors and build shared purpose.",

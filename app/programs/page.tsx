@@ -15,6 +15,13 @@ const programs = [
     href: "/programs/legal-observers",
     cta: "Learn more",
   },
+  {
+    icon: "🛒",
+    title: "Springfield Neighbors",
+    desc: "Donate shelf-stable pantry staples and Walmart eGift cards to help keep neighbors' shelves stocked. Every can and box goes directly to a neighbor who needs it.",
+    href: "/programs/springfield-neighbors",
+    cta: "Learn more",
+  },
 ];
 
 export default function ProgramsPage() {

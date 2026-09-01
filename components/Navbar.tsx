@@ -62,6 +62,12 @@ export default function Navbar() {
                     >
                       Legal Observers
                     </Link>
+                    <Link
+                      href="/programs/springfield-neighbors"
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      Springfield Neighbors
+                    </Link>
                   </div>
                 </div>
               )}
@@ -128,6 +134,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Programs — Legal Observers
+            </Link>
+            <Link
+              href="/programs/springfield-neighbors"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Programs — Springfield Neighbors
             </Link>
             <Link
               href="/news"
