@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Springfield Neighbors | Purple Fireflies",
   description:
-    "Drop off shelf-stable pantry staples at our Athens collection spots to help neighbors in Springfield. A volunteer carries donations down each week.",
+    "A community collaboration hosted by Purple Fireflies — drop off shelf-stable pantry staples at our Athens collection spots to help neighbors in Springfield. A volunteer carries donations down each week.",
 };
 
 const dropOffSpots = [
@@ -43,7 +43,7 @@ const cards = [
     icon: "🎁",
     title: "Donate a Walmart eGift Card",
     desc: "Buy a Walmart eGift card online and email it to us — we use it to pick up fresh items and fill any gaps in donations.",
-    href: "https://giftcards.walmart.com/",
+    href: "https://www.walmart.com/giftcards/ip/Everyday-Basic-Blue-Yellow-Spark-Walmart-eGift-Card/323856066",
     external: true,
     cta: "Purchase an eGift card",
   },
@@ -66,12 +66,20 @@ export default function SpringfieldNeighborsPage() {
       >
         <div className="px-4 pt-16 pb-0 text-center">
           <div className="max-w-2xl mx-auto">
+            <div className="flex justify-center gap-2 mb-5">
             <span
-              className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white mb-5"
+              className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white"
               style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
             >
               Programs
             </span>
+            <span
+              className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white"
+              style={{ background: "#F59E0B" }}
+            >
+              Collaboration
+            </span>
+          </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
               Springfield Neighbors
             </h1>
@@ -89,6 +97,17 @@ export default function SpringfieldNeighborsPage() {
 
           {/* About */}
           <h2 className="text-2xl font-bold text-foreground mb-3">About Springfield Neighbors</h2>
+          <div
+            className="rounded-xl p-5 mb-8"
+            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}
+          >
+            <p className="text-foreground font-semibold">A community collaboration</p>
+            <p className="text-text-secondary text-base leading-relaxed mt-2">
+              Springfield Neighbors is not a Purple Fireflies program. It&apos;s a collaboration
+              among community members — Purple Fireflies is simply hosting this information on
+              our website so neighbors can find it and get involved.
+            </p>
+          </div>
           <div className="space-y-5 text-lg text-text-secondary leading-relaxed mb-12">
             <p>
               Springfield Neighbors is a mutual aid food program supporting people in the
@@ -168,9 +187,9 @@ export default function SpringfieldNeighborsPage() {
             <div className="rounded-xl p-6 space-y-3" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}>
               <p className="text-foreground font-semibold text-base">How to donate a card:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Click the link below to open Walmart&apos;s eGift card store</li>
+                <li>Click the link below to open the Walmart eGift card page</li>
                 <li>Choose the amount you&apos;d like to give</li>
-                <li>Select <strong className="text-foreground">email delivery</strong> and send the card to <a href="mailto:springfield_neighbors@proton.me" className="text-primary hover:underline">springfield_neighbors@proton.me</a></li>
+                <li>Enter <strong className="text-foreground">springfield_neighbors@proton.me</strong> as the recipient email at checkout so the card comes straight to us</li>
               </ul>
             </div>
           </div>
