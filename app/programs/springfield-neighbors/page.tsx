@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Springfield Neighbors | Purple Fireflies",
   description:
-    "Supporting Haitian families in Springfield who are afraid to leave their homes — drop off shelf-stable pantry staples at our Athens collection spots and a volunteer carries donations down each week.",
+    "Supporting Haitian families in Springfield who are afraid to leave their homes — drop off shelf-stable food and personal care items at our Athens collection spots and volunteers deliver donations to Springfield each week.",
 };
 
 const dropOffSpots = [
@@ -36,6 +36,15 @@ const items = [
   "1 qt. shelf-stable boxed milk",
   "Plastic jar of applesauce",
   "Toilet paper",
+  "Diapers",
+  "Baby wipes",
+  "Bar soap",
+  "Shampoo",
+  "Toothpaste",
+  "Toothbrushes",
+  "Deodorant",
+  "Laundry detergent",
+  "Dish soap",
 ];
 
 const cards = [
@@ -85,7 +94,7 @@ export default function SpringfieldNeighborsPage() {
             </h1>
             <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 560, margin: "0 auto 2.5rem" }}>
               Supporting Haitian families in Springfield who are afraid to leave their homes —
-              drop off shelf-stable pantry staples and a volunteer brings them down each week.
+              drop off shelf-stable food and personal care items and volunteers deliver them to Springfield each week.
             </p>
           </div>
         </div>
@@ -104,27 +113,27 @@ export default function SpringfieldNeighborsPage() {
             <p className="text-foreground font-semibold">A community collaboration</p>
             <p className="text-text-secondary text-base leading-relaxed mt-2">
               Springfield Neighbors is not a Purple Fireflies program. It&apos;s a collaboration
-              among community members — Purple Fireflies is simply hosting this information on
-              our website so neighbors can find it and get involved.
+              among community members in coordination with aid groups in Springfield — Purple
+              Fireflies is simply hosting this information on our website so neighbors can find
+              it and get involved.
             </p>
           </div>
           <div className="space-y-5 text-lg text-text-secondary leading-relaxed mb-12">
             <p>
-              Springfield Neighbors is a mutual aid food program supporting the Haitian community
-              in Springfield. Many Haitian families are afraid to leave their homes due to the
-              ongoing events in their county. This program helps ensure they have food and
-              essentials without having to take that risk.
+              Springfield Neighbors is a mutual aid program supporting the Haitian community
+              in Springfield. Many Haitian families are afraid to leave their homes due to
+              escalating ICE activities. Courts across the country have ruled that many ICE
+              tactics are illegal. Our efforts are intended to protect our Haitian neighbors
+              from extrajudicial threats by providing food and other essentials.
             </p>
             <p>
-              The program runs entirely on community generosity. Drop off shelf-stable pantry
-              staples at one of our designated collection spots, then a volunteer carries the
-              donations down to Springfield each week. No middlemen, no overhead — just
-              neighbors helping neighbors.
+              The program runs entirely on community generosity. Drop off shelf-stable food
+              and personal care items at one of our designated collection spots. Once a week
+              volunteers deliver the donations to aid groups in Springfield.
             </p>
             <p>
               Nothing is too small. A single box of cereal or a roll of toilet paper might seem
-              modest on its own, but together these donations keep pantries full and families
-              fed.
+              modest on its own, but together these donations keep families safe.
             </p>
           </div>
 
@@ -157,7 +166,8 @@ export default function SpringfieldNeighborsPage() {
           {/* Items to donate */}
           <h2 className="text-2xl font-bold text-foreground mb-3">Items We Accept</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-6">
-            Please donate shelf-stable pantry staples. Here&apos;s what we&apos;re currently collecting:
+            Please donate shelf-stable food and personal care items. Here&apos;s what we&apos;re
+            currently collecting:
           </p>
           <div className="grid gap-3 sm:grid-cols-2 mb-12">
             {items.map((item) => (
@@ -176,14 +186,16 @@ export default function SpringfieldNeighborsPage() {
               </div>
             ))}
           </div>
+          <p className="text-sm text-text-secondary leading-relaxed mb-12" style={{ fontStyle: "italic" }}>
+            ! Please no liquid or powder containers over 42 oz.
+          </p>
 
           {/* Walmart eGift cards */}
           <h2 className="text-2xl font-bold text-foreground mb-3">Walmart eGift Cards</h2>
           <div className="space-y-5 text-lg text-text-secondary leading-relaxed mb-12">
             <p>
-              A Walmart eGift card is one of the most flexible ways to help. We use donated cards
-              to buy fresh produce, dairy, and other items that can&apos;t be donated as staples —
-              so every card rounds out what our pantry staples can provide.
+              A Walmart eGift card is one of the most flexible ways to help. We coordinate
+              every week to see what are the greatest needs that time.
             </p>
             <div className="rounded-xl p-6 space-y-3" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}>
               <p className="text-foreground font-semibold text-base">How to donate a card:</p>
