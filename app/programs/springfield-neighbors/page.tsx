@@ -166,8 +166,7 @@ export default function SpringfieldNeighborsPage() {
           {/* Items to donate */}
           <h2 className="text-2xl font-bold text-foreground mb-3">Items We Accept</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-6">
-            Please donate shelf-stable food and personal care items. Here&apos;s what we&apos;re
-            currently collecting:
+            Drop off any shelf-stable food and personal care items listed below:
           </p>
           <div className="grid gap-3 sm:grid-cols-2 mb-12">
             {items.map((item) => (
@@ -186,9 +185,11 @@ export default function SpringfieldNeighborsPage() {
               </div>
             ))}
           </div>
-          <p className="text-sm text-text-secondary leading-relaxed mb-12" style={{ fontStyle: "italic" }}>
-            ! Please no liquid or powder containers over 42 oz.
-          </p>
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 mb-12">
+            <p className="text-sm font-semibold text-red-800">
+              !IMPORTANT! PLEASE NO LIQUID OR POWDER CONTAINERS OVER 42 OZ.
+            </p>
+          </div>
 
           {/* Walmart eGift cards */}
           <h2 className="text-2xl font-bold text-foreground mb-3">Walmart eGift Cards</h2>
