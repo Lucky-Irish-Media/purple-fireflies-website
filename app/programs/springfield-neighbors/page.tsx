@@ -187,7 +187,7 @@ export default function SpringfieldNeighborsPage() {
           </div>
           <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 mb-12">
             <p className="text-sm font-semibold text-red-800">
-              !IMPORTANT! PLEASE NO LIQUID OR POWDER CONTAINERS OVER 42 OZ.
+              IMPORTANT! PLEASE NO LIQUID OR POWDER CONTAINERS OVER 42 OZ.
             </p>
           </div>
 
