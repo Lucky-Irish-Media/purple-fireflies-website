@@ -205,7 +205,7 @@ export async function createMealSignupAction(
         state: data.state,
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
-        internalNotes: data.internalNotes,
+        internalNotes: data.internalNotes?.trim() ? data.internalNotes : undefined,
       });
     } else {
       participant = await createParticipant({

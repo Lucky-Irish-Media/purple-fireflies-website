@@ -90,15 +90,41 @@ export async function updateParticipant(id: number, data: {
   internalNotes?: string;
 }): Promise<Participant> {
   const db = await getDB();
+  const sets: string[] = [
+    "name = ?",
+    "email = ?",
+    "phone = ?",
+    "address1 = ?",
+    "address2 = ?",
+    "city = ?",
+    "state = ?",
+    "zip_code = ?",
+    "contact_method = ?",
+  ];
+  const values: unknown[] = [
+    data.name,
+    data.email,
+    data.phone,
+    data.address1,
+    data.address2 || null,
+    data.city,
+    data.state,
+    data.zipCode,
+    data.contactMethod,
+  ];
+  if (data.internalNotes !== undefined) {
+    sets.push("internal_notes = ?");
+    values.push(data.internalNotes || null);
+  }
+  values.push(id);
   const result = await db
     .prepare(
       `UPDATE participants
-       SET name = ?, email = ?, phone = ?, address1 = ?, address2 = ?,
-           city = ?, state = ?, zip_code = ?, contact_method = ?, internal_notes = ?, updated_at = datetime('now')
+       SET ${sets.join(", ")}, updated_at = datetime('now')
        WHERE id = ?
        RETURNING *`
     )
-    .bind(data.name, data.email, data.phone, data.address1, data.address2 || null, data.city, data.state, data.zipCode, data.contactMethod, data.internalNotes || null, id)
+    .bind(...(values as never[]))
     .first<Participant>();
   if (!result) {
     throw new Error("Failed to update participant");
