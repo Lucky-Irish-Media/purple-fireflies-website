@@ -7,9 +7,55 @@ import { updateLegalObserverRequestAction } from "@/app/actions/legal-observer";
 import { DataTable } from "../../components/DataTable";
 import { Modal } from "../../components/Modal";
 import { formatDate, formatPhone, formatDateTime, getRequestStatusBadge } from "../../lib/utils";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<LegalObserverRequest>();
+
+function RequesterFilter({ column }: { column: any }) {
+  return (
+    <input
+      type="text"
+      placeholder="Filter name, email..."
+      value={(column.getFilterValue() as string) || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value);
+      }}
+      onClick={(e) => e.stopPropagation()}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    />
+  );
+}
+
+function StatusFilter({ column }: { column: any }) {
+  const value = column.getFilterValue() as string | undefined;
+  return (
+    <select
+      value={value || ""}
+      onChange={(e) => {
+        e.stopPropagation();
+        column.setFilterValue(e.target.value || undefined);
+      }}
+      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+    >
+      <option value="">All</option>
+      {LO_REQUEST_STATUS_OPTIONS.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function requesterFilterFn(row: any, _columnId: string, filterValue: string): boolean {
+  if (!filterValue) return true;
+  const r = row.original;
+  const search = String(filterValue).toLowerCase();
+  return (
+    r.contact_name?.toLowerCase().includes(search) ||
+    r.contact_email?.toLowerCase().includes(search) ||
+    r.contact_phone?.includes(search)
+  );
+}
 
 export function LegalObserverRequestsTable({ initialData }: { initialData: LegalObserverRequest[] }) {
   const [isPending, startTransition] = useTransition();
@@ -52,75 +98,100 @@ export function LegalObserverRequestsTable({ initialData }: { initialData: Legal
   }
 
   const columns = useMemo(() => [
-    columnHelper.accessor("contact_name", {
-      header: "Contact Name",
-      cell: (info) => (
-        <span className="text-foreground font-medium">{info.getValue()}</span>
-      ),
-    }),
-    columnHelper.accessor("contact_email", {
-      header: "Email",
-      cell: (info) => (
-        <span className="text-text-secondary">{info.getValue()}</span>
-      ),
-    }),
-    columnHelper.accessor("contact_phone", {
-      header: "Phone",
-      cell: (info) => (
-        <span className="text-text-secondary">{formatPhone(info.getValue())}</span>
-      ),
-    }),
-    columnHelper.accessor("event_date", {
-      header: "Event Date",
-      cell: (info) => (
-        <span className="text-text-secondary">{formatDate(info.getValue())}</span>
-      ),
-    }),
-    columnHelper.accessor("event_time", {
-      header: "Time",
-      cell: (info) => (
-        <span className="text-text-secondary">{info.getValue() || "—"}</span>
-      ),
-    }),
-    columnHelper.accessor("event_location", {
-      header: "Location",
-      cell: (info) => (
-        <span className="text-text-secondary">{info.getValue()}</span>
-      ),
-    }),
-    columnHelper.accessor("event_type", {
-      header: "Event Type",
-      cell: (info) => (
-        <span className="text-text-secondary">{info.getValue() || "—"}</span>
-      ),
-    }),
-    columnHelper.accessor("special_notes", {
-      header: "Notes",
-      cell: (info) => (
-        <span className="text-text-secondary">{info.getValue() || "—"}</span>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => getRequestStatusBadge(info.getValue()),
-    }),
-    columnHelper.accessor("internal_notes", {
-      header: "Internal Notes",
+    columnHelper.display({
+      id: "requester",
+      header: "Requester",
+      filterFn: requesterFilterFn,
+      meta: { filterComponent: RequesterFilter },
       cell: (info) => {
-        const notes = info.getValue();
-        if (!notes) return <span className="text-text-secondary">—</span>;
+        const r = info.row.original;
         return (
-          <span className="text-text-secondary" title={notes}>
-            {notes.length > 40 ? notes.slice(0, 40) + "…" : notes}
-          </span>
+          <div className="space-y-0.5 max-w-[220px]">
+            <div className="text-foreground font-medium text-sm">{r.contact_name}</div>
+            <div className="text-text-secondary text-xs truncate">{r.contact_email}</div>
+            <div className="text-text-secondary text-xs">{formatPhone(r.contact_phone)}</div>
+          </div>
         );
       },
     }),
-    columnHelper.accessor("created_at", {
+    columnHelper.accessor((row) => row.event_date, {
+      id: "event",
+      header: "Event",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const r = info.row.original;
+        return (
+          <div className="space-y-0.5">
+            <div className="text-foreground font-medium text-sm">{formatDate(r.event_date)}</div>
+            <div className="text-text-secondary text-xs">{r.event_time || ""}</div>
+            <div className="text-text-secondary text-xs truncate max-w-[220px]">{r.event_location}</div>
+            {r.event_type && <div className="text-text-secondary text-xs">{r.event_type}</div>}
+          </div>
+        );
+      },
+    }),
+    columnHelper.accessor((row) => row.status, {
+      id: "status",
+      header: "Status",
+      filterFn: filterFns.equals,
+      meta: { filterComponent: StatusFilter },
+      cell: (info) => getRequestStatusBadge(info.getValue()),
+    }),
+    columnHelper.display({
+      id: "special_notes",
+      header: "Request Notes",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const value = info.row.original.special_notes;
+        if (!value) return <span className="text-text-secondary">—</span>;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              info.row.toggleExpanded();
+            }}
+            className="text-left w-full cursor-pointer"
+          >
+            {info.row.getIsExpanded() ? (
+              <span className="text-text-secondary whitespace-pre-wrap max-w-md">{value}</span>
+            ) : (
+              <span className="text-text-secondary max-w-xs truncate block">{value} <span className="text-xs text-text-secondary/50">▶</span></span>
+            )}
+          </button>
+        );
+      },
+    }),
+    columnHelper.display({
+      id: "internal_notes",
+      header: "Internal Notes",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const value = info.row.original.internal_notes;
+        if (!value) return <span className="text-text-secondary">—</span>;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              info.row.toggleExpanded();
+            }}
+            className="text-left w-full cursor-pointer"
+          >
+            {info.row.getIsExpanded() ? (
+              <span className="text-text-secondary whitespace-pre-wrap max-w-md">{value}</span>
+            ) : (
+              <span className="text-text-secondary max-w-xs truncate block">{value} <span className="text-xs text-text-secondary/50">▶</span></span>
+            )}
+          </button>
+        );
+      },
+    }),
+    columnHelper.accessor((row) => row.created_at, {
+      id: "created_at",
       header: "Submitted",
       cell: (info) => (
         <span className="text-text-secondary">{formatDateTime(info.getValue())}</span>
       ),
+      filterFn: filterFns.includesString,
     }),
     columnHelper.display({
       id: "actions",
@@ -213,10 +284,14 @@ export function LegalObserverRequestsTable({ initialData }: { initialData: Legal
         enableSorting
         enableFiltering
         enablePagination
+        enableExpanding
+        enableColumnVisibility
         enableGlobalFilter
         enableColumnPinning
-        initialColumnPinning={{ left: ["contact_name"], right: ["actions"] }}
-        initialSorting={[{ id: "event_date", desc: false }]}
+        enableColumnResizing
+        enableFacetedFilters
+        initialColumnPinning={{ left: ["requester"], right: ["actions"] }}
+        initialSorting={[{ id: "event", desc: false }]}
         pageSize={25}
         storageKey="lo-requests-column-visibility"
       />
