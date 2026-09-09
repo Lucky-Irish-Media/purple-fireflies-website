@@ -18,6 +18,7 @@ import type {
   VolunteerSignupWithDeliveries,
   LegalObserverSignup,
   LegalObserverRequest,
+  LoRequestStatus,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -1295,4 +1296,22 @@ export async function getLegalObserverRequests(): Promise<LegalObserverRequest[]
     )
     .all<LegalObserverRequest>();
   return result.results || [];
+}
+
+export async function updateLegalObserverRequest(
+  id: number,
+  data: { status: LoRequestStatus; internal_notes: string | null }
+): Promise<LegalObserverRequest> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE legal_observer_requests
+       SET status = ?, internal_notes = ?, updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.status, data.internal_notes, id)
+    .first<LegalObserverRequest>();
+  if (!result) throw new Error("Legal observer request not found");
+  return result;
 }

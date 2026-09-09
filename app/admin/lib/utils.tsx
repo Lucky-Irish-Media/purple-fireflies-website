@@ -216,6 +216,22 @@ export function getDeliveryDateStatusBadge(closed: boolean) {
   );
 }
 
+export function getRequestStatusBadge(status: string) {
+  const styles: Record<string, string> = {
+    pending: "bg-gray-100 text-gray-800",
+    working: "bg-yellow-100 text-yellow-800",
+    fulfilled: "bg-green-100 text-green-800",
+    partial: "bg-blue-100 text-blue-800",
+    unable: "bg-red-100 text-red-800",
+    cancelled: "bg-gray-100 text-gray-600",
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${styles[status] || "bg-gray-100 text-gray-800"}`}>
+      {status}
+    </span>
+  );
+}
+
 export function DeliveryDateFilter({ column }: { column: any }) {
   const value = column.getFilterValue() as string | undefined;
   return (
