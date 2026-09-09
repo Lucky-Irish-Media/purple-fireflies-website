@@ -343,6 +343,17 @@ export interface LegalObserverSignup {
   created_at: string;
 }
 
+export type LoRequestStatus = "pending" | "working" | "fulfilled" | "partial" | "unable" | "cancelled";
+
+export const LO_REQUEST_STATUS_OPTIONS: { value: LoRequestStatus; label: string }[] = [
+  { value: "pending", label: "Pending" },
+  { value: "working", label: "Working" },
+  { value: "fulfilled", label: "Fulfilled" },
+  { value: "partial", label: "Partial" },
+  { value: "unable", label: "Unable" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
 export interface LegalObserverRequest {
   id: number;
   contact_name: string;
@@ -353,5 +364,8 @@ export interface LegalObserverRequest {
   event_location: string;
   event_type: string | null;
   special_notes: string | null;
+  status: LoRequestStatus;
+  internal_notes: string | null;
   created_at: string;
+  updated_at: string;
 }

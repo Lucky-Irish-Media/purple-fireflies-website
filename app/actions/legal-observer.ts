@@ -1,7 +1,7 @@
 "use server";
 
-import { LegalObserverSignupSchema, LegalObserverRequestSchema, type LegalObserverSignupFormState, type LegalObserverRequestFormState } from "@/app/lib/definitions";
-import { createLegalObserverSignup, createLegalObserverRequest } from "@/app/lib/db";
+import { LegalObserverSignupSchema, LegalObserverRequestSchema, type LegalObserverSignupFormState, type LegalObserverRequestFormState, type LoRequestStatus } from "@/app/lib/definitions";
+import { createLegalObserverSignup, createLegalObserverRequest, updateLegalObserverRequest, getLegalObserverRequests } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 
 function getErrorMessage(): string {
@@ -91,5 +91,20 @@ export async function submitLegalObserverRequest(
   } catch (e) {
     console.error("legal observer request action error:", e);
     return { message: getErrorMessage() };
+  }
+}
+
+export async function updateLegalObserverRequestAction(
+  id: number,
+  status: LoRequestStatus,
+  internalNotes: string | null
+): Promise<{ success: boolean; message: string; requests?: Awaited<ReturnType<typeof getLegalObserverRequests>> }> {
+  try {
+    await updateLegalObserverRequest(id, { status, internal_notes: internalNotes });
+    const requests = await getLegalObserverRequests();
+    return { success: true, message: "Request updated successfully.", requests };
+  } catch (e) {
+    console.error("updateLegalObserverRequest action error:", e);
+    return { success: false, message: "Failed to update request." };
   }
 }
