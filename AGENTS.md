@@ -3,7 +3,7 @@
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes - APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
 <!-- BEGIN:deployment-rules -->
@@ -25,7 +25,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- BEGIN:project-tracking-rules -->
 # Project Tracking Rules
 
-- Document EVERY feature in the Obsidian project tracker at `~/Nextcloud/Obsidian/Projects/purple-fireflies-website/` as soon as planning starts — before writing any code
+- Document EVERY feature in the Obsidian project tracker at `~/Obsidian/Projects/purple-fireflies-website/` as soon as planning starts - before writing any code
 - Follow the `tracker-*` skill conventions from the streamlist repo (`.opencode/skills/tracker-*`):
   - Create a feature note in `Features/` (PascalCase filename, e.g. `AdminAnyDayDelivery.md`) with the standard frontmatter (`type: feature`, `area`, `status`, `priority`, `created`, `description`) and the documented structure (Overview, Progress, User Stories, Technical Notes, Acceptance Criteria, Related)
   - Create related `Tasks/` notes for implementation work and `Decisions/` notes for significant decisions
@@ -33,6 +33,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Set the feature `status` to `planned`/`in-progress` when starting and `done` when merged to `main`
 - If a feature was built without a tracker note, create the note retroactively as part of completing it
 <!-- END:project-tracking-rules -->
+
+# Writing Style
+
+- NEVER use em dashes (`—`). Use regular hyphens (`-`) instead.
 
 # Verification
 
@@ -46,7 +50,7 @@ All admin tables use the shared `<DataTable>` component from `app/admin/componen
 
 ## Formatting Conventions
 
-Import shared formatters and badge components from `app/admin/lib/utils.tsx` — do NOT define them locally.
+Import shared formatters and badge components from `app/admin/lib/utils.tsx` - do NOT define them locally.
 
 | Data Type | Formatter | Example |
 |---|---|---|
@@ -79,9 +83,9 @@ Import shared formatters and badge components from `app/admin/lib/utils.tsx` —
 
 ## Do NOT
 
-- Do not call `new Date().toLocaleString()` directly in cell renderers — use `formatDateTime()` from utils.
-- Do not duplicate `formatPhone`, `formatDate`, `todayLocal`, or `deliveryDateFilterFn` — they live in `app/admin/lib/utils.tsx`.
-- Do not create per-table badge components — use the shared ones from `app/admin/lib/utils.tsx`.
+- Do not call `new Date().toLocaleString()` directly in cell renderers - use `formatDateTime()` from utils.
+- Do not duplicate `formatPhone`, `formatDate`, `todayLocal`, or `deliveryDateFilterFn` - they live in `app/admin/lib/utils.tsx`.
+- Do not create per-table badge components - use the shared ones from `app/admin/lib/utils.tsx`.
 <!-- END:admin-table-style-rules -->
 
 <!-- BEGIN:skills -->
@@ -89,6 +93,6 @@ Import shared formatters and badge components from `app/admin/lib/utils.tsx` —
 
 - At the START of every session, run `ls ~/.opencode/skills/` to check for skill files
 - READ every skill file found there and be ready to execute its workflow
-- The `skill` tool may report "no skills available" even when files exist — ALWAYS verify by listing the directory directly
+- The `skill` tool may report "no skills available" even when files exist - ALWAYS verify by listing the directory directly
 - When a user says a task is done (or similar phrasing), re-check this directory for any post-feature workflow
 <!-- END:skills -->

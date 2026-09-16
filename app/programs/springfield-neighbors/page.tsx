@@ -208,6 +208,71 @@ export default function SpringfieldNeighborsPage() {
             </div>
           </div>
 
+          {/* Downloadable resources */}
+          <h2 className="text-2xl font-bold text-foreground mb-3">Spread the Word</h2>
+          <p className="text-lg text-text-secondary leading-relaxed mb-6">
+            Download, print, and hand these out to friends, neighbors, and local businesses.
+            Every flyer distributed is another person who might step up to help.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 mb-12">
+            <a
+              href="/springfield/purple-fireflies-project.pdf"
+              download
+              className="rounded-xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md no-underline"
+              style={{
+                background: "rgba(124,58,237,0.06)",
+                border: "1px solid rgba(124,58,237,0.12)",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              }}
+            >
+              <div
+                className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
+                style={{ background: "rgba(124,58,237,0.08)" }}
+              >
+                📄
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">Project Overview Flyer</h3>
+              <p className="text-sm text-text-secondary leading-relaxed flex-1">
+                A printable overview of the Springfield Neighbors project - what it is, how to help,
+                and where to drop off donations. Great for bulletin boards and community boards.
+              </p>
+              <span
+                className="mt-4 inline-flex items-center gap-1 text-sm font-semibold"
+                style={{ color: "#7C3AED" }}
+              >
+                Download PDF ↓
+              </span>
+            </a>
+            <a
+              href="/springfield/business-card.pdf"
+              download
+              className="rounded-xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md no-underline"
+              style={{
+                background: "rgba(124,58,237,0.06)",
+                border: "1px solid rgba(124,58,237,0.12)",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              }}
+            >
+              <div
+                className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
+                style={{ background: "rgba(124,58,237,0.08)" }}
+              >
+                🃏
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">Business Card</h3>
+              <p className="text-sm text-text-secondary leading-relaxed flex-1">
+                A compact card-sized handout you can give to people one-on-one. Easy to tuck into
+                a pocket, a bag, or leave at a register.
+              </p>
+              <span
+                className="mt-4 inline-flex items-center gap-1 text-sm font-semibold"
+                style={{ color: "#7C3AED" }}
+              >
+                Download PDF ↓
+              </span>
+            </a>
+          </div>
+
           {/* CTA cards */}
           <h2 className="text-2xl font-bold text-foreground mb-6">Get Involved</h2>
           <div className="grid gap-6 sm:grid-cols-2">
