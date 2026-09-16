@@ -3,7 +3,7 @@
 import { verifySession } from "@/app/lib/dal";
 import { getAssignmentsForDate, getWaitlistEntriesByDate, logReminderSent } from "@/app/lib/db";
 import type { DateDriver } from "@/app/lib/db";
-import { getDeliveryDaySchedule } from "@/app/lib/delivery-day";
+import { getDeliveryDayScheduleForDate } from "@/app/lib/delivery-day";
 import { sendEmail, sendDeliverySummaryEmail } from "@/app/lib/email";
 
 export interface SendRemindersState {
@@ -56,7 +56,7 @@ export async function sendDriverReminders(
     }
 
     for (const driver of drivers) {
-      const schedule = getDeliveryDaySchedule(driver.delivery_day);
+      const schedule = getDeliveryDayScheduleForDate(driver.delivery_date);
 
       const formattedDate = new Date(driver.delivery_date + "T00:00:00").toLocaleDateString("en-US", {
         month: "long",

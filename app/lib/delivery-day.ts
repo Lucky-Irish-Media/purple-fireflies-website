@@ -61,12 +61,38 @@ const SCHEDULED_DAYS: Partial<Record<DeliveryDay, DeliveryDaySchedule>> = {
   },
 };
 
+// All Wednesdays except the first of the month use the UCM pickup location
+// (same as Thursday) while keeping the Wednesday 12:00pm pickup time.
+const OTHER_WEDNESDAY_SCHEDULE: DeliveryDaySchedule = {
+  location: "United Campus Ministries, 18 N College St, Athens, OH 45701",
+  shortLocation: "UCM",
+  time: "12:00pm",
+};
+
+// The first weekday of a given type in a month always falls on a day between
+// the 1st and the 7th, so a date with day-of-month <= 7 is the first one.
+function isFirstWeekdayOfMonth(dateStr: string, day: DeliveryDay): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  return getDeliveryDay(dateStr) === day && date.getDate() <= 7;
+}
+
 // Wednesdays and Thursdays have a fixed pickup schedule. Other days have no
 // published pickup info yet, so emails fall back to a generic message.
 export function getDeliveryDaySchedule(day: DeliveryDay): DeliveryDaySchedule {
   return (
     SCHEDULED_DAYS[day] ?? { location: null, shortLocation: null, time: null }
   );
+}
+
+// Date-aware variant: Wednesday pickup location depends on the week of the
+// month (first Wednesday keeps the Episcopal Church pickup; all other
+// Wednesdays use the UCM pickup like Thursday).
+export function getDeliveryDayScheduleForDate(dateStr: string): DeliveryDaySchedule {
+  const day = getDeliveryDay(dateStr);
+  if (day === "wednesday" && !isFirstWeekdayOfMonth(dateStr, "wednesday")) {
+    return OTHER_WEDNESDAY_SCHEDULE;
+  }
+  return getDeliveryDaySchedule(day);
 }
 
 const CAP_BY_DAY: Record<DeliveryDay, number> = {

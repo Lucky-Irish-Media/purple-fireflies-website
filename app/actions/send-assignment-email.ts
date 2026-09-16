@@ -2,7 +2,7 @@
 
 import { verifySession } from "@/app/lib/dal";
 import { getMealSignupById, getDriverById } from "@/app/lib/db";
-import { getDeliveryDaySchedule } from "@/app/lib/delivery-day";
+import { getDeliveryDayScheduleForDate } from "@/app/lib/delivery-day";
 import { sendEmail } from "@/app/lib/email";
 
 export interface SendAssignmentEmailState {
@@ -39,7 +39,7 @@ export async function sendAssignmentEmail(
     });
 
     const address = `${signup.participant_address1}${signup.participant_address2 ? ", " + signup.participant_address2 : ""}, ${signup.participant_city}, ${signup.participant_state} ${signup.participant_zip_code}`;
-    const schedule = getDeliveryDaySchedule(signup.delivery_day);
+    const schedule = getDeliveryDayScheduleForDate(signup.delivery_date);
     const mealParts: string[] = [];
     if (signup.regular_quantity > 0) mealParts.push(`${signup.regular_quantity} Regular`);
     if (signup.vegan_quantity > 0) mealParts.push(`${signup.vegan_quantity} Vegan/GF`);

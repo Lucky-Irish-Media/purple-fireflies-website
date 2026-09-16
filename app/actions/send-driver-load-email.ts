@@ -3,7 +3,7 @@
 import { verifySession } from "@/app/lib/dal";
 import { getDriverById } from "@/app/lib/db";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { getDeliveryDaySchedule, type DeliveryDay } from "@/app/lib/delivery-day";
+import { getDeliveryDayScheduleForDate } from "@/app/lib/delivery-day";
 import { sendEmail } from "@/app/lib/email";
 
 export interface SendDriverLoadEmailState {
@@ -64,7 +64,7 @@ export async function sendDriverLoadEmail(
       return { success: false, message: "No deliveries found for this driver on that date." };
     }
 
-    const schedule = getDeliveryDaySchedule(deliveryDay as DeliveryDay);
+    const schedule = getDeliveryDayScheduleForDate(deliveryDate);
 
     const formattedDate = new Date(deliveryDate + "T00:00:00").toLocaleDateString("en-US", {
       month: "long",
