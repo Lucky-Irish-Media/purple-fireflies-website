@@ -152,14 +152,6 @@ const faqs = [
   },
 ];
 
-function branchMailto(name: string): string {
-  const subject = encodeURIComponent(`Get Involved - ${name}`);
-  const body = encodeURIComponent(
-    `Hi Purple Fireflies,\n\nI'd like to help with ${name}.\n\nA little about me and what I have to offer:\n\n\nThanks!`
-  );
-  return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-}
-
 export default function Contact() {
   const methods = [
     {
@@ -211,7 +203,8 @@ export default function Contact() {
           <h2 className="text-2xl font-bold text-foreground mb-3">Ways to Help</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-10" style={{ maxWidth: 640 }}>
             Every branch below is real work we are actively doing, not a vague interest area. Read
-            the one that pulls at you, or read all of them.
+            the one that pulls at you, or read all of them. When you are ready, sign up at the
+            bottom of the page.
           </p>
 
           <div className="grid gap-6 sm:grid-cols-2">
@@ -256,20 +249,15 @@ export default function Contact() {
                   <span className="font-semibold">Good fit if</span> {b.fit}
                 </p>
 
-                <div className="mt-auto pt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+                {b.link && (
                   <a
-                    href={branchMailto(b.name)}
-                    className="text-sm font-semibold transition-colors"
+                    href={b.link}
+                    className="mt-auto pt-5 text-sm font-semibold transition-colors"
                     style={{ color: "#7C3AED" }}
                   >
-                    Email us about this →
+                    {b.linkLabel} →
                   </a>
-                  {b.link && (
-                    <a href={b.link} className="text-sm font-medium text-text-secondary transition-colors hover:text-primary">
-                      {b.linkLabel} →
-                    </a>
-                  )}
-                </div>
+                )}
               </div>
             ))}
           </div>
