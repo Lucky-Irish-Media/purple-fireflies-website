@@ -26,11 +26,15 @@ This version has breaking changes - APIs, conventions, and file structure may al
 # Project Tracking Rules
 
 - Document EVERY feature in the Obsidian project tracker at `~/Obsidian/Projects/purple-fireflies-website/` as soon as planning starts - before writing any code
-- Follow the `tracker-*` skill conventions from the streamlist repo (`.opencode/skills/tracker-*`):
-  - Create a feature note in `Features/` (PascalCase filename, e.g. `AdminAnyDayDelivery.md`) with the standard frontmatter (`type: feature`, `area`, `status`, `priority`, `created`, `description`) and the documented structure (Overview, Progress, User Stories, Technical Notes, Acceptance Criteria, Related)
-  - Create related `Tasks/` notes for implementation work and `Decisions/` notes for significant decisions
-  - Update `MOC.md` (bump `updated:` frontmatter and add a "Recent Changes" entry) whenever a feature lands or a major milestone completes
-- Set the feature `status` to `planned`/`in-progress` when starting and `done` when merged to `main`
+- **The note schema is defined by the `tracker-standard` skill** - load it first, then the local `tracker-*` skills in `.opencode/skills/` for this project's deltas rather than re-deriving the conventions:
+  - `tracker-feature` - create/update a feature note in `Features/` (PascalCase filename, e.g. `AdminAnyDayDelivery.md`)
+  - `tracker-task` - create implementation/bug notes in `Tasks/` (capitalized kebab-case)
+  - `tracker-decision` - record ADRs in `Decisions/` (sequential, zero-padded)
+  - `tracker-area` - maintain responsibility notes in `Areas/`
+  - `tracker-moc` - refresh the `MOC.md` dashboard
+  - `tracker-read` - query existing notes
+  - `tracker-research` - document external services and investigations
+- Status is one of `todo`, `in-progress`, `done`, `cancelled` - never `planned` or `on hold`. Set the feature `status` to `todo` when planning starts, `in-progress` when work begins, and `done` when merged to `main`
 - If a feature was built without a tracker note, create the note retroactively as part of completing it
 <!-- END:project-tracking-rules -->
 
