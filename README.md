@@ -20,7 +20,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/events` | Upcoming and past community events |
 | `/news` | Articles about Purple Fireflies in the news |
 | `/donate` | Donations page (Venmo, PayPal, Cash App, Give Butter) |
-| `/contact` | Get Involved page |
+| `/contact` | Get Involved page — 7 volunteer branch cards, signup process, FAQ |
 | `/login` | Sign in (admins and volunteers) |
 | `/admin` | Admin dashboard |
 | `/admin/users` | Admin user management (volunteer approval, password reset, resend invite) |
@@ -35,6 +35,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 
 - **Meal Delivery Signup** — Public form for requesting meal delivery with date slot availability and vegan/GF options; prevents duplicate signups for the same person and date; admins can close any upcoming delivery day early, routing new signups to the waitlist even before the 15-meal cap is reached; admins can apply more than the standard 2 meals per signup (up to 10 per meal type, 20 total) from the admin panel while the public form keeps the 1-2 meal limit; the admin Delivery Days table lists all 7 weekdays for the next 4 weeks so admins can schedule signups and driver volunteers on any day, while the public forms remain limited to Wednesdays and Thursdays (Wednesday and Thursday driver emails include the pickup location — for Wednesdays that is the Episcopal Church on the first Wednesday of the month and the UCM pickup, like Thursday, on all other Wednesdays; emails for non-Wed/Thu days use a generic pickup message since those days have no fixed schedule yet)
 - **Driver Volunteer Signup** — Public form for volunteers to sign up for delivery dates and regions; new volunteers start with driver status **Active** and liability **Not Signed**
+- **Get Involved Branches** — The `/contact` page explains the seven ways to help (general volunteering, training, neighborhood outreach, tech support, financial/resources, communication, projects/youth). Each branch card has a one-line blurb, a task list, a "good fit if" line, and a cross-link to the relevant program page where one exists; there is no per-card signup CTA, all signup happens in the "Get in Touch" section at the bottom of the page. The page also has a "these are not siloed roles" band, a 3-step "what happens after you sign up" strip, and an FAQ (experience, multiple branches, time commitment, minors, wrong branch). Signup still routes through the external Disroot form; static content only, no DB
 - **Volunteer Portal** — `/volunteer` portal where signed-in volunteers view and cancel their signups, update contact info, and see assigned deliveries; accounts are auto-created from the volunteer form with an emailed temporary password and require admin approval
 - **Signup Lookup** — Modal to look up existing signups by email
 - **Driver Reminder Emails** — Admin dashboard action to email drivers their delivery assignments for a selected date and email the coordinator a summary; supports sending the summary email only via a checkbox
