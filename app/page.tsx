@@ -23,6 +23,13 @@ const programs = [
     cta: "Learn more",
   },
   {
+    icon: "🍳",
+    title: "Sunday Meals",
+    desc: "Cook once a month for six months and serve 15 plates to your neighbors.",
+    href: "/programs/sunday-meals",
+    cta: "Sign up",
+  },
+  {
     icon: "🤝",
     title: "Community",
     desc: "Events and resources that connect neighbors and build shared purpose.",

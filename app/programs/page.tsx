@@ -22,6 +22,13 @@ const programs = [
     href: "/programs/springfield-neighbors",
     cta: "Learn more",
   },
+  {
+    icon: "🍳",
+    title: "Sunday Meals",
+    desc: "A meal made by neighbors, for neighbors. Cook once a month for six months and serve 15 individually made plates.",
+    href: "/programs/sunday-meals",
+    cta: "Sign up to cook",
+  },
 ];
 
 export default function ProgramsPage() {
