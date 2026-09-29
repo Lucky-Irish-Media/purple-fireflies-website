@@ -68,6 +68,12 @@ export default function Navbar() {
                     >
                       Springfield Neighbors
                     </Link>
+                    <Link
+                      href="/programs/sunday-meals"
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      Sunday Meals
+                    </Link>
                   </div>
                 </div>
               )}
@@ -141,6 +147,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Programs — Springfield Neighbors
+            </Link>
+            <Link
+              href="/programs/sunday-meals"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Programs — Sunday Meals
             </Link>
             <Link
               href="/news"

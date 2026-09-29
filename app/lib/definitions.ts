@@ -369,3 +369,87 @@ export interface LegalObserverRequest {
   created_at: string;
   updated_at: string;
 }
+
+export const SUNDAY_MEAL_AVAILABILITY_VALUES = [
+  "1st",
+  "2nd",
+  "3rd",
+  "4th",
+  "5th",
+  "any",
+] as const;
+
+export type SundayMealAvailability = (typeof SUNDAY_MEAL_AVAILABILITY_VALUES)[number];
+
+export const SUNDAY_MEAL_AVAILABILITY_OPTIONS: {
+  value: SundayMealAvailability;
+  label: string;
+}[] = [
+  { value: "1st", label: "1st Sunday" },
+  { value: "2nd", label: "2nd Sunday" },
+  { value: "3rd", label: "3rd Sunday" },
+  { value: "4th", label: "4th Sunday" },
+  { value: "5th", label: "5th Sunday" },
+  { value: "any", label: "Any Sunday works" },
+];
+
+export const SundayMealCookSignupSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  availability: z
+    .array(z.enum(SUNDAY_MEAL_AVAILABILITY_VALUES, {
+      message: "Please pick at least one Sunday.",
+    }))
+    .min(1, { message: "Please pick at least one Sunday." }),
+  cooking_details: z.string().optional(),
+  dietary_notes: z.string().optional(),
+  servings: z
+    .number({ message: "Please enter a number." })
+    .int({ message: "Please enter a whole number." })
+    .min(1, { message: "Please enter at least 1." })
+    .max(200, { message: "Please enter 200 or fewer." })
+    .optional(),
+  notes: z.string().optional(),
+});
+
+export type SundayMealCookSignupFormState =
+  | {
+      errors?: {
+        name?: string[];
+        email?: string[];
+        phone?: string[];
+        availability?: string[];
+        cooking_details?: string[];
+        dietary_notes?: string[];
+        servings?: string[];
+        notes?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
+export type SundayMealCookStatus = "active" | "paused" | "finished" | "cancelled";
+
+export const SUNDAY_MEAL_COOK_STATUS_OPTIONS: { value: SundayMealCookStatus; label: string }[] = [
+  { value: "active", label: "Active" },
+  { value: "paused", label: "Paused" },
+  { value: "finished", label: "Finished" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+export interface SundayMealCook {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  availability: string;
+  cooking_details: string | null;
+  dietary_notes: string | null;
+  servings: number | null;
+  notes: string | null;
+  status: SundayMealCookStatus;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}

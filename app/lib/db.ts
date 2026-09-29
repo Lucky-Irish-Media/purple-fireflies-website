@@ -19,6 +19,8 @@ import type {
   LegalObserverSignup,
   LegalObserverRequest,
   LoRequestStatus,
+  SundayMealCook,
+  SundayMealCookStatus,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -1313,5 +1315,66 @@ export async function updateLegalObserverRequest(
     .bind(data.status, data.internal_notes, id)
     .first<LegalObserverRequest>();
   if (!result) throw new Error("Legal observer request not found");
+  return result;
+}
+
+export async function createSundayMealCook(data: {
+  name: string;
+  email: string;
+  phone: string;
+  availability: string[];
+  cookingDetails?: string;
+  dietaryNotes?: string;
+  servings?: number;
+  notes?: string;
+}): Promise<SundayMealCook> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO sunday_meal_cooks (name, email, phone, availability, cooking_details, dietary_notes, servings, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(
+      data.name,
+      data.email,
+      data.phone,
+      JSON.stringify(data.availability),
+      data.cookingDetails || null,
+      data.dietaryNotes || null,
+      data.servings ?? null,
+      data.notes || null
+    )
+    .first<SundayMealCook>();
+  if (!result) throw new Error("Failed to create Sunday Meal cook signup");
+  return result;
+}
+
+export async function getSundayMealCooks(): Promise<SundayMealCook[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM sunday_meal_cooks
+       ORDER BY created_at DESC`
+    )
+    .all<SundayMealCook>();
+  return result.results || [];
+}
+
+export async function updateSundayMealCook(
+  id: number,
+  data: { status: SundayMealCookStatus; internal_notes: string | null }
+): Promise<SundayMealCook> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE sunday_meal_cooks
+       SET status = ?, internal_notes = ?, updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.status, data.internal_notes, id)
+    .first<SundayMealCook>();
+  if (!result) throw new Error("Sunday Meal cook not found");
   return result;
 }
