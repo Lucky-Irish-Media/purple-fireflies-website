@@ -67,6 +67,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the result.
 ### Environment Variables
 
 - `SESSION_SECRET` — Required. Set in `.dev.vars` for local development.
+- `SPRINGFIELD_BOXES_DELIVERED` — Running total of boxes delivered by Springfield Neighbors volunteers, shown in the hero stats strip on `/programs/springfield-neighbors`. Manually maintained — bump it in `wrangler.toml` under `[vars]` (production) and `[env.preview.vars]` (preview). Anything that isn't a non-negative integer renders as `0`.
 
 ## Deployment
 

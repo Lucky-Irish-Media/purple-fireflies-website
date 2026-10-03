@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { getSpringfieldStats } from "@/app/lib/springfield";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Springfield Neighbors | Purple Fireflies",
@@ -66,7 +69,9 @@ const cards = [
   },
 ];
 
-export default function SpringfieldNeighborsPage() {
+export default async function SpringfieldNeighborsPage() {
+  const stats = await getSpringfieldStats();
+
   return (
     <div className="flex flex-col flex-1 font-sans">
       {/* Hero */}
@@ -96,6 +101,16 @@ export default function SpringfieldNeighborsPage() {
               Supporting Haitian families in Springfield who are afraid to leave their homes —
               drop off shelf-stable food and personal care items and volunteers deliver them to Springfield each week.
             </p>
+          </div>
+        </div>
+
+        {/* Stats strip */}
+        <div style={{ background: "rgba(0,0,0,0.25)", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+          <div className="max-w-7xl mx-auto px-4 grid grid-cols-1">
+            <div className="py-5 text-center">
+              <div className="text-2xl font-bold" style={{ color: "#F59E0B" }}>{stats.total_boxes_delivered}</div>
+              <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Total Boxes Delivered</div>
+            </div>
           </div>
         </div>
       </section>

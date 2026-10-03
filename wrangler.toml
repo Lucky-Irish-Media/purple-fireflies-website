@@ -16,9 +16,17 @@ database_id = "295c9661-624c-4964-8d1f-69f6c991a4f0"
 binding = "PURPLE_FIREFLIES_KV"
 id = "c7014b56c6d343e8a223d8a41d034731"
 
+[vars]
+# Running total of boxes delivered by Springfield Neighbors volunteers, shown on
+# /programs/springfield-neighbors. Manually bumped; not a D1 aggregate.
+SPRINGFIELD_BOXES_DELIVERED = "95"
+
 [env.preview]
 name = "purple-fireflies-website-preview"
 workers_dev = true
+
+[env.preview.vars]
+SPRINGFIELD_BOXES_DELIVERED = "95"
 
 [[env.preview.d1_databases]]
 binding = "purple_fireflies_db"
