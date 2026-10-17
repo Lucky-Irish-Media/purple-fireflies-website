@@ -30,7 +30,7 @@ async function getDB(): Promise<D1Database> {
 const MEAL_SIGNUP_SELECT = `ms.id, ms.participant_id, ms.regular_quantity, ms.vegan_quantity, ms.delivery_day, ms.delivery_date, ms.comments, ms.bag_number, ms.status, ms.created_at`;
 const DRIVER_SELECT = `dv.id, dv.participant_id, dv.on_signal, dv.regions, dv.delivery_day, dv.delivery_date, dv.created_at`;
 const PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.address1 as participant_address1, p.address2 as participant_address2, p.city as participant_city, p.state as participant_state, p.zip_code as participant_zip_code, p.contact_method as participant_contact_method, p.internal_notes as participant_internal_notes`;
-const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.bag_number as participant_bag_number, p.driver_liability as participant_driver_liability, p.driver_status as participant_driver_status`;
+const DRIVER_PARTICIPANT_SELECT = `p.name as participant_name, p.email as participant_email, p.phone as participant_phone, p.bag_number as participant_bag_number, p.driver_liability as participant_driver_liability, p.driver_status as participant_driver_status, (SELECT ws.signed_at FROM waiver_signatures ws WHERE ws.participant_id = p.id ORDER BY ws.signed_at DESC LIMIT 1) as waiver_signed_at`;
 const WAITLIST_SELECT = `wl.id, wl.participant_id, wl.delivery_date, wl.regular_quantity, wl.vegan_quantity, wl.comments, wl.status, wl.created_at`;
 
 export async function getParticipantByEmail(email: string): Promise<Participant | null> {
@@ -1314,4 +1314,73 @@ export async function updateLegalObserverRequest(
     .first<LegalObserverRequest>();
   if (!result) throw new Error("Legal observer request not found");
   return result;
+}
+
+export interface WaiverSignature {
+  id: number;
+  participant_id: number;
+  signer_name: string;
+  email: string;
+  signed_at: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  waiver_version: string;
+  driver_license_number: string | null;
+  license_state: string | null;
+  vehicle: string | null;
+  license_plate: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  created_at: string;
+}
+
+export async function createWaiverSignature(data: {
+  participantId: number;
+  signerName: string;
+  email: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  waiverVersion: string;
+  driverLicenseNumber?: string | null;
+  licenseState?: string | null;
+  vehicle?: string | null;
+  licensePlate?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+}): Promise<WaiverSignature> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO waiver_signatures (participant_id, signer_name, email, ip_address, user_agent, waiver_version, driver_license_number, license_state, vehicle, license_plate, emergency_contact_name, emergency_contact_phone)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(
+      data.participantId,
+      data.signerName,
+      data.email,
+      data.ipAddress || null,
+      data.userAgent || null,
+      data.waiverVersion,
+      data.driverLicenseNumber || null,
+      data.licenseState || null,
+      data.vehicle || null,
+      data.licensePlate || null,
+      data.emergencyContactName || null,
+      data.emergencyContactPhone || null
+    )
+    .first<WaiverSignature>();
+  if (!result) {
+    throw new Error("Failed to create waiver signature");
+  }
+  return result;
+}
+
+export async function getWaiverSignatureByParticipantId(participantId: number): Promise<WaiverSignature | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM waiver_signatures WHERE participant_id = ? ORDER BY signed_at DESC LIMIT 1")
+    .bind(participantId)
+    .first<WaiverSignature>();
+  return result || null;
 }

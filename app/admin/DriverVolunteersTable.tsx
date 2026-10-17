@@ -24,6 +24,7 @@ interface GroupedVolunteer {
   participant_email: string;
   participant_phone: string;
   participant_driver_status: "active" | "inactive";
+  participant_waiver_signed_at: string | null;
   days: DriverVolunteerWithParticipant[];
 }
 
@@ -38,6 +39,7 @@ function groupVolunteers(volunteers: DriverVolunteerWithParticipant[]): GroupedV
         participant_email: v.participant_email,
         participant_phone: v.participant_phone,
         participant_driver_status: v.participant_driver_status,
+        participant_waiver_signed_at: v.participant_waiver_signed_at,
         days: [],
       };
       map.set(v.participant_id, group);
@@ -89,6 +91,7 @@ function LiabilityCell({ group, onChanged }: { group: GroupedVolunteer; onChange
   const [isPending, startTransition] = useTransition();
   const currentValue = Boolean(group.days[0]?.participant_driver_liability);
   const [signed, setSigned] = useState(currentValue);
+  const signedAt = group.days[0]?.participant_waiver_signed_at ?? null;
 
   useEffect(() => {
     setSigned(currentValue);
@@ -107,15 +110,20 @@ function LiabilityCell({ group, onChanged }: { group: GroupedVolunteer; onChange
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      disabled={isPending}
-      className="disabled:opacity-50"
-      aria-label={`Toggle liability status`}
-    >
-      {getLiabilityBadge(signed ? 1 : 0)}
-    </button>
+    <div className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={isPending}
+        className="disabled:opacity-50"
+        aria-label={`Toggle liability status`}
+      >
+        {getLiabilityBadge(signed ? 1 : 0)}
+      </button>
+      {signedAt && (
+        <span className="text-xs text-text-secondary">Signed {formatDate(signedAt)}</span>
+      )}
+    </div>
   );
 }
 
