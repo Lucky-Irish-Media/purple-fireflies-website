@@ -1,12 +1,15 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import bcrypt from "bcryptjs";
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
-import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone, getUserByEmail, createUser } from "@/app/lib/db";
+import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone, getUserByEmail, createUser, createWaiverSignature, getWaiverSignatureByParticipantId, updateDriverParticipantStatus } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 import { generateRandomPassword } from "@/app/lib/password";
 import { sendVolunteerAccountEmail } from "@/app/lib/email";
 import { isStandardDeliveryDay } from "@/app/lib/delivery-day";
+import { WAIVER_VERSION } from "@/app/lib/waiver";
 
 function getErrorMessage(): string {
   return "An unexpected error occurred. Please try again.";
@@ -70,6 +73,50 @@ export async function submitDriverVolunteer(
       });
     }
 
+    let hasSigned = participant.driver_liability === 1;
+    if (!hasSigned) {
+      const existingSig = await getWaiverSignatureByParticipantId(participant.id);
+      if (existingSig) {
+        hasSigned = true;
+      }
+    }
+
+    if (!hasSigned) {
+      const signature = data.signature?.trim();
+      if (!signature) {
+        return { errors: { signature: ["Signature is required."] } };
+      }
+      if (data.waiverAcknowledged !== true) {
+        return { errors: { waiverAcknowledged: ["You must acknowledge the waiver terms."] } };
+      }
+      const emergencyPhone = data.emergencyContactPhone?.trim();
+      if (emergencyPhone && emergencyPhone !== "") {
+        const phoneTest = /^(\+1[-\s.]?)?\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}$/;
+        if (!phoneTest.test(emergencyPhone)) {
+          return { errors: { emergencyContactPhone: ["Please enter a valid phone number."] } };
+        }
+      }
+      const hdrs = await headers();
+      const ipAddress = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() || hdrs.get("x-real-ip") || null;
+      const userAgent = hdrs.get("user-agent") || null;
+      await createWaiverSignature({
+        participantId: participant.id,
+        signerName: data.name,
+        email: data.email,
+        ipAddress,
+        userAgent,
+        waiverVersion: WAIVER_VERSION,
+        driverLicenseNumber: data.driverLicenseNumber?.trim() || null,
+        licenseState: data.licenseState?.trim() || null,
+        vehicle: data.vehicle?.trim() || null,
+        licensePlate: data.licensePlate?.trim() || null,
+        emergencyContactName: data.emergencyContactName?.trim() || null,
+        emergencyContactPhone: emergencyPhone || null,
+      });
+      await updateDriverParticipantStatus(participant.id, { driver_liability: 1 });
+      hasSigned = true;
+    }
+
     const existingVolunteers = await getDriverVolunteersByEmailOrPhone(data.email, data.phone);
     const existingDates = new Set(
       existingVolunteers.map((v) => v.delivery_date)
@@ -129,5 +176,29 @@ export async function submitDriverVolunteer(
   } catch (e) {
     console.error("driver volunteer action error:", e);
     return { message: getErrorMessage() };
+  }
+}
+
+export async function checkDriverWaiverStatus(email: string): Promise<{ signed: boolean }> {
+  try {
+    const { allowed } = await checkRateLimit("signup:driver");
+    if (!allowed) {
+      return { signed: false };
+    }
+    const participant = await getParticipantByEmail(email);
+    if (!participant) {
+      return { signed: false };
+    }
+    if (participant.driver_liability === 1) {
+      return { signed: true };
+    }
+    const sig = await getWaiverSignatureByParticipantId(participant.id);
+    if (sig) {
+      return { signed: true };
+    }
+    return { signed: false };
+  } catch (e) {
+    console.error("checkDriverWaiverStatus error:", e);
+    return { signed: false };
   }
 }

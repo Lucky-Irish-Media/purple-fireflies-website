@@ -57,6 +57,14 @@ export const DriverVolunteerSchema = z.object({
   onSignal: z.enum(["yes", "no", "willing"], { message: "Please select an option." }),
   deliveryDates: z.array(z.string()).min(1, { message: "Please select at least one delivery date." }),
   regions: z.array(z.enum(regions)).min(1, { message: "Please select at least one region." }),
+  driverLicenseNumber: z.string().optional(),
+  licenseState: z.string().optional(),
+  vehicle: z.string().optional(),
+  licensePlate: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).optional().or(z.literal("")),
+  signature: z.string().optional(),
+  waiverAcknowledged: z.coerce.boolean().optional(),
 });
 
 export type MealSignupFormState =
@@ -64,7 +72,7 @@ export type MealSignupFormState =
   | undefined;
 
 export type DriverVolunteerFormState =
-  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; onSignal?: string[]; deliveryDates?: string[]; regions?: string[] }; message?: string; selectedDates?: string; accountCreated?: boolean }
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; onSignal?: string[]; deliveryDates?: string[]; regions?: string[]; driverLicenseNumber?: string[]; licenseState?: string[]; vehicle?: string[]; licensePlate?: string[]; emergencyContactName?: string[]; emergencyContactPhone?: string[]; signature?: string[]; waiverAcknowledged?: string[] }; message?: string; selectedDates?: string; accountCreated?: boolean }
   | undefined;
 
 export const VolunteerProfileSchema = z.object({
@@ -189,6 +197,7 @@ export interface DriverVolunteerWithParticipant extends DriverVolunteer {
   participant_bag_number: string | null;
   participant_driver_liability: number;
   participant_driver_status: "active" | "inactive";
+  participant_waiver_signed_at: string | null;
 }
 
 export interface VolunteerDelivery {

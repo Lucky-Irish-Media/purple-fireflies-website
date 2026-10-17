@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { submitDriverVolunteer } from "@/app/actions/driver-volunteer";
+import { submitDriverVolunteer, checkDriverWaiverStatus } from "@/app/actions/driver-volunteer";
 import type { DriverVolunteerFormState } from "@/app/lib/definitions";
+import { WAIVER_TEXT, WAIVER_CERTIFICATION_BULLETS, WAIVER_VERSION, WAIVER_SOURCE_URL } from "@/app/lib/waiver";
 import { LookupModal } from "@/components/LookupModal";
 
 const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"];
@@ -41,8 +42,21 @@ function generateDriverDateOptions() {
 export function DriverVolunteerForm() {
   const [state, formAction, isPending] = useActionState(submitDriverVolunteer, undefined as DriverVolunteerFormState);
   const [showLookup, setShowLookup] = useState(false);
+  const [waiverChecked, setWaiverChecked] = useState(false);
+  const [waiverSigned, setWaiverSigned] = useState(false);
 
   const deliveryDateOptions = useMemo(() => generateDriverDateOptions(), []);
+
+  async function handleEmailBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const email = e.target.value.trim();
+    if (!email || !email.includes("@")) return;
+    setWaiverChecked(false);
+    const result = await checkDriverWaiverStatus(email);
+    setWaiverSigned(result.signed);
+    setWaiverChecked(true);
+  }
+
+  const showWaiver = waiverChecked && !waiverSigned;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -96,6 +110,7 @@ export function DriverVolunteerForm() {
             id="email"
             name="email"
             required
+            onBlur={handleEmailBlur}
             className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
               state?.errors?.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
             }`}
@@ -222,6 +237,159 @@ export function DriverVolunteerForm() {
             </p>
           )}
         </fieldset>
+
+        {showWaiver && (
+          <fieldset className="space-y-4 rounded-lg border border-primary/20 p-6">
+            <legend className="px-2 text-sm font-medium text-foreground">
+              Liability Waiver and Acknowledgment <span className="text-red-500">*</span>
+            </legend>
+
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-primary/10 bg-background p-4">
+              <p className="whitespace-pre-line text-sm text-text-secondary">{WAIVER_TEXT}</p>
+              <p className="mt-2 text-xs text-text-secondary">
+                Version {WAIVER_VERSION} - Source:{" "}
+                <a href={WAIVER_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  signed PDF
+                </a>
+              </p>
+            </div>
+
+            <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
+              {WAIVER_CERTIFICATION_BULLETS.map((bullet) => (
+                <li key={bullet}>{bullet}</li>
+              ))}
+            </ul>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="driverLicenseNumber" className="block text-sm font-medium text-foreground">
+                  Driver&apos;s License Number
+                </label>
+                <input
+                  type="text"
+                  id="driverLicenseNumber"
+                  name="driverLicenseNumber"
+                  className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                    state?.errors?.driverLicenseNumber ? "border-red-500" : "border-input"
+                  }`}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="licenseState" className="block text-sm font-medium text-foreground">
+                  State of Issuance
+                </label>
+                <input
+                  type="text"
+                  id="licenseState"
+                  name="licenseState"
+                  className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                    state?.errors?.licenseState ? "border-red-500" : "border-input"
+                  }`}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="vehicle" className="block text-sm font-medium text-foreground">
+                  Vehicle Make and Model
+                </label>
+                <input
+                  type="text"
+                  id="vehicle"
+                  name="vehicle"
+                  placeholder="e.g. 2019 Honda Civic"
+                  className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                    state?.errors?.vehicle ? "border-red-500" : "border-input"
+                  }`}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="licensePlate" className="block text-sm font-medium text-foreground">
+                  License Plate Number
+                </label>
+                <input
+                  type="text"
+                  id="licensePlate"
+                  name="licensePlate"
+                  className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                    state?.errors?.licensePlate ? "border-red-500" : "border-input"
+                  }`}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="emergencyContactName" className="block text-sm font-medium text-foreground">
+                  Emergency Contact Name
+                </label>
+                <input
+                  type="text"
+                  id="emergencyContactName"
+                  name="emergencyContactName"
+                  className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                    state?.errors?.emergencyContactName ? "border-red-500" : "border-input"
+                  }`}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="emergencyContactPhone" className="block text-sm font-medium text-foreground">
+                  Emergency Contact Phone
+                </label>
+                <input
+                  type="tel"
+                  id="emergencyContactPhone"
+                  name="emergencyContactPhone"
+                  placeholder="(555) 123-4567"
+                  className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                    state?.errors?.emergencyContactPhone ? "border-red-500" : "border-input"
+                  }`}
+                />
+                {state?.errors?.emergencyContactPhone && (
+                  <p className="text-sm text-red-500" role="alert">
+                    {state.errors.emergencyContactPhone[0]}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="signature" className="block text-sm font-medium text-foreground">
+                Full Name as Signature <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="signature"
+                name="signature"
+                required
+                placeholder="Type your full legal name"
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary ${
+                  state?.errors?.signature ? "border-red-500" : "border-input"
+                }`}
+                aria-invalid={state?.errors?.signature ? "true" : "false"}
+              />
+              {state?.errors?.signature && (
+                <p className="text-sm text-red-500" role="alert">
+                  {state.errors.signature[0]}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="waiverAcknowledged"
+                  defaultChecked={false}
+                  className="mt-1 h-4 w-4 text-primary border-input focus:ring-primary rounded"
+                />
+                <span className="text-sm text-foreground">
+                  I have read and agree to the Liability Waiver and Acknowledgment above. <span className="text-red-500">*</span>
+                </span>
+              </label>
+              {state?.errors?.waiverAcknowledged && (
+                <p className="text-sm text-red-500" role="alert">
+                  {state.errors.waiverAcknowledged[0]}
+                </p>
+              )}
+            </div>
+          </fieldset>
+        )}
 
         {state?.message && state.message !== "success" && (
           <div className="rounded-lg bg-red-50 p-4 text-red-600" role="alert">
