@@ -38,7 +38,8 @@ export default function Navbar() {
               onMouseEnter={() => setIsProgramsOpen(true)}
               onMouseLeave={() => setIsProgramsOpen(false)}
             >
-              <button
+              <Link
+                href="/programs"
                 className={`text-base font-semibold transition-colors duration-200 border-b-2 pb-0.5 ${
                   pathname.startsWith("/programs")
                     ? "text-white border-accent"
@@ -46,25 +47,35 @@ export default function Navbar() {
                 }`}
               >
                 Programs
-              </button>
+              </Link>
               {(isProgramsOpen) && (
                 <div className="absolute top-full left-0 z-50 pt-2">
                   <div className="w-48 rounded-lg border border-white/10 bg-primary-dark/95 backdrop-blur-sm py-2 shadow-xl transition-opacity duration-200">
                     <Link
+                      href="/programs"
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                      onClick={() => setIsProgramsOpen(false)}
+                    >
+                      All Programs
+                    </Link>
+                    <Link
                       href="/programs/meal-delivery"
                       className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                      onClick={() => setIsProgramsOpen(false)}
                     >
                       Meal Delivery
                     </Link>
                     <Link
                       href="/programs/legal-observers"
                       className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                      onClick={() => setIsProgramsOpen(false)}
                     >
                       Legal Observers
                     </Link>
                     <Link
                       href="/programs/springfield-neighbors"
                       className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                      onClick={() => setIsProgramsOpen(false)}
                     >
                       Springfield Neighbors
                     </Link>
@@ -123,6 +134,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Home
+            </Link>
+            <Link
+              href="/programs"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Programs — All Programs
             </Link>
             <Link
               href="/programs/meal-delivery"

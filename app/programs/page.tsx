@@ -26,43 +26,65 @@ const programs = [
 
 export default function ProgramsPage() {
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="mb-6 text-4xl font-bold">Our Programs</h1>
-      <p className="mb-8 text-lg text-text-secondary leading-relaxed">
-        We believe that strong communities are built when every neighbor has what they
-        need to thrive. Our programs are designed to bridge gaps, connect resources,
-        and create lasting change — one relationship at a time.
-      </p>
-      <div className="grid gap-6 md:grid-cols-2">
-        {programs.map((p, i) => (
-          <div
-            key={p.title}
-            className="rounded-xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-            style={{
-              background: "#fff",
-              border: "1px solid rgba(124,58,237,0.12)",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-              animationDelay: `${i * 0.15}s`,
-            }}
-          >
-            <div
-              className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
-              style={{ background: "rgba(124,58,237,0.08)" }}
+    <div className="flex flex-col flex-1 font-sans">
+      {/* Hero */}
+      <section
+        style={{ background: "linear-gradient(160deg, #3b0764 0%, #5B21B6 45%, #7C3AED 100%)" }}
+      >
+        <div className="px-4 pt-16 pb-12 text-center">
+          <div className="max-w-2xl mx-auto">
+            <span
+              className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white mb-5"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
             >
-              {p.icon}
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">{p.title}</h3>
-            <p className="text-text-secondary leading-relaxed flex-1 text-sm">{p.desc}</p>
-            <Link
-              href={p.href}
-              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-colors"
-              style={{ color: "#7C3AED" }}
-            >
-              {p.cta} →
-            </Link>
+              Our Work
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
+              Our Programs
+            </h1>
+            <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 560, margin: "0 auto" }}>
+              We believe that strong communities are built when every neighbor has what they
+              need to thrive. Our programs are designed to bridge gaps, connect resources,
+              and create lasting change — one relationship at a time.
+            </p>
           </div>
-        ))}
-      </div>
-    </main>
+        </div>
+      </section>
+
+      {/* Programs */}
+      <section className="px-4 py-16 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid gap-6 sm:grid-cols-2">
+            {programs.map((p) => (
+              <div
+                key={p.title}
+                className="rounded-xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                style={{
+                  background: "#fff",
+                  border: "1px solid rgba(124,58,237,0.12)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                }}
+              >
+                <div
+                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
+                  style={{ background: "rgba(124,58,237,0.08)" }}
+                >
+                  {p.icon}
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{p.title}</h3>
+                <p className="text-text-secondary leading-relaxed flex-1 text-sm">{p.desc}</p>
+                <Link
+                  href={p.href}
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:opacity-80"
+                  style={{ color: "#7C3AED" }}
+                >
+                  {p.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
