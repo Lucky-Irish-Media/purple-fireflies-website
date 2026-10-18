@@ -78,6 +78,9 @@ export default function Navbar() {
             <Link href="/events" className={linkClass("/events")}>
               Events
             </Link>
+            <Link href="/community" className={linkClass("/community")}>
+              Community
+            </Link>
             <Link href="/donate" className={linkClass("/donate")}>
               Donate
             </Link>
@@ -155,6 +158,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Events
+            </Link>
+            <Link
+              href="/community"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Community
             </Link>
             <Link
               href="/donate"

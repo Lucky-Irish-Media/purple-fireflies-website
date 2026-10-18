@@ -1,3 +1,14 @@
+import Link from "next/link";
+
+const footerLinks = [
+  { href: "/programs", label: "Programs" },
+  { href: "/news", label: "News" },
+  { href: "/events", label: "Events" },
+  { href: "/community", label: "Community" },
+  { href: "/donate", label: "Donate" },
+  { href: "/contact", label: "Get Involved" },
+];
+
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-primary-dark to-primary text-white py-6 px-4">
@@ -6,6 +17,17 @@ export default function Footer() {
           <p className="font-semibold">Purple Fireflies</p>
           <p className="text-white/70 text-xs">Serving our community</p>
         </div>
+        <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          {footerLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
         <div className="flex items-center gap-4">
           <a href="mailto:info@purplefireflies.org" className="text-sm text-white/80 hover:text-white transition-colors">
             info@purplefireflies.org
