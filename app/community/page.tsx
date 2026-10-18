@@ -12,7 +12,7 @@ const partners = [
     name: "Athens County Food Info",
     monogram: "AC",
     blurb:
-      "A one-stop directory of free food programs across Athens County, Ohio: pantry hours and locations, free meals, food events, delivery and rides for people without a car, and help applying for programs. Built and kept current by Athens County residents who visit the sites themselves.",
+      "A one-stop directory of free food programs across Athens County, Ohio: pantry hours and locations, free meals, food events, delivery and rides for people without a car, and help applying for programs. Built and kept current by Athens County residents who visit the locations themselves.",
     href: "https://athensfood.info",
   },
 ];
