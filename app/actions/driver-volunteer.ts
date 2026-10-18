@@ -181,10 +181,12 @@ export async function submitDriverVolunteer(
 
 export async function checkDriverWaiverStatus(email: string): Promise<{ signed: boolean }> {
   try {
-    const { allowed } = await checkRateLimit("signup:driver");
-    if (!allowed) {
-      return { signed: false };
-    }
+    // Deliberately not rate-limited. This is a read-only lookup that decides whether the
+    // waiver section is shown, so a throttled "not signed" answer would ask a Signed driver
+    // to sign again. It also must not share the `signup:driver` budget: checks on email blur
+    // used to consume the same 5-attempts-per-15-minutes global counter as submissions, so a
+    // few visitors could both show the waiver to Signed drivers and block signups entirely.
+    // The mutation path (submitDriverVolunteer) stays rate-limited.
     const participant = await getParticipantByEmail(email);
     if (!participant) {
       return { signed: false };
