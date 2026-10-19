@@ -28,6 +28,10 @@ export async function submitDriverVolunteer(
     const deliveryDates = formData.getAll("deliveryDates") as string[];
     const regions = formData.getAll("regions") as string[];
 
+    // The waiver fields only render when the driver still needs to sign, so a
+    // missing field comes back as null from formData.get(). Map null -> undefined
+    // so the schema's .optional() (and .or(z.literal("")) for the phone) passes
+    // for already-signed drivers re-submitting without the waiver section.
     const validatedFields = DriverVolunteerSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
@@ -35,6 +39,14 @@ export async function submitDriverVolunteer(
       onSignal: formData.get("onSignal"),
       deliveryDates,
       regions,
+      driverLicenseNumber: formData.get("driverLicenseNumber") ?? undefined,
+      licenseState: formData.get("licenseState") ?? undefined,
+      vehicle: formData.get("vehicle") ?? undefined,
+      licensePlate: formData.get("licensePlate") ?? undefined,
+      emergencyContactName: formData.get("emergencyContactName") ?? undefined,
+      emergencyContactPhone: formData.get("emergencyContactPhone") ?? undefined,
+      signature: formData.get("signature") ?? undefined,
+      waiverAcknowledged: formData.get("waiverAcknowledged") ?? undefined,
     });
 
     if (!validatedFields.success) {
