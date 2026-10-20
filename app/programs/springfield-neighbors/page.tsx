@@ -15,6 +15,11 @@ const dropOffSpots = [
     address: "1006-C E. State Street, Athens",
     note: "Mention your donation is for Springfield Neighbors when you drop it off.",
   },
+  {
+    name: "United Campus Ministries",
+    address: "18 North College Street, Athens",
+    note: "Monday - Thursday, 10 am - 4 pm",
+  },
 ];
 
 const items = [
@@ -155,7 +160,7 @@ export default async function SpringfieldNeighborsPage() {
           {/* Drop-off locations */}
           <h2 className="text-2xl font-bold text-foreground mb-3">Where to Drop Off</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-6">
-            We&apos;re currently collecting at the spot below. Check back — we&apos;re adding
+            We&apos;re currently collecting at the spots below. Check back — we&apos;re adding
             more drop-off locations all the time.
           </p>
           <div className="grid gap-4 sm:grid-cols-2 mb-12">
