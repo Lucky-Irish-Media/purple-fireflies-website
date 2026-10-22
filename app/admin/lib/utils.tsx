@@ -20,8 +20,12 @@ export function todayLocal(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 export function deliveryDateFilterFn(row: any, columnId: string, value: string): boolean {
+  if (!value) return true;
   const date = row.getValue(columnId);
+  if (ISO_DATE_RE.test(value)) return date === value;
   const today = todayLocal();
   switch (value) {
     case "future":
@@ -233,23 +237,49 @@ export function getRequestStatusBadge(status: string) {
 }
 
 export function DeliveryDateFilter({ column }: { column: any }) {
-  const value = column.getFilterValue() as string | undefined;
+  const value = (column.getFilterValue() as string | undefined) ?? "";
+  const exactDate = ISO_DATE_RE.test(value) ? value : "";
   return (
-    <select
-      value={value || ""}
-      onChange={(e) => {
-        e.stopPropagation();
-        column.setFilterValue(e.target.value || undefined);
-      }}
-      className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-    >
-      <option value="">All</option>
-      <option value="today">Today</option>
-      <option value="thisWeek">This Week</option>
-      <option value="nextWeek">Next Week</option>
-      <option value="future">Future Dates Only</option>
-      <option value="past">Past Dates Only</option>
-    </select>
+    <div className="w-full space-y-1">
+      <input
+        type="date"
+        aria-label="Exact delivery date"
+        value={exactDate}
+        onChange={(e) => {
+          e.stopPropagation();
+          column.setFilterValue(e.target.value || undefined);
+        }}
+        className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+      />
+      <select
+        aria-label="Delivery date preset"
+        value={exactDate ? "" : value}
+        onChange={(e) => {
+          e.stopPropagation();
+          column.setFilterValue(e.target.value || undefined);
+        }}
+        className="w-full rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        <option value="">All dates</option>
+        <option value="today">Today</option>
+        <option value="thisWeek">This Week</option>
+        <option value="nextWeek">Next Week</option>
+        <option value="future">Future Dates Only</option>
+        <option value="past">Past Dates Only</option>
+      </select>
+      {value ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            column.setFilterValue(undefined);
+          }}
+          className="text-xs text-red-500 hover:text-red-700"
+        >
+          Clear delivery filter
+        </button>
+      ) : null}
+    </div>
   );
 }
 
