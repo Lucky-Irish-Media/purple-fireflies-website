@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Community | Purple Fireflies",
   description:
-    "Meet the community groups Purple Fireflies works alongside in Athens County, Ohio - including Athens County Food Info, a directory of free food programs, pantries, meals, and rides.",
+    "Meet the community groups Purple Fireflies works alongside in Athens County, Ohio - including Athens County Food Info, a directory of free food programs, and Love Light Movement, a volunteer group serving free meals across Athens and Meigs counties.",
 };
 
 // Add a partner by appending one object: name, monogram, blurb, href.
@@ -14,6 +14,13 @@ const partners = [
     blurb:
       "A one-stop directory of free food programs across Athens County, Ohio: pantry hours and locations, free meals, food events, delivery and rides for people without a car, and help applying for programs. Built and kept current by Athens County residents who visit the locations themselves.",
     href: "https://athensfood.info",
+  },
+  {
+    name: "Love Light Movement",
+    monogram: "LL",
+    blurb:
+      "A 100% volunteer-run 501(c)(3) bridging the gap between food waste and food insecurity across Athens and Meigs counties, Ohio. They serve 400+ meals a week with free take-home meals in The Plains and delivery to Athens, The Plains, and Chauncey, all run entirely on donations with no paid staff or administrative fees.",
+    href: "https://lovelightrecovery.com/",
   },
 ];
 
