@@ -19,6 +19,12 @@ import type {
   LegalObserverSignup,
   LegalObserverRequest,
   LoRequestStatus,
+  Animal,
+  AnimalWithPhotos,
+  AnimalPhoto,
+  AnimalExpense,
+  AnimalSponsorship,
+  AnimalInput,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -1383,4 +1389,259 @@ export async function getWaiverSignatureByParticipantId(participantId: number): 
     .bind(participantId)
     .first<WaiverSignature>();
   return result || null;
+}
+
+// ---------------------------------------------------------------------------
+// Community Pet Fund
+//
+// These functions are deliberately thin: they read and write rows, nothing else.
+// The publish gate (owner consent + Givebutter campaign) and the rule that donor
+// PII never reaches a public page live in the server actions and pages that call
+// them. Animal reads never join `animal_sponsorships`, so no animal object can
+// carry `donor_email`.
+// ---------------------------------------------------------------------------
+
+async function attachPhotos(animals: Animal[]): Promise<AnimalWithPhotos[]> {
+  if (animals.length === 0) return [];
+  const db = await getDB();
+  const placeholders = animals.map(() => "?").join(", ");
+  const result = await db
+    .prepare(
+      `SELECT * FROM animal_photos
+       WHERE animal_id IN (${placeholders})
+       ORDER BY animal_id ASC, sort_order ASC, id ASC`
+    )
+    .bind(...animals.map((animal) => animal.id))
+    .all<AnimalPhoto>();
+
+  const photosByAnimal = new Map<number, AnimalPhoto[]>();
+  for (const photo of result.results || []) {
+    const list = photosByAnimal.get(photo.animal_id) ?? [];
+    list.push(photo);
+    photosByAnimal.set(photo.animal_id, list);
+  }
+
+  return animals.map((animal) => ({ ...animal, photos: photosByAnimal.get(animal.id) ?? [] }));
+}
+
+export async function getPublishedAnimals(): Promise<AnimalWithPhotos[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM animals WHERE is_published = 1 ORDER BY sort_order ASC, name ASC")
+    .all<Animal>();
+  return attachPhotos(result.results || []);
+}
+
+export async function getAnimalBySlug(slug: string): Promise<AnimalWithPhotos | null> {
+  const db = await getDB();
+  const animal = await db
+    .prepare("SELECT * FROM animals WHERE slug = ?")
+    .bind(slug)
+    .first<Animal>();
+  if (!animal) return null;
+  const [withPhotos] = await attachPhotos([animal]);
+  return withPhotos ?? null;
+}
+
+export async function getAnimalById(id: number): Promise<AnimalWithPhotos | null> {
+  const db = await getDB();
+  const animal = await db
+    .prepare("SELECT * FROM animals WHERE id = ?")
+    .bind(id)
+    .first<Animal>();
+  if (!animal) return null;
+  const [withPhotos] = await attachPhotos([animal]);
+  return withPhotos ?? null;
+}
+
+export async function getAnimalExpenses(animalId: number): Promise<AnimalExpense[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM animal_expenses
+       WHERE animal_id = ?
+       ORDER BY COALESCE(spent_on, created_at) DESC, id DESC`
+    )
+    .bind(animalId)
+    .all<AnimalExpense>();
+  return result.results || [];
+}
+
+/**
+ * Admin-only: these rows carry donor names and email addresses. Never call this
+ * from a public page or pass its result into one.
+ */
+export async function getSponsorships(animalId: number): Promise<AnimalSponsorship[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM animal_sponsorships
+       WHERE animal_id = ?
+       ORDER BY COALESCE(occurred_at, created_at) DESC, id DESC`
+    )
+    .bind(animalId)
+    .all<AnimalSponsorship>();
+  return result.results || [];
+}
+
+export async function createAnimal(data: AnimalInput): Promise<Animal> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO animals (slug, name, species, breed, age_text, sex, tagline, bio, story, needs_json, goal_cents, gb_campaign_code, gb_campaign_url, status, is_published, owner_consent_at, owner_consent_note, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(
+      data.slug,
+      data.name,
+      data.species,
+      data.breed || null,
+      data.age_text || null,
+      data.sex || null,
+      data.tagline || null,
+      data.bio,
+      data.story || null,
+      data.needs_json || null,
+      data.goal_cents ?? 0,
+      data.gb_campaign_code || null,
+      data.gb_campaign_url || null,
+      data.status || "draft",
+      data.is_published ? 1 : 0,
+      data.owner_consent_at || null,
+      data.owner_consent_note || null,
+      data.sort_order ?? 0
+    )
+    .first<Animal>();
+  if (!result) {
+    throw new Error("Failed to create animal");
+  }
+  return result;
+}
+
+export async function updateAnimal(id: number, data: AnimalInput): Promise<Animal> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE animals
+       SET slug = ?, name = ?, species = ?, breed = ?, age_text = ?, sex = ?, tagline = ?, bio = ?, story = ?, needs_json = ?, goal_cents = ?, gb_campaign_code = ?, gb_campaign_url = ?, status = ?, is_published = ?, owner_consent_at = ?, owner_consent_note = ?, sort_order = ?, updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(
+      data.slug,
+      data.name,
+      data.species,
+      data.breed || null,
+      data.age_text || null,
+      data.sex || null,
+      data.tagline || null,
+      data.bio,
+      data.story || null,
+      data.needs_json || null,
+      data.goal_cents ?? 0,
+      data.gb_campaign_code || null,
+      data.gb_campaign_url || null,
+      data.status || "draft",
+      data.is_published ? 1 : 0,
+      data.owner_consent_at || null,
+      data.owner_consent_note || null,
+      data.sort_order ?? 0,
+      id
+    )
+    .first<Animal>();
+  if (!result) {
+    throw new Error("Animal not found");
+  }
+  return result;
+}
+
+/**
+ * Photos and expenses cascade with the animal. Sponsorship rows deliberately do
+ * not, so D1 rejects the delete once a pet has donor transactions - that is the
+ * intended behavior, not a bug: close the pet instead of erasing its money.
+ */
+export async function deleteAnimal(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM animals WHERE id = ?").bind(id).run();
+}
+
+export async function addAnimalPhoto(data: {
+  animalId: number;
+  photoKey: string;
+  alt?: string | null;
+  sortOrder?: number;
+}): Promise<AnimalPhoto> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO animal_photos (animal_id, photo_key, alt, sort_order)
+       VALUES (?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.animalId, data.photoKey, data.alt || null, data.sortOrder ?? 0)
+    .first<AnimalPhoto>();
+  if (!result) {
+    throw new Error("Failed to add animal photo");
+  }
+  return result;
+}
+
+/**
+ * Returns the deleted row so the caller can remove the matching R2 object. R2
+ * deletion is the action's job; this layer only knows about D1.
+ */
+export async function deleteAnimalPhoto(id: number): Promise<AnimalPhoto | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("DELETE FROM animal_photos WHERE id = ? RETURNING *")
+    .bind(id)
+    .first<AnimalPhoto>();
+  return result || null;
+}
+
+export async function addAnimalExpense(data: {
+  animalId: number;
+  label: string;
+  amountCents: number;
+  vendor?: string | null;
+  spentOn?: string | null;
+}): Promise<AnimalExpense> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO animal_expenses (animal_id, label, amount_cents, vendor, spent_on)
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.animalId, data.label, data.amountCents, data.vendor || null, data.spentOn || null)
+    .first<AnimalExpense>();
+  if (!result) {
+    throw new Error("Failed to add animal expense");
+  }
+  return result;
+}
+
+export async function deleteAnimalExpense(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM animal_expenses WHERE id = ?").bind(id).run();
+}
+
+/**
+ * Writes the cached totals the public pages read. Kept separate from
+ * `updateAnimal()` so a Givebutter sync can never overwrite admin-entered copy.
+ */
+export async function updateGivebutterTotals(
+  id: number,
+  data: { raisedCents: number; supporters: number; syncedAt?: string | null }
+): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `UPDATE animals
+       SET gb_raised_cents = ?, gb_supporters = ?, gb_synced_at = COALESCE(?, datetime('now')), updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(data.raisedCents, data.supporters, data.syncedAt || null, id)
+    .run();
 }

@@ -252,6 +252,63 @@ for (const date of fullDates) {
 
 const passwordHash = await bcrypt.hash("Admin123!", 12);
 
+// Community Pet Fund fixtures. Obviously fake by design: these exist so the
+// public and admin pages can be built and reviewed before real animals and
+// signed owner consent forms exist. No donor rows are seeded - sponsorships
+// carry real people's names and email addresses, and preview totals are written
+// through `updateGivebutterTotals()` / the webhook instead.
+//
+// This script is the preview seed only and must never be pointed at production.
+const sampleAnimals = [
+  {
+    slug: "test-pet",
+    name: "Test Pet",
+    species: "Dog",
+    breed: "Test Breed",
+    age_text: "Test age",
+    sex: "Test sex",
+    tagline: "Preview fixture - not a real pet",
+    bio: "Placeholder bio for building the community pet pages. This animal does not exist.",
+    story: "Placeholder story so the detail page has a second section to render.",
+    needs: [
+      { label: "Test vet exam", cost_cents: 15000, cadence: "one_time" },
+      { label: "Test monthly food", cost_cents: 4000, cadence: "monthly" },
+    ],
+    goal_cents: 60000,
+    gb_campaign_code: "TESTCAMPAIGN1",
+    gb_campaign_url: "https://givebutter.com/test-pet",
+    gb_raised_cents: 12500,
+    gb_supporters: 3,
+    status: "accepting",
+    is_published: 1,
+    owner_consent_at: "2026-10-24",
+    owner_consent_note: "Fake consent recorded for preview only",
+    sort_order: 1,
+  },
+  {
+    slug: "test-pet-two",
+    name: "Test Pet Two",
+    species: "Cat",
+    breed: null,
+    age_text: "Test age",
+    sex: "Test sex",
+    tagline: "Unpublished preview fixture",
+    bio: "Placeholder bio for a draft animal. This animal does not exist either.",
+    story: null,
+    needs: [{ label: "Test dental cleaning", cost_cents: 30000, cadence: "one_time" }],
+    goal_cents: 30000,
+    gb_campaign_code: null,
+    gb_campaign_url: null,
+    gb_raised_cents: 0,
+    gb_supporters: 0,
+    status: "draft",
+    is_published: 0,
+    owner_consent_at: null,
+    owner_consent_note: null,
+    sort_order: 2,
+  },
+];
+
 const lines = [];
 
 lines.push(`INSERT INTO users (email, name, password_hash, role, created_at) VALUES ('admin@purplefireflies.org', 'Admin', ${esc(passwordHash)}, 'admin', datetime('now'));`);
@@ -281,6 +338,12 @@ for (const w of waitlistEntries) {
   lines.push(`INSERT INTO waitlist (participant_id, delivery_date, regular_quantity, vegan_quantity, status, created_at) VALUES (${w.participant_index + 1}, ${esc(w.delivery_date)}, ${w.regular_quantity}, ${w.vegan_quantity}, ${esc(w.status)}, datetime('now'));`);
 }
 
+for (const a of sampleAnimals) {
+  lines.push(`INSERT INTO animals (slug, name, species, breed, age_text, sex, tagline, bio, story, needs_json, goal_cents, gb_campaign_code, gb_campaign_url, gb_raised_cents, gb_supporters, gb_synced_at, status, is_published, owner_consent_at, owner_consent_note, sort_order, created_at, updated_at) VALUES (${esc(a.slug)}, ${esc(a.name)}, ${esc(a.species)}, ${esc(a.breed)}, ${esc(a.age_text)}, ${esc(a.sex)}, ${esc(a.tagline)}, ${esc(a.bio)}, ${esc(a.story)}, ${esc(JSON.stringify(a.needs))}, ${a.goal_cents}, ${esc(a.gb_campaign_code)}, ${esc(a.gb_campaign_url)}, ${a.gb_raised_cents}, ${a.gb_supporters}, datetime('now'), ${esc(a.status)}, ${a.is_published}, ${esc(a.owner_consent_at)}, ${esc(a.owner_consent_note)}, ${a.sort_order}, datetime('now'), datetime('now'));`);
+}
+
+lines.push(`INSERT INTO animal_expenses (animal_id, label, amount_cents, vendor, spent_on, created_at) VALUES ((SELECT id FROM animals WHERE slug = 'test-pet'), 'Test vet visit', 7500, 'Test Vet Clinic', '2026-10-20', datetime('now'));`);
+
 const sql = lines.join("\n");
 fs.writeFileSync("/tmp/seed_preview.sql", sql, "utf-8");
 console.log(`Seed SQL written to /tmp/seed_preview.sql`);
@@ -293,3 +356,5 @@ console.log(`  Driver Volunteers: ${driverVolunteers.length}`);
 console.log(`  Delivery Assignments: ${assignments.length}`);
 console.log(`  Reminder Logs: ${reminderLogs.length}`);
 console.log(`  Waitlist Entries: ${waitlistEntries.length}`);
+console.log(`  Animals: ${sampleAnimals.length} (preview fixtures, no donor rows)`);
+console.log(`  Animal Expenses: 1 (preview fixture)`);
