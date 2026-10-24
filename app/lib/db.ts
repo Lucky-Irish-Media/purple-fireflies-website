@@ -1454,6 +1454,33 @@ export async function getAnimalById(id: number): Promise<AnimalWithPhotos | null
   return withPhotos ?? null;
 }
 
+/**
+ * Admin-only: unlike `getPublishedAnimals()`, this returns drafts and closed
+ * pets too, so the Animals tab can show the whole roster.
+ */
+export async function getAllAnimals(): Promise<AnimalWithPhotos[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM animals ORDER BY sort_order ASC, name ASC")
+    .all<Animal>();
+  return attachPhotos(result.results || []);
+}
+
+/**
+ * Admin-only: the Animals tab shows raised versus spent per pet, so it needs
+ * every expense in one read rather than one query per animal.
+ */
+export async function getAllAnimalExpenses(): Promise<AnimalExpense[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM animal_expenses
+       ORDER BY COALESCE(spent_on, created_at) DESC, id DESC`
+    )
+    .all<AnimalExpense>();
+  return result.results || [];
+}
+
 export async function getAnimalExpenses(animalId: number): Promise<AnimalExpense[]> {
   const db = await getDB();
   const result = await db
