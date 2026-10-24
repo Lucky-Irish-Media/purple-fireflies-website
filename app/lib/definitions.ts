@@ -378,3 +378,196 @@ export interface LegalObserverRequest {
   created_at: string;
   updated_at: string;
 }
+
+export const ANIMAL_STATUS_VALUES = ["draft", "accepting", "funded", "closed"] as const;
+
+export type AnimalStatus = (typeof ANIMAL_STATUS_VALUES)[number];
+
+export const ANIMAL_STATUS_OPTIONS: { value: AnimalStatus; label: string }[] = [
+  { value: "draft", label: "Draft" },
+  { value: "accepting", label: "Accepting sponsors" },
+  { value: "funded", label: "Funded" },
+  { value: "closed", label: "Closed" },
+];
+
+export const SPONSORSHIP_STATUS_VALUES = ["succeeded", "refunded", "failed"] as const;
+
+export type SponsorshipStatus = (typeof SPONSORSHIP_STATUS_VALUES)[number];
+
+export const NEED_CADENCE_OPTIONS: { value: string; label: string }[] = [
+  { value: "one_time", label: "One-time" },
+  { value: "monthly", label: "Monthly" },
+];
+
+/**
+ * A single line on a pet's needs list, stored in `animals.needs_json`.
+ * `cost_cents` is what that line actually costs, so the page can show real
+ * numbers instead of a round goal. `cadence` stays a free string because an
+ * admin may type "weekly" or "as needed" and a closed enum would silently
+ * drop the whole need.
+ */
+export const AnimalNeedSchema = z.object({
+  label: z.string().min(1, { message: "Label is required." }).trim(),
+  cost_cents: z.coerce.number().int().nonnegative({ message: "Cost cannot be negative." }),
+  cadence: z.string().min(1).trim().default("one_time"),
+});
+
+export type AnimalNeed = z.infer<typeof AnimalNeedSchema>;
+
+export const AnimalNeedListSchema = z.array(AnimalNeedSchema);
+
+/**
+ * `needs_json` is free text written by an admin, so a bad value must not throw
+ * on a public page. Null, invalid JSON, or a shape that does not match all
+ * degrade to an empty list.
+ */
+export function parseAnimalNeeds(raw: string | null | undefined): AnimalNeed[] {
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  const result = AnimalNeedListSchema.safeParse(parsed);
+  return result.success ? result.data : [];
+}
+
+const booleanField = z
+  .union([z.boolean(), z.literal("on"), z.literal("true"), z.literal("false"), z.literal("")])
+  .transform((value) => value === true || value === "on" || value === "true");
+
+export const AnimalSchema = z.object({
+  slug: z
+    .string()
+    .min(1, { message: "Slug is required." })
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: "Use lowercase letters, numbers, and hyphens." })
+    .trim(),
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  species: z.string().min(1, { message: "Species is required." }).trim(),
+  breed: z.string().optional(),
+  age_text: z.string().optional(),
+  sex: z.string().optional(),
+  tagline: z.string().optional(),
+  bio: z.string().min(1, { message: "Bio is required." }).trim(),
+  story: z.string().optional(),
+  needs_json: z.string().optional(),
+  goal_cents: z.coerce.number().int().min(0).default(0),
+  gb_campaign_code: z.string().optional(),
+  gb_campaign_url: z.union([z.string().url({ message: "Please enter a valid URL." }), z.literal("")]).optional(),
+  status: z.enum(ANIMAL_STATUS_VALUES).default("draft"),
+  is_published: booleanField.default(false),
+  owner_consent_at: z.string().optional(),
+  owner_consent_note: z.string().optional(),
+  sort_order: z.coerce.number().int().default(0),
+});
+
+export type AnimalFormData = z.infer<typeof AnimalSchema>;
+
+export const AnimalExpenseSchema = z.object({
+  label: z.string().min(1, { message: "Description is required." }).trim(),
+  amount_cents: z.coerce.number().int().positive({ message: "Amount must be greater than zero." }),
+  vendor: z.string().optional(),
+  spent_on: z.string().optional(),
+});
+
+export const AnimalPhotoSchema = z.object({
+  photo_key: z.string().min(1, { message: "Photo key is required." }).trim(),
+  alt: z.string().optional(),
+  sort_order: z.coerce.number().int().default(0),
+});
+
+export interface Animal {
+  id: number;
+  slug: string;
+  name: string;
+  species: string;
+  breed: string | null;
+  age_text: string | null;
+  sex: string | null;
+  tagline: string | null;
+  bio: string;
+  story: string | null;
+  needs_json: string | null;
+  goal_cents: number;
+  gb_campaign_code: string | null;
+  gb_campaign_url: string | null;
+  gb_raised_cents: number;
+  gb_supporters: number;
+  gb_synced_at: string | null;
+  status: AnimalStatus;
+  is_published: number;
+  owner_consent_at: string | null;
+  owner_consent_note: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnimalPhoto {
+  id: number;
+  animal_id: number;
+  photo_key: string;
+  alt: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface AnimalWithPhotos extends Animal {
+  photos: AnimalPhoto[];
+}
+
+export interface AnimalExpense {
+  id: number;
+  animal_id: number;
+  label: string;
+  amount_cents: number;
+  vendor: string | null;
+  spent_on: string | null;
+  created_at: string;
+}
+
+export interface AnimalSponsorship {
+  id: number;
+  animal_id: number | null;
+  gb_transaction_id: string;
+  gb_plan_id: string | null;
+  gb_campaign_code: string | null;
+  amount_cents: number;
+  fee_cents: number | null;
+  donated_cents: number | null;
+  is_recurring: number;
+  donor_first_name: string | null;
+  donor_last_name: string | null;
+  donor_email: string | null;
+  display_name: string | null;
+  show_publicly: number;
+  status: SponsorshipStatus;
+  occurred_at: string | null;
+  created_at: string;
+}
+
+/**
+ * Writable animal fields. Cached Givebutter totals and timestamps are owned by
+ * `updateGivebutterTotals()`, not by the admin form.
+ */
+export interface AnimalInput {
+  slug: string;
+  name: string;
+  species: string;
+  breed?: string | null;
+  age_text?: string | null;
+  sex?: string | null;
+  tagline?: string | null;
+  bio: string;
+  story?: string | null;
+  needs_json?: string | null;
+  goal_cents?: number;
+  gb_campaign_code?: string | null;
+  gb_campaign_url?: string | null;
+  status?: AnimalStatus;
+  is_published?: boolean;
+  owner_consent_at?: string | null;
+  owner_consent_note?: string | null;
+  sort_order?: number;
+}
