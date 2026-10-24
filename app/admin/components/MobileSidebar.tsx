@@ -9,6 +9,7 @@ const navLinks = [
   { type: "heading", label: "Programs" },
   { href: "/admin/programs/meal-delivery", label: "Meal Delivery", section: true },
   { href: "/admin/programs/legal-observers", label: "Legal Observers", section: true },
+  { href: "/admin/programs/community-pets", label: "Community Pets", section: true },
   { type: "heading", label: "Community" },
   { href: "/admin/events", label: "Events", section: true },
   { href: "/admin/news", label: "News", section: true },
