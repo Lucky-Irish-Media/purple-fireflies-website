@@ -32,8 +32,14 @@ SPRINGFIELD_BOXES_DELIVERED = "130"
 COMMUNITY_PETS_DONATIONS_ENABLED = "false"
 NONPROFIT_STATUS = "state_only"
 
+# Same Worker as production on purpose. Cloudflare has one Worker with two
+# environments, not a separate preview Worker: Workers Builds uploads a version
+# with the preview bindings below and a branch alias, and that version reads the
+# same secret store as production. Never run `wrangler deploy --env preview`
+# here, because with a shared name it would move production traffic.
+# `wrangler versions upload --env preview` is the safe command.
 [env.preview]
-name = "purple-fireflies-website-preview"
+name = "purple-fireflies-website"
 workers_dev = true
 
 [env.preview.vars]
