@@ -26,6 +26,11 @@ bucket_name = "purple-fireflies-media"
 # Running total of boxes delivered by Springfield Neighbors volunteers, shown on
 # /programs/springfield-neighbors. Manually bumped; not a D1 aggregate.
 SPRINGFIELD_BOXES_DELIVERED = "130"
+# Community Pet Fund launch state. Production stays off until the Ohio AG
+# registration, Givebutter onboarding, and board policies are in place, and the
+# tax line stays state-only until a 501(c)(3) determination letter exists.
+COMMUNITY_PETS_DONATIONS_ENABLED = "false"
+NONPROFIT_STATUS = "state_only"
 
 [env.preview]
 name = "purple-fireflies-website-preview"
@@ -33,6 +38,11 @@ workers_dev = true
 
 [env.preview.vars]
 SPRINGFIELD_BOXES_DELIVERED = "130"
+# Preview differs on purpose: donations are on so the sponsor block can be
+# exercised before launch, and the tax line is still state-only because a
+# preview deploy is not a 501(c)(3) either.
+COMMUNITY_PETS_DONATIONS_ENABLED = "true"
+NONPROFIT_STATUS = "state_only"
 
 [[env.preview.d1_databases]]
 binding = "purple_fireflies_db"

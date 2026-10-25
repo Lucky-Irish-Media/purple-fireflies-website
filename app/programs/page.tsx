@@ -22,6 +22,13 @@ const programs = [
     href: "/programs/springfield-neighbors",
     cta: "Learn more",
   },
+  {
+    icon: "🐾",
+    title: "Community Pet Fund",
+    desc: "Help Athens County neighbors keep their pets. The fund pays vet clinics and suppliers directly for care a household cannot cover, so a bill never means a pet loses its home.",
+    href: "/programs/community-pets",
+    cta: "Learn more",
+  },
 ];
 
 export default function ProgramsPage() {
