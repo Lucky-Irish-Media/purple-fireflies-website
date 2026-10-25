@@ -15,6 +15,7 @@ import {
 } from "@/app/lib/definitions";
 import {
   addAnimalExpense,
+  addAnimalPhoto,
   createAnimal,
   deleteAnimal,
   deleteAnimalExpense,
@@ -24,6 +25,13 @@ import {
   getAnimalById,
   updateAnimal,
 } from "@/app/lib/db";
+import {
+  MAX_IMAGE_BYTES,
+  animalPhotoKey,
+  deleteMediaObject,
+  extensionForImageType,
+  putMediaObject,
+} from "@/app/lib/media";
 
 export type AnimalActionState = {
   errors?: Record<string, string[]>;
@@ -332,7 +340,18 @@ export async function deleteAnimalAction(
       return { success: false, message: "Invalid pet ID." };
     }
 
+    // Read the photos first: the cascade deletes the rows, but R2 objects have
+    // to be removed explicitly or they are orphaned in the bucket forever.
+    const animal = await getAnimalById(id);
+
     await deleteAnimal(id);
+
+    if (animal) {
+      await Promise.allSettled(
+        animal.photos.map((photo) => deleteMediaObject(photo.photo_key)),
+      );
+    }
+
     const state = await currentState();
     revalidateAnimalPaths();
 
@@ -352,8 +371,10 @@ export async function deleteAnimalAction(
 }
 
 /**
- * Removes the photo row. The R2 object is deleted by the media storage task,
- * which owns the bucket; this action deliberately knows only about D1.
+ * Removes the photo row and then the R2 object it points at. The row goes
+ * first so a failure to reach R2 cannot leave a row whose object is gone;
+ * cleanup failures are logged rather than surfaced, because the photo is
+ * already gone from the admin's point of view.
  */
 export async function deleteAnimalPhotoAction(
   _prevState: AnimalActionState,
@@ -372,6 +393,12 @@ export async function deleteAnimalPhotoAction(
       return { success: false, message: "Photo not found." };
     }
 
+    try {
+      await deleteMediaObject(deleted.photo_key);
+    } catch (e) {
+      console.error("deleteAnimalPhotoAction R2 cleanup error:", e);
+    }
+
     const state = await currentState();
     revalidateAnimalPaths();
 
@@ -379,6 +406,75 @@ export async function deleteAnimalPhotoAction(
   } catch (e) {
     console.error("deleteAnimalPhotoAction error:", e);
     return { success: false, message: "Failed to remove the photo." };
+  }
+}
+
+export async function uploadAnimalPhotoAction(
+  _prevState: AnimalActionState,
+  formData: FormData,
+): Promise<AnimalActionState> {
+  try {
+    await verifySession();
+
+    const animalId = Number(formData.get("animal_id"));
+    if (!animalId) {
+      return { success: false, message: "Invalid pet ID." };
+    }
+
+    const animal = await getAnimalById(animalId);
+    if (!animal) {
+      return { success: false, message: "Pet not found." };
+    }
+
+    const file = formData.get("photo");
+    if (!(file instanceof File) || file.size === 0) {
+      return { success: false, message: "Choose an image to upload." };
+    }
+
+    // MIME type is the browser's claim, not a sniff. The serve route sends
+    // `X-Content-Type-Options: nosniff`, and only these three types are ever
+    // written, so the stored Content-Type is one this app chose.
+    const extension = extensionForImageType(file.type);
+    if (!extension) {
+      return {
+        success: false,
+        message: "Photos must be a JPEG, PNG, or WebP image.",
+      };
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      return { success: false, message: "Photos must be 8 MB or smaller." };
+    }
+
+    const alt = toField(formData.get("alt")).trim();
+    const photoKey = animalPhotoKey(animalId, extension);
+
+    await putMediaObject(photoKey, await file.arrayBuffer(), file.type);
+
+    try {
+      await addAnimalPhoto({
+        animalId,
+        photoKey,
+        alt: alt || null,
+        sortOrder: animal.photos.length,
+      });
+    } catch (e) {
+      // The bytes landed but the row did not. Drop the object so the bucket
+      // cannot collect images that no page can ever reference.
+      try {
+        await deleteMediaObject(photoKey);
+      } catch (cleanupError) {
+        console.error("uploadAnimalPhotoAction R2 cleanup error:", cleanupError);
+      }
+      throw e;
+    }
+
+    const state = await currentState();
+    revalidateAnimalPaths();
+
+    return { success: true, message: "Photo uploaded.", ...state };
+  } catch (e) {
+    console.error("uploadAnimalPhotoAction error:", e);
+    return { success: false, message: "Failed to upload the photo." };
   }
 }
 

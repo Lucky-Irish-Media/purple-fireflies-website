@@ -24,6 +24,7 @@ import {
 import { DataTable } from "../../components/DataTable";
 import { Modal } from "../../components/Modal";
 import { formatCents, formatDate, getAnimalStatusBadge } from "../../lib/utils";
+import { PhotoUpload } from "./PhotoUpload";
 
 const columnHelper = createColumnHelper<AnimalWithPhotos>();
 
@@ -655,10 +656,12 @@ function ExpensesSection({
 
 function PhotosSection({
   animal,
+  applyState,
   deleteAction,
   deletePending,
 }: {
   animal: AnimalWithPhotos;
+  applyState: (state: AnimalActionState) => AnimalActionState;
   deleteAction: (formData: FormData) => void;
   deletePending: boolean;
 }) {
@@ -668,8 +671,7 @@ function PhotosSection({
 
       {animal.photos.length === 0 ? (
         <p className="text-sm text-text-secondary">
-          No photos yet. Upload and browser-side resizing ship with the media
-          storage task, once the R2 bucket exists.
+          No photos yet. The first photo becomes the pet&apos;s cover image.
         </p>
       ) : (
         <div className="space-y-2">
@@ -678,10 +680,17 @@ function PhotosSection({
               key={photo.id}
               className="flex items-center justify-between gap-3 rounded-lg border border-primary/10 px-3 py-2"
             >
-              <div className="space-y-0.5">
-                <div className="text-sm text-foreground">{photo.photo_key}</div>
-                <div className="text-xs text-text-secondary">
-                  Alt text: {photo.alt || "missing"}
+              <div className="flex items-center gap-3">
+                <img
+                  src={`/api/media/${photo.photo_key}`}
+                  alt={photo.alt || animal.name}
+                  className="h-12 w-12 rounded-lg border border-primary/10 object-cover"
+                />
+                <div className="space-y-0.5">
+                  <div className="text-sm text-foreground">{photo.photo_key}</div>
+                  <div className="text-xs text-text-secondary">
+                    Alt text: {photo.alt || "missing"}
+                  </div>
                 </div>
               </div>
               <form action={deleteAction}>
@@ -698,6 +707,8 @@ function PhotosSection({
           ))}
         </div>
       )}
+
+      <PhotoUpload animalId={animal.id} applyState={applyState} />
     </section>
   );
 }
@@ -1074,6 +1085,7 @@ export function AnimalsTable({
 
             <PhotosSection
               animal={editingAnimal}
+              applyState={applyState}
               deleteAction={deletePhotoAction}
               deletePending={deletePhotoPending}
             />

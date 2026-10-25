@@ -16,6 +16,14 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Pet photo uploads go through a server action. The browser resizes them
+    // to well under a megabyte, but the action accepts up to 8 MB, so the
+    // 1 MB default would reject a valid file before the action ever ran.
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
   turbopack: {
     root: path.resolve(import.meta.dirname ?? process.cwd()),
   },
