@@ -20,10 +20,12 @@ export default function CommunityPetTabs({
   animals,
   expenses,
   sponsorships,
+  givebutterConfigured,
 }: {
   animals: AnimalWithPhotos[];
   expenses: AnimalExpense[];
   sponsorships: AnimalSponsorshipWithAnimal[];
+  givebutterConfigured: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("animals");
 
@@ -53,7 +55,10 @@ export default function CommunityPetTabs({
 
       {activeTab === "sponsors" && (
         <section>
-          <SponsorsTable sponsorships={sponsorships} />
+          <SponsorsTable
+            sponsorships={sponsorships}
+            givebutterConfigured={givebutterConfigured}
+          />
         </section>
       )}
     </div>

@@ -1,15 +1,15 @@
 import "server-only";
 
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { readEnvVar } from "@/app/lib/env";
 
 /**
  * Deployment-level switches for the public Community Pet Fund pages.
  *
  * Both values are plain vars, not secrets: `wrangler.toml` keeps production
  * turned off until the launch gates clear and turns preview on so the sponsor
- * block can be exercised before launch. Reads follow `app/lib/springfield.ts`:
- * the Node process env first, then the Cloudflare env binding, and anything
- * missing or unexpected fails safe to the conservative value.
+ * block can be exercised before launch. Reads go through `readEnvVar()`: the
+ * Node process env first, then the Cloudflare env binding, and anything missing
+ * or unexpected fails safe to the conservative value.
  */
 
 export type NonprofitStatus = "state_only" | "501c3";
@@ -17,22 +17,6 @@ export type NonprofitStatus = "state_only" | "501c3";
 export interface CommunityPetsConfig {
   donationsEnabled: boolean;
   nonprofitStatus: NonprofitStatus;
-}
-
-async function readEnvVar(name: string): Promise<string | undefined> {
-  const fromProcess = process.env[name];
-
-  if (fromProcess) {
-    return fromProcess;
-  }
-
-  try {
-    const { env } = await getCloudflareContext({ async: true });
-    return (env as unknown as Record<string, string | undefined>)[name];
-  } catch {
-    // Cloudflare context not available (e.g., running outside opennext)
-    return undefined;
-  }
 }
 
 export async function getCommunityPetsConfig(): Promise<CommunityPetsConfig> {

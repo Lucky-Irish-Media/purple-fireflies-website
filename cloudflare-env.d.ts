@@ -5,5 +5,10 @@ interface CloudflareEnv {
   EMAIL_API_KEY?: string;
   EMAIL_FROM?: string;
   EMAIL_API_URL?: string;
+  ADMIN_EMAIL?: string;
   SPRINGFIELD_BOXES_DELIVERED?: string;
+  COMMUNITY_PETS_DONATIONS_ENABLED?: string;
+  NONPROFIT_STATUS?: string;
+  GIVEBUTTER_API_KEY?: string;
+  GIVEBUTTER_WEBHOOK_SECRET?: string;
 }

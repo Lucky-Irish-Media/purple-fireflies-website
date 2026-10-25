@@ -1,6 +1,11 @@
 import type { Participant, MealSignup, WaitlistEntryWithParticipant } from "@/app/lib/definitions";
 import type { DateDriver } from "@/app/lib/db";
 import { formatDeliveryDay, getDeliveryDay } from "@/app/lib/delivery-day";
+import {
+  getCommunityPetsConfig,
+  getTaxStatusCopy,
+} from "@/app/lib/community-pets-config";
+import { readEnvVar } from "@/app/lib/env";
 
 export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant, waitlistedDates?: string[]): Promise<void> {
   if (signups.length === 0 && (!waitlistedDates || waitlistedDates.length === 0)) return;
@@ -271,4 +276,98 @@ ${tableRows}
     text,
     html,
   });
+}
+
+/**
+ * Community Pet Fund gift acknowledgement.
+ *
+ * Sent once per donor per pet (the first gift), not on every recurring charge,
+ * so a monthly sponsor does not get twelve near-identical emails a year. The tax
+ * line comes from `getTaxStatusCopy()` rather than being written here, so
+ * gaining 501(c)(3) status is a var flip and this copy follows.
+ */
+export async function sendSponsorshipAcknowledgementEmail(params: {
+  to: string;
+  donorName: string;
+  animalName: string;
+  amountCents: number;
+  isRecurring: boolean;
+  campaignUrl: string | null;
+}): Promise<void> {
+  const { nonprofitStatus } = await getCommunityPetsConfig();
+  const taxCopy = getTaxStatusCopy(nonprofitStatus);
+  const amount = formatUsd(params.amountCents);
+  const greeting = params.donorName.trim() || "there";
+
+  const recurringLine = params.isRecurring
+    ? `\nYour gift is recurring, so it will be charged again on the schedule you chose in Givebutter. You can change or cancel it there at any time.\n`
+    : "";
+
+  const campaignLine = params.campaignUrl
+    ? `\nYou can see ${params.animalName}'s progress any time at:\n${params.campaignUrl}\n`
+    : "";
+
+  const text = `Hi ${greeting},
+
+Thank you for sponsoring ${params.animalName} through the Community Pet Fund. Your gift of ${amount} has been received and will go toward this pet's care.
+
+${taxCopy}${recurringLine}${campaignLine}
+If ${params.animalName}'s listed needs are fully met, or the pet leaves the program, any remaining gifts stay in the Community Pet Fund and support other neighbors' pets. We do not pay leftovers to the owner. We never publish donor names, email addresses, or individual gift amounts.
+
+With gratitude,
+Purple Fireflies`;
+
+  await sendEmail({
+    to: params.to,
+    subject: `Thank you for sponsoring ${params.animalName}`,
+    text,
+  });
+}
+
+/**
+ * Internal alert for a failed recurring plan.
+ *
+ * Goes to `ADMIN_EMAIL` when set, otherwise the public contact address, so a
+ * lapsed plan is not silently missed. Deliberately not sent to the donor: a
+ * failed card is Givebutter's retry flow to handle, and a second email from us
+ * would only confuse them.
+ */
+export async function sendPlanFailureEmail(params: {
+  planId: string;
+  donorName: string;
+  donorEmail: string;
+  amountCents: number;
+  frequency: string | null;
+  nextBillDate: string | null;
+}): Promise<void> {
+  const adminEmail = (await readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
+
+  const lines = [
+    `Plan ID: ${params.planId}`,
+    `Donor: ${params.donorName || "Unknown"} <${params.donorEmail || "no email"}>`,
+    `Amount: ${formatUsd(params.amountCents)}`,
+    `Frequency: ${params.frequency || "unknown"}`,
+    `Next bill date: ${params.nextBillDate || "unknown"}`,
+  ];
+
+  const text = `A recurring Community Pet Fund plan failed in Givebutter.
+
+${lines.join("\n")}
+
+Givebutter retries failed plans on its own schedule. Check the plan in the Givebutter dashboard if it keeps failing.
+
+Purple Fireflies`;
+
+  await sendEmail({
+    to: adminEmail,
+    subject: `Givebutter plan failed - ${params.donorName || params.planId}`,
+    text,
+  });
+}
+
+function formatUsd(cents: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format((Number.isFinite(cents) ? cents : 0) / 100);
 }

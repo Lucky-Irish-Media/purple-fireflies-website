@@ -26,6 +26,7 @@ import type {
   AnimalSponsorship,
   AnimalSponsorshipWithAnimal,
   AnimalInput,
+  SponsorshipStatus,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -1693,4 +1694,232 @@ export async function updateGivebutterTotals(
     )
     .bind(data.raisedCents, data.supporters, data.syncedAt || null, id)
     .run();
+}
+
+// ---------------------------------------------------------------------------
+// Givebutter capture
+//
+// The webhook is public and unauthenticated apart from its signature, so every
+// write here is idempotent on a natural key: `givebutter_events.event_id` for
+// an event, `animal_sponsorships.gb_transaction_id` for a gift. A retry is a
+// no-op, never a second gift.
+// ---------------------------------------------------------------------------
+
+/**
+ * Campaign codes are typed by hand in the admin form, so the match is
+ * case-insensitive. Codes are the only attribution key a webhook carries.
+ */
+export async function getAnimalByCampaignCode(code: string): Promise<Animal | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      "SELECT * FROM animals WHERE gb_campaign_code IS NOT NULL AND gb_campaign_code = ? COLLATE NOCASE LIMIT 1"
+    )
+    .bind(code.trim())
+    .first<Animal>();
+  return result || null;
+}
+
+/** Admin/refresh only: every pet that has a campaign to reconcile. */
+export async function getAnimalsWithCampaignCode(): Promise<Animal[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT * FROM animals
+       WHERE gb_campaign_code IS NOT NULL AND TRIM(gb_campaign_code) <> ''
+       ORDER BY sort_order ASC, name ASC`
+    )
+    .all<Animal>();
+  return result.results || [];
+}
+
+/**
+ * Admin-only, like every other read of this table: the row carries donor PII.
+ * Used by the refund handler to find the gift being reversed.
+ */
+export async function getSponsorshipByTransactionId(
+  transactionId: string
+): Promise<AnimalSponsorship | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM animal_sponsorships WHERE gb_transaction_id = ?")
+    .bind(transactionId)
+    .first<AnimalSponsorship>();
+  return result || null;
+}
+
+/**
+ * Claims an event id. Returns false when it was already claimed, which is how a
+ * webhook retry becomes a no-op. Callers that then fail must release the claim
+ * with `deleteGivebutterEvent()` so the retry can still be processed.
+ */
+export async function recordGivebutterEvent(data: {
+  eventId: string;
+  type: string;
+  animalId?: number | null;
+}): Promise<boolean> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO givebutter_events (event_id, type, animal_id)
+       VALUES (?, ?, ?)
+       ON CONFLICT(event_id) DO NOTHING`
+    )
+    .bind(data.eventId, data.type, data.animalId ?? null)
+    .run();
+  return (result.meta?.changes ?? 0) > 0;
+}
+
+export async function deleteGivebutterEvent(eventId: string): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM givebutter_events WHERE event_id = ?").bind(eventId).run();
+}
+
+export async function setGivebutterEventAnimal(eventId: string, animalId: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE givebutter_events SET animal_id = ? WHERE event_id = ?")
+    .bind(animalId, eventId)
+    .run();
+}
+
+/**
+ * Inserts a gift, or returns null when that transaction is already recorded.
+ * The unique `gb_transaction_id` is the idempotency guarantee; this function
+ * never updates an existing row, so a replay cannot restate an amount.
+ */
+export async function createSponsorshipIfMissing(data: {
+  animalId: number;
+  transactionId: string;
+  planId?: string | null;
+  campaignCode?: string | null;
+  amountCents: number;
+  feeCents?: number | null;
+  donatedCents?: number | null;
+  isRecurring?: boolean;
+  donorFirstName?: string | null;
+  donorLastName?: string | null;
+  donorEmail?: string | null;
+  displayName?: string | null;
+  status?: SponsorshipStatus;
+  occurredAt?: string | null;
+}): Promise<AnimalSponsorship | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO animal_sponsorships (
+         animal_id, gb_transaction_id, gb_plan_id, gb_campaign_code, amount_cents,
+         fee_cents, donated_cents, is_recurring, donor_first_name, donor_last_name,
+         donor_email, display_name, show_publicly, status, occurred_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+       ON CONFLICT(gb_transaction_id) DO NOTHING
+       RETURNING *`
+    )
+    .bind(
+      data.animalId,
+      data.transactionId,
+      data.planId || null,
+      data.campaignCode || null,
+      data.amountCents,
+      data.feeCents ?? null,
+      data.donatedCents ?? null,
+      data.isRecurring ? 1 : 0,
+      data.donorFirstName || null,
+      data.donorLastName || null,
+      data.donorEmail || null,
+      data.displayName || null,
+      data.status || "succeeded",
+      data.occurredAt || null
+    )
+    .first<AnimalSponsorship>();
+  return result || null;
+}
+
+export async function setSponsorshipStatus(id: number, status: SponsorshipStatus): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE animal_sponsorships SET status = ? WHERE id = ?")
+    .bind(status, id)
+    .run();
+}
+
+/**
+ * Partial refunds shrink the gift instead of reversing it, so `amount_cents`
+ * becomes the net amount the donor kept in the fund. Clamped at zero because a
+ * refund larger than the recorded gift must not produce a negative row.
+ */
+export async function reduceSponsorshipAmount(id: number, cents: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE animal_sponsorships SET amount_cents = MAX(0, amount_cents - ?) WHERE id = ?")
+    .bind(Math.max(0, Math.round(cents)), id)
+    .run();
+}
+
+/**
+ * Moves the cached totals the public pages read. Deltas are clamped at zero so
+ * a refund delivered twice, or out of order, cannot drive a total negative.
+ */
+export async function adjustAnimalTotals(
+  animalId: number,
+  raisedDeltaCents: number,
+  supporterDelta: number
+): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `UPDATE animals
+       SET gb_raised_cents = MAX(0, gb_raised_cents + ?),
+           gb_supporters = MAX(0, gb_supporters + ?),
+           updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(raisedDeltaCents, supporterDelta, animalId)
+    .run();
+}
+
+/**
+ * Supporter counts are "people who gave", not "gifts received". A recurring
+ * donor's second monthly gift must not add a second supporter, so the webhook
+ * only increments when this is the donor's first gift to that pet.
+ */
+export async function hasPriorSponsorshipFromDonor(
+  animalId: number,
+  email: string
+): Promise<boolean> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT 1 AS found FROM animal_sponsorships
+       WHERE animal_id = ? AND donor_email = ? COLLATE NOCASE
+       LIMIT 1`
+    )
+    .bind(animalId, email.trim())
+    .first<{ found: number }>();
+  return Boolean(result);
+}
+
+/**
+ * The mirror of `hasPriorSponsorshipFromDonor` for refunds: a full refund only
+ * removes a supporter when that donor has no other succeeded gift to the pet.
+ * Without this, refunding one of a donor's two gifts would drop the count to
+ * zero until the next Givebutter refresh.
+ */
+export async function hasOtherSucceededSponsorship(
+  animalId: number,
+  email: string,
+  excludeId: number
+): Promise<boolean> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT 1 AS found FROM animal_sponsorships
+       WHERE animal_id = ? AND donor_email = ? COLLATE NOCASE
+         AND status = 'succeeded' AND id <> ?
+       LIMIT 1`
+    )
+    .bind(animalId, email.trim(), excludeId)
+    .first<{ found: number }>();
+  return Boolean(result);
 }

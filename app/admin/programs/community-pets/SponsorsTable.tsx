@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useActionState, useMemo } from "react";
 import {
   createColumnHelper,
   filterFns,
@@ -12,6 +12,10 @@ import type {
   AnimalSponsorshipWithAnimal,
   SponsorshipStatus,
 } from "@/app/lib/definitions";
+import {
+  refreshGivebutterTotalsAction,
+  type GivebutterRefreshState,
+} from "@/app/actions/admin-givebutter";
 import { DataTable } from "../../components/DataTable";
 import {
   formatCents,
@@ -174,10 +178,17 @@ const typedColumns = columns as unknown as ColumnDef<
 
 export function SponsorsTable({
   sponsorships,
+  givebutterConfigured,
 }: {
   sponsorships: AnimalSponsorshipWithAnimal[];
+  givebutterConfigured: boolean;
 }) {
   const data = useMemo(() => sponsorships, [sponsorships]);
+
+  const [refreshState, refreshAction, refreshPending] = useActionState<
+    GivebutterRefreshState,
+    FormData
+  >(refreshGivebutterTotalsAction, {});
 
   const totals = useMemo(() => {
     let raisedCents = 0;
@@ -192,23 +203,47 @@ export function SponsorsTable({
     return { raisedCents, refundedCents, count: data.length };
   }, [data]);
 
+  const refreshControl = givebutterConfigured ? (
+    <form action={refreshAction} className="space-y-2">
+      <button
+        type="submit"
+        disabled={refreshPending}
+        className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {refreshPending ? "Refreshing..." : "Refresh from Givebutter"}
+      </button>
+      {refreshState.message ? (
+        <p
+          className={`text-xs ${
+            refreshState.success ? "text-text-secondary" : "text-red-600"
+          }`}
+        >
+          {refreshState.message}
+        </p>
+      ) : null}
+    </form>
+  ) : null;
+
   if (data.length === 0) {
     return (
       <section className="space-y-6">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Sponsors</h2>
-          <p className="mt-1 text-sm text-text-secondary">
-            No sponsorships recorded yet
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Sponsors</h2>
+            <p className="mt-1 text-sm text-text-secondary">
+              No sponsorships recorded yet
+            </p>
+          </div>
+          {refreshControl}
         </div>
         <div className="rounded-lg border border-primary/10 bg-card p-6">
           <p className="text-sm font-medium text-foreground">
-            Donor transactions appear here once Givebutter capture ships.
+            Donor transactions appear here as Givebutter webhooks arrive.
           </p>
           <p className="mt-2 text-sm text-text-secondary">
-            Until then, sponsors are recorded in the Givebutter dashboard. This
-            tab reads the local ledger only, so it stays empty instead of showing
-            numbers it cannot verify.
+            Gifts imported through a CSV do not fire webhooks. After an import,
+            use Refresh from Givebutter to pull the campaign totals, then check
+            the Givebutter dashboard for the individual transactions.
           </p>
         </div>
       </section>
@@ -217,11 +252,14 @@ export function SponsorsTable({
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-foreground">Sponsors</h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          {totals.count} gift{totals.count === 1 ? "" : "s"} recorded
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Sponsors</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            {totals.count} gift{totals.count === 1 ? "" : "s"} recorded
+          </p>
+        </div>
+        {refreshControl}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
