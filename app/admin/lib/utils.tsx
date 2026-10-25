@@ -101,6 +101,27 @@ export function getAnimalStatusBadge(status: string) {
   );
 }
 
+const SPONSORSHIP_STATUS_LABELS: Record<string, string> = {
+  succeeded: "Succeeded",
+  refunded: "Refunded",
+  failed: "Failed",
+};
+
+export function getSponsorshipStatusBadge(status: string) {
+  const styles: Record<string, string> = {
+    succeeded: "bg-green-100 text-green-800",
+    refunded: "bg-amber-100 text-amber-800",
+    failed: "bg-red-100 text-red-800",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-800"}`}
+    >
+      {SPONSORSHIP_STATUS_LABELS[status] || status}
+    </span>
+  );
+}
+
 export function getSignalBadge(signal: string) {
   return (
     <span

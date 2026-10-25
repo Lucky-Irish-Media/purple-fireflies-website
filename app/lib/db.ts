@@ -24,6 +24,7 @@ import type {
   AnimalPhoto,
   AnimalExpense,
   AnimalSponsorship,
+  AnimalSponsorshipWithAnimal,
   AnimalInput,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
@@ -1508,6 +1509,27 @@ export async function getSponsorships(animalId: number): Promise<AnimalSponsorsh
     )
     .bind(animalId)
     .all<AnimalSponsorship>();
+  return result.results || [];
+}
+
+/**
+ * Admin-only: the only read that returns donor PII for every sponsorship at
+ * once. Never call this from a public page, a public component, or a route
+ * handler that serves one - the rows carry `donor_email`.
+ *
+ * The join is LEFT so a transaction with no `animal_id`, or one whose pet was
+ * deleted, still appears in the donor ledger instead of vanishing from it.
+ */
+export async function getAllSponsorships(): Promise<AnimalSponsorshipWithAnimal[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `SELECT s.*, a.name AS animal_name, a.slug AS animal_slug
+       FROM animal_sponsorships s
+       LEFT JOIN animals a ON a.id = s.animal_id
+       ORDER BY COALESCE(s.occurred_at, s.created_at) DESC, s.id DESC`
+    )
+    .all<AnimalSponsorshipWithAnimal>();
   return result.results || [];
 }
 

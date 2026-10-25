@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { AnimalWithPhotos, AnimalExpense } from "@/app/lib/definitions";
+import type {
+  AnimalWithPhotos,
+  AnimalExpense,
+  AnimalSponsorshipWithAnimal,
+} from "@/app/lib/definitions";
 import { AnimalsTable } from "./AnimalsTable";
+import { SponsorsTable } from "./SponsorsTable";
 
 type TabKey = "animals" | "sponsors";
 
@@ -14,9 +19,11 @@ const tabs: { key: TabKey; label: string }[] = [
 export default function CommunityPetTabs({
   animals,
   expenses,
+  sponsorships,
 }: {
   animals: AnimalWithPhotos[];
   expenses: AnimalExpense[];
+  sponsorships: AnimalSponsorshipWithAnimal[];
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("animals");
 
@@ -46,11 +53,7 @@ export default function CommunityPetTabs({
 
       {activeTab === "sponsors" && (
         <section>
-          <h2 className="text-xl font-bold text-foreground">Sponsors</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Donor transactions will appear here once Givebutter capture ships.
-            Until then, sponsors are recorded in the Givebutter dashboard.
-          </p>
+          <SponsorsTable sponsorships={sponsorships} />
         </section>
       )}
     </div>
