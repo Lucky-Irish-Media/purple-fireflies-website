@@ -17,9 +17,10 @@ This version has breaking changes - APIs, conventions, and file structure may al
 
 # Production Safety
 
-- NEVER run any command against production (e.g. `wrangler ... --remote` without `--env preview`) unless the user EXPLICITLY states you may
+- NEVER run any command against production (e.g. `wrangler ... --remote` with no preview flag) unless the user EXPLICITLY states you may
 - This includes D1 migrations, KV operations, and any other wrangler commands targeting the production environment
-- When in doubt, default to the preview environment (`--env preview`)
+- There is no `[env.preview]` and no `wrangler deploy --env preview`. Feature branches deploy through Worker Previews with `npx wrangler preview`, which reads the `[previews]` block in `wrangler.toml`. `wrangler deploy` is production-only
+- When in doubt, read the resource IDs in `wrangler.toml` before running anything remote
 <!-- END:deployment-rules -->
 
 <!-- BEGIN:project-tracking-rules -->

@@ -17,12 +17,20 @@ export type NonprofitStatus = "state_only" | "501c3";
 export interface CommunityPetsConfig {
   donationsEnabled: boolean;
   nonprofitStatus: NonprofitStatus;
+  /**
+   * Givebutter's Widgets account ID. It is public by nature - it ends up in the
+   * library script URL on the pet page - and the embedded form cannot load
+   * without it. Empty when unset, which makes the sponsor block fall back to a
+   * plain campaign link instead of an empty form.
+   */
+  givebutterAccountId: string;
 }
 
 export async function getCommunityPetsConfig(): Promise<CommunityPetsConfig> {
-  const [donationsRaw, nonprofitRaw] = await Promise.all([
+  const [donationsRaw, nonprofitRaw, widgetAccountRaw] = await Promise.all([
     readEnvVar("COMMUNITY_PETS_DONATIONS_ENABLED"),
     readEnvVar("NONPROFIT_STATUS"),
+    readEnvVar("GIVEBUTTER_WIDGET_ACCOUNT_ID"),
   ]);
 
   return {
@@ -32,6 +40,7 @@ export async function getCommunityPetsConfig(): Promise<CommunityPetsConfig> {
     // No determination letter means no deductibility claim, so anything that is
     // not exactly "501c3" renders the state-only copy.
     nonprofitStatus: nonprofitRaw === "501c3" ? "501c3" : "state_only",
+    givebutterAccountId: widgetAccountRaw?.trim() ?? "",
   };
 }
 

@@ -6,11 +6,20 @@ initOpenNextCloudflareForDev();
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+  // `widgets.givebutter.com` is the Givebutter Widgets library, loaded only on
+  // pet pages that embed a donation form. Everything else on the site is
+  // first-party.
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://widgets.givebutter.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // `givebuttercdn.com` serves the widget's own icons and "powered by" mark in
+  // its shadow DOM.
+  "img-src 'self' data: blob: https://givebutter.com https://givebuttercdn.com",
   "font-src 'self'",
-  "connect-src 'self'",
+  // The widget looks up its configuration at `givebutter.com/elements/api`.
+  "connect-src 'self' https://givebutter.com https://widgets.givebutter.com",
+  // Without an explicit frame-src the donation form's iframe inherits
+  // default-src 'self' and is blocked, which shows as an empty card.
+  "frame-src https://givebutter.com https://*.givebutter.com",
   "base-uri 'self'",
   "form-action 'self'",
 ].join("; ");

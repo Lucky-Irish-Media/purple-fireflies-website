@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AnimalProgress from "@/components/AnimalProgress";
+import GivebutterWidget from "@/components/GivebutterWidget";
 import { getAnimalBySlug, getAnimalExpenses } from "@/app/lib/db";
 import {
   getCommunityPetsConfig,
@@ -158,21 +159,27 @@ function StatusPill({ status }: { status: AnimalStatus }) {
 interface SponsorBlockProps {
   name: string;
   status: AnimalStatus;
+  /** `animals.gb_campaign_code`; the publish gate requires it before release. */
+  campaignCode: string | null;
   campaignUrl: string | null;
+  /** Givebutter Widgets account ID; empty until the org's ID is configured. */
+  widgetAccountId: string;
   donationsEnabled: boolean;
   taxCopy: string;
 }
 
 /**
- * Seat for `components/GivebutterWidget.tsx`, which is a separate task. Nothing
- * here loads a third-party script or renders a donation form, so the page works
- * with `COMMUNITY_PETS_DONATIONS_ENABLED` off. When the widget lands it replaces
- * the body of the `accepting` branch and nothing else moves.
+ * The one place a donation form can appear. It renders nothing third-party
+ * unless donations are on, the pet is accepting sponsors, and both a campaign
+ * code and the org's widget account ID are configured - otherwise a visitor
+ * gets an explanation and the campaign link, never a broken embed.
  */
 function SponsorBlock({
   name,
   status,
+  campaignCode,
   campaignUrl,
+  widgetAccountId,
   donationsEnabled,
   taxCopy,
 }: SponsorBlockProps) {
@@ -204,48 +211,70 @@ function SponsorBlock({
   }
 
   if (status === "accepting") {
+    const embeddableCode = campaignCode?.trim();
+    const accountId = widgetAccountId.trim();
+
     return (
-      <div className="rounded-xl p-6" style={cardStyle}>
-        <p
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "#7C3AED" }}
-        >
-          Sponsor this pet
-        </p>
-        <p className="mt-1 text-lg font-bold text-foreground">
-          Sponsor {name}
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-          The donation form for this campaign is being connected. You can open
-          the campaign page directly, or get in touch and we will help you give.
-        </p>
-        {campaignUrl ? (
-          <a
-            href={campaignUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold"
+      <div className="rounded-xl" style={cardStyle}>
+        <div className="p-6 pb-0">
+          <p
+            className="text-xs font-semibold uppercase tracking-wide"
             style={{ color: "#7C3AED" }}
           >
-            Open the {name} campaign →
-          </a>
-        ) : (
-          <p className="mt-4 text-sm text-text-secondary">
-            A campaign link is not available yet. Get in touch and we will send
-            it to you.
+            Sponsor this pet
           </p>
-        )}
-        <p className="mt-4 border-t pt-4 text-sm leading-relaxed text-text-secondary" style={{ borderColor: "rgba(124,58,237,0.12)" }}>
-          <span className="font-semibold text-foreground">
-            Where the money goes:
-          </span>{" "}
-          gifts pay vet clinics and suppliers directly for the needs listed on
-          this page. Leftover funds stay in the Community Pet Fund for other
-          neighbors&apos; pets.
-        </p>
-        <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          {taxCopy}
-        </p>
+          <p className="mt-1 text-lg font-bold text-foreground">
+            Sponsor {name}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+            Give any amount, one time or monthly. The form is Givebutter&apos;s
+            and stays on this page, so card details never touch our servers.
+          </p>
+        </div>
+
+        <div className="mt-4 px-3">
+          {embeddableCode && accountId ? (
+            <GivebutterWidget
+              campaignCode={embeddableCode}
+              accountId={accountId}
+              campaignUrl={campaignUrl}
+            />
+          ) : (
+            <div className="px-3">
+              <p className="text-sm leading-relaxed text-text-secondary">
+                The embedded donation form is not available right now.
+                {campaignUrl
+                  ? " You can still give on the campaign page."
+                  : " Get in touch and we will help you give."}
+              </p>
+              {campaignUrl ? (
+                <a
+                  href={campaignUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold"
+                  style={{ color: "#7C3AED" }}
+                >
+                  Open the {name} campaign →
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 pt-4">
+          <p className="border-t pt-4 text-sm leading-relaxed text-text-secondary" style={{ borderColor: "rgba(124,58,237,0.12)" }}>
+            <span className="font-semibold text-foreground">
+              Where the money goes:
+            </span>{" "}
+            gifts pay vet clinics and suppliers directly for the needs listed on
+            this page. Leftover funds stay in the Community Pet Fund for other
+            neighbors&apos; pets.
+          </p>
+          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+            {taxCopy}
+          </p>
+        </div>
       </div>
     );
   }
@@ -437,7 +466,9 @@ export default async function CommunityPetPage({ params }: AnimalPageProps) {
             <SponsorBlock
               name={animal.name}
               status={animal.status}
+              campaignCode={animal.gb_campaign_code}
               campaignUrl={animal.gb_campaign_url}
+              widgetAccountId={config.givebutterAccountId}
               donationsEnabled={config.donationsEnabled}
               taxCopy={taxCopy}
             />

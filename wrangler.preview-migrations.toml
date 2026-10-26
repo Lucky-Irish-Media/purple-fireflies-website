@@ -1,0 +1,19 @@
+# Migration-only config for the preview D1 database. `wrangler d1 migrations
+# apply` reads top-level bindings, so it cannot use the `[previews]` block in
+# wrangler.toml. Keeping this in a separate file means a preview migration can
+# never resolve to the production database by accident.
+#
+# Usage:
+#   npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.toml
+#
+# The database name and ID must stay in sync with [[previews.d1_databases]] in
+# wrangler.toml. This file has no `main`, so it cannot be deployed by mistake.
+name = "purple-fireflies-website-preview-migrations"
+compatibility_date = "2026-07-04"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "PREVIEW_DB"
+database_name = "purple-fireflies-db-preview"
+database_id = "dcb6e0de-2d20-40bc-82c3-1ccd96f0a540"
+migrations_dir = "migrations"
