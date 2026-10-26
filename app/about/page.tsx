@@ -13,9 +13,18 @@ export default function AboutPage() {
       >
         <div className="px-4 pt-16 pb-12 text-center">
           <div className="max-w-2xl mx-auto">
+            <span
+              className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white mb-5"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
+            >
+              About Us
+            </span>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
-              About Purple Fireflies
+              Who We Are
             </h1>
+            <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 560, margin: "0 auto" }}>
+              Purple Fireflies believe in community helping community. We operate on the belief that we all need help at times, and we each want to do our part to help our community.
+            </p>
           </div>
         </div>
       </section>
@@ -24,9 +33,6 @@ export default function AboutPage() {
       <section className="px-4 py-16 bg-white">
         <div className="max-w-3xl mx-auto">
           <div className="space-y-6 text-lg text-text-secondary leading-relaxed">
-            <p>
-              Purple Fireflies believe in community helping community. We operate on the belief that we all need help at times, and we each want to do our part to help our community.
-            </p>
             <p>
               The idea of Purple Fireflies came about in November of 2025, when SNAP benefits were paused for the month. The Link family started the November Grocery Buddy that helped feed 150 households that month. We noticed that many families were unable to secure transportation to access the extra food or free meals offered in Athens city limits. This led us to start this nonprofit organization to continue to get meals to people that would be unable to easily access these services, hence the Meal Program.
             </p>
