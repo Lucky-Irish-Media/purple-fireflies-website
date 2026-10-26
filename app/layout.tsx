@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Purple Fireflies",
-  description: "A simple one-page website",
+  description:
+    "Purple Fireflies is a volunteer-run nonprofit in Athens County, Ohio delivering meals, observing for first-amendment rights, and stocking neighbors' shelves",
 };
 
 export default function RootLayout({

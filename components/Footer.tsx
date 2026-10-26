@@ -6,6 +6,7 @@ const footerLinks = [
   { href: "/events", label: "Events" },
   { href: "/community", label: "Community" },
   { href: "/donate", label: "Donate" },
+  { href: "/about", label: "About" },
   { href: "/contact", label: "Get Involved" },
 ];
 
