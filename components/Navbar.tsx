@@ -13,9 +13,12 @@ export default function Navbar() {
     return null;
   }
 
-  const linkClass = (path: string) =>
+  const linkClass = (
+    path: string,
+    active: (current: string) => boolean = (current) => current === path,
+  ) =>
     `text-base font-semibold transition-colors duration-200 border-b-2 pb-0.5 ${
-      pathname === path
+      active(pathname)
         ? "text-white border-accent"
         : "text-white/70 hover:text-white border-transparent"
     }`;
@@ -34,17 +37,15 @@ export default function Navbar() {
               Home
             </Link>
             <div
-              className="relative"
+              className="relative flex"
               onMouseEnter={() => setIsProgramsOpen(true)}
               onMouseLeave={() => setIsProgramsOpen(false)}
             >
               <Link
                 href="/programs"
-                className={`text-base font-semibold transition-colors duration-200 border-b-2 pb-0.5 ${
-                  pathname.startsWith("/programs")
-                    ? "text-white border-accent"
-                    : "text-white/70 hover:text-white border-transparent"
-                }`}
+                className={linkClass("/programs", (current) =>
+                  current.startsWith("/programs"),
+                )}
               >
                 Programs
               </Link>
