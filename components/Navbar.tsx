@@ -95,6 +95,9 @@ export default function Navbar() {
             <Link href="/donate" className={linkClass("/donate")}>
               Donate
             </Link>
+            <Link href="/about" className={linkClass("/about")}>
+              About
+            </Link>
             <Link
               href="/contact"
               className="rounded-full bg-accent px-5 py-2 text-sm font-bold text-white shadow-md transition-all duration-200 hover:bg-amber-400 hover:shadow-lg"
@@ -190,6 +193,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Donate
+            </Link>
+            <Link
+              href="/about"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              About
             </Link>
             <Link
               href="/contact"
