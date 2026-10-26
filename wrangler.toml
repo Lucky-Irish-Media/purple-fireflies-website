@@ -39,7 +39,7 @@ NONPROFIT_STATUS = "state_only"
 # embedded donation form cannot load without it, so the sponsor block falls back
 # to a plain campaign link while it is empty. Public by nature: it appears in the
 # library script URL on the pet page.
-GIVEBUTTER_WIDGET_ACCOUNT_ID = ""
+GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
 
 # Worker Previews back the feature-branch deployments that Workers Builds
 # creates for every branch except main. They run on the same Worker with
@@ -55,8 +55,8 @@ SPRINGFIELD_BOXES_DELIVERED = "130"
 COMMUNITY_PETS_DONATIONS_ENABLED = "true"
 NONPROFIT_STATUS = "state_only"
 # Same Widgets account ID as production; preview embeds the form so the sponsor
-# path can be exercised before launch. Empty until the org's ID is recorded.
-GIVEBUTTER_WIDGET_ACCOUNT_ID = ""
+# path can be exercised before launch.
+GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
 
 [[previews.d1_databases]]
 binding = "purple_fireflies_db"

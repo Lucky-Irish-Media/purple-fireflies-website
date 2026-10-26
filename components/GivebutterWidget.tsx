@@ -23,6 +23,14 @@ import { useEffect, useState } from "react";
  */
 const LIBRARY_URL = "https://widgets.givebutter.com/latest.umd.cjs";
 
+/**
+ * Givebutter's dashboard snippet also sends `p=other`. It is the platform
+ * attribution tag ("other" means a hand-built embed rather than WordPress,
+ * Squarespace, or one of their other integrations), so it is kept in step with
+ * the snippet the developer page hands out.
+ */
+const LIBRARY_PLATFORM = "other";
+
 /** The custom element the library registers, used to detect a blocked script. */
 const WIDGET_TAG = "givebutter-giving-form";
 
@@ -79,7 +87,9 @@ export default function GivebutterWidget({
   return (
     <div>
       <Script
-        src={`${LIBRARY_URL}?acct=${encodeURIComponent(accountId)}`}
+        src={`${LIBRARY_URL}?acct=${encodeURIComponent(
+          accountId
+        )}&p=${LIBRARY_PLATFORM}`}
         strategy="lazyOnload"
         onReady={handleLibraryReady}
         onError={() => setStatus("blocked")}
