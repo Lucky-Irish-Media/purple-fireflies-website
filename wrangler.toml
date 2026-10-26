@@ -30,7 +30,7 @@ SPRINGFIELD_BOXES_DELIVERED = "130"
 
 [[env.preview.d1_databases]]
 binding = "purple_fireflies_db"
-database_name = "purple-fireflies-db"
+database_name = "purple-fireflies-db-preview"
 database_id = "dcb6e0de-2d20-40bc-82c3-1ccd96f0a540"
 
 [[env.preview.kv_namespaces]]
