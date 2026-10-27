@@ -4,7 +4,9 @@ import { readEnvVar } from "@/app/lib/env";
 export const dynamic = "force-dynamic";
 
 export default async function Donate() {
-  const accountId = (await readEnvVar("GIVEBUTTER_WIDGET_ACCOUNT_ID"))?.trim() ?? "";
+  const accountId =
+    (await readEnvVar("GIVEBUTTER_WIDGET_ACCOUNT_ID"))?.trim() ||
+    "WCsdHvZKyriW1GgL";
 
   return (
     <div className="flex flex-col flex-1 font-sans">
@@ -38,13 +40,7 @@ export default async function Donate() {
             <p className="text-sm leading-relaxed text-text-secondary">
               Support Purple Fireflies&apos; day-to-day work feeding neighbors across Athens and Meigs counties.
             </p>
-            {accountId ? (
-              <GivebutterDonationWidget widgetId="LylWlo" accountId={accountId} />
-            ) : (
-              <p className="text-sm text-text-secondary">
-                The donation form is not available right now.
-              </p>
-            )}
+            <GivebutterDonationWidget campaignCode="GTIM3Q" accountId={accountId} />
           </div>
 
           <div className="flex flex-col gap-4">
@@ -52,13 +48,7 @@ export default async function Donate() {
             <p className="text-sm leading-relaxed text-text-secondary">
               Help neighbors keep their pets by covering vet bills, medication, food, and supplies.
             </p>
-            {accountId ? (
-              <GivebutterDonationWidget widgetId="gKZrZD" accountId={accountId} />
-            ) : (
-              <p className="text-sm text-text-secondary">
-                The donation form is not available right now.
-              </p>
-            )}
+            <GivebutterDonationWidget campaignCode="QXB4GF" accountId={accountId} />
           </div>
         </div>
       </section>

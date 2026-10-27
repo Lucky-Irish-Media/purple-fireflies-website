@@ -3,11 +3,13 @@ import type { DetailedHTMLProps, HTMLAttributes } from "react";
 declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
-      "givebutter-widget": DetailedHTMLProps<
+      "givebutter-giving-form": DetailedHTMLProps<
         HTMLAttributes<HTMLElement>,
         HTMLElement
       > & {
-        id?: string;
+        campaign?: string;
+        account?: string;
+        "theme-color"?: string;
       };
     }
   }

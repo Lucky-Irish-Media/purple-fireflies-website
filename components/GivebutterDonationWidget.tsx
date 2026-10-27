@@ -5,18 +5,18 @@ import { useEffect, useState } from "react";
 
 const LIBRARY_URL = "https://widgets.givebutter.com/latest.umd.cjs";
 const LIBRARY_PLATFORM = "other";
-const WIDGET_TAG = "givebutter-widget";
+const WIDGET_TAG = "givebutter-giving-form";
 const BLOCKED_AFTER_MS = 10_000;
 
 type WidgetStatus = "pending" | "ready" | "blocked";
 
 interface GivebutterDonationWidgetProps {
-  widgetId: string;
+  campaignCode: string;
   accountId: string;
 }
 
 export default function GivebutterDonationWidget({
-  widgetId,
+  campaignCode,
   accountId,
 }: GivebutterDonationWidgetProps) {
   const [status, setStatus] = useState<WidgetStatus>("pending");
@@ -36,6 +36,8 @@ export default function GivebutterDonationWidget({
   function handleLibraryReady() {
     setStatus(window.customElements.get(WIDGET_TAG) ? "ready" : "blocked");
   }
+
+  const donateUrl = `https://givebutter.com/c/${campaignCode}`;
 
   return (
     <div>
@@ -61,8 +63,17 @@ export default function GivebutterDonationWidget({
           </p>
           <p className="mt-1 text-sm leading-relaxed text-text-secondary">
             A script blocker may be preventing Givebutter&apos;s form from
-            appearing.
+            appearing. You can still give on the campaign page.
           </p>
+          <a
+            href={donateUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold"
+            style={{ color: "#7C3AED" }}
+          >
+            Open the campaign page →
+          </a>
         </div>
       ) : (
         <>
@@ -71,7 +82,11 @@ export default function GivebutterDonationWidget({
               Loading the donation form...
             </p>
           ) : null}
-          <givebutter-widget id={widgetId} />
+          <givebutter-giving-form
+            campaign={campaignCode}
+            account={accountId}
+            theme-color="#7C3AED"
+          />
         </>
       )}
     </div>
