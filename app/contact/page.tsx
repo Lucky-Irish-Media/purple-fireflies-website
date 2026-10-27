@@ -1,46 +1,113 @@
 export const metadata = {
   title: "Get Involved | Purple Fireflies",
   description:
-    "Volunteer with Purple Fireflies: communication, collaboration outreach, tech support, pet program, fundraising, flyers and zines, and recruitment.",
+    "Seven ways to help Purple Fireflies: general volunteering, training, neighborhood outreach, tech support, fundraising, communications, and youth projects.",
 };
 
 const CONTACT_EMAIL = "info@purplefireflies.org";
 
-const interests = [
-  {
-    icon: "📣",
-    name: "Communication, newsletter, and social media",
-    blurb: "Getting the word out. Flyers, social posts, and newsletters, done well enough that people actually read them.",
-  },
+const branches = [
   {
     icon: "🤝",
-    name: "Reaching out to other organizations for collaborations",
-    blurb: "Build relationships with vets, animal organizations, and other food organizations that refer people to us or partner on projects.",
+    name: "General Volunteer",
+    blurb:
+      "Show up where you are needed and pitch in. If something needs doing this week, we can probably use a hand.",
+    tasks: [
+      "Deliver meals, drive neighbors to appointments, and run supply runs",
+      "Call or text neighbors to confirm details and see how they are doing",
+      "Sort, pack, and stock pantry and supply shelves",
+      "Set up, run, and tear down community events",
+    ],
+    fit: "you have a few free hours and don't need a title to do useful work.",
+    link: "/programs/meal-delivery",
+    linkLabel: "See Meal Delivery",
+  },
+  {
+    icon: "🎓",
+    name: "Training",
+    blurb:
+      "Help us teach the skills our programs depend on. Run a session, co-facilitate one, or build the curriculum from nothing.",
+    tasks: [
+      "Run or co-facilitate training sessions on de-escalation, safety, and legal rights",
+      "Write and revise training materials, handouts, and slide decks",
+      "Schedule trainings, manage signups, and handle logistics",
+      "Get trained yourself first, then teach the next group",
+    ],
+    fit: "you know a topic well enough to explain it twice to different people.",
+    link: "/programs/legal-observers",
+    linkLabel: "See Legal Observers",
+  },
+  {
+    icon: "📣",
+    name: "Neighborhood Outreach",
+    blurb:
+      "Most people find us because a neighbor told them. You are the reason the next block hears about us.",
+    tasks: [
+      "Talk with neighbors at events, churches, schools, clinics, and local businesses",
+      "Hand out flyers and program information in high-traffic places",
+      "Build relationships with community organizations that refer people to us",
+      "Bring us leads, feedback, and the questions your neighbors are actually asking",
+    ],
+    fit: "you know the neighborhood, or you want to, and you are not shy about talking to strangers.",
+    link: "/programs/springfield-neighbors",
+    linkLabel: "See Springfield Neighbors",
   },
   {
     icon: "💻",
-    name: "Tech support",
-    blurb: "Website updates and keeping the tools we rely on running.",
-  },
-  {
-    icon: "🐾",
-    name: "Pet program",
-    blurb: "Taking photos, purchasing items, and possibly helping with rides to vets.",
+    name: "Tech Support",
+    blurb:
+      "Keep the tools we rely on running. This site, our signups and databases, our email, and the pile of hardware in between.",
+    tasks: [
+      "Fix bugs and build small features on this website",
+      "Keep laptops, phones, printers, and routers alive",
+      "Help people with accounts, email, and basic digital security",
+      "Set up the tools that make everyone else's job easier",
+    ],
+    fit: "you are comfortable with tech and would rather fix it than wait for somebody else.",
   },
   {
     icon: "💛",
-    name: "Fundraising",
-    blurb: "Events or getting our word out. Running campaigns, drives, and donation drives.",
+    name: "Financial / Resources",
+    blurb:
+      "Fundraising and money management. Every dollar we move has paperwork behind it, and every grant we chase has a deadline.",
+    tasks: [
+      "Run fundraising campaigns, drives, and donation drives",
+      "Track expenses, budgets, and reimbursements so the books are honest",
+      "Prepare grant applications and funder reports",
+      "Manage donor records, acknowledgments, and receipts",
+    ],
+    fit: "you are organized, straight with numbers, and comfortable asking people for money.",
+    link: "/donate",
+    linkLabel: "See where donations go",
   },
   {
-    icon: "📄",
-    name: "Flyers and zines",
-    blurb: "Posting around the community. Design, print, and distribute flyers and zines.",
+    icon: "📱",
+    name: "Communication",
+    blurb:
+      "Getting the word out. Flyers, social posts, and newsletters, done well enough that people actually read them.",
+    tasks: [
+      "Design and print flyers, posters, and signage",
+      "Draft, schedule, and publish social media posts",
+      "Write newsletter and program announcements",
+      "Keep our public messaging clear, consistent, and on-brand",
+    ],
+    fit: "you like writing, design, or being the person who tells everyone what is happening.",
   },
   {
     icon: "🌱",
-    name: "Recruitment",
-    blurb: "We need people to help, and as we grow we need more. Help us find and welcome new volunteers.",
+    name: "Projects / Youth",
+    blurb:
+      "Big ideas and the next generation. Start new community projects from scratch, and mentor young people who want to do the same.",
+    tasks: [
+      "Design and run new community projects from idea to done",
+      "Mentor, supervise, and support youth volunteers",
+      "Plan youth events, workshops, and skill-building activities",
+      "Keep projects on track: scope it, staff it, finish it",
+    ],
+    fit: "you want to build something, not just staff something that already exists.",
+    link: "/events",
+    linkLabel: "See what's already running",
+    wide: true,
   },
 ];
 
@@ -122,9 +189,9 @@ export default function Contact() {
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
               Get Involved
             </h1>
-            <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 560, margin: "0 auto" }}>
-              Thank you for wanting to get involved! We are always in need of help in all forms.
-              Please let us know what fits your interests and schedule.
+            <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 520, margin: "0 auto" }}>
+              Seven ways to lend a hand. Read through them, pick what sounds like you, and tell us
+              you are interested. Most of this can be learned on the job.
             </p>
           </div>
         </div>
@@ -134,21 +201,19 @@ export default function Contact() {
       <section className="px-4 py-16 bg-white">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold text-foreground mb-3">Ways to Help</h2>
-          <p className="text-lg text-text-secondary leading-relaxed mb-4" style={{ maxWidth: 640 }}>
-            You do not have to choose one. Choose all that interest you. When you fill out the form
-            we will reach out and chat with you as to what roles may be the best fit. If you want to
-            help with the meal program please go to the program page to sign up.
-          </p>
-          <p className="text-sm text-text-secondary leading-relaxed mb-10" style={{ maxWidth: 640 }}>
-            Every option below is real work we are actively doing. Read the ones that pull at you,
-            or read all of them. When you are ready, sign up at the bottom of the page.
+          <p className="text-lg text-text-secondary leading-relaxed mb-10" style={{ maxWidth: 640 }}>
+            Every branch below is real work we are actively doing, not a vague interest area. Read
+            the one that pulls at you, or read all of them. When you are ready, sign up at the
+            bottom of the page.
           </p>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            {interests.map((item) => (
+            {branches.map((b) => (
               <div
-                key={item.name}
-                className="flex flex-col p-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                key={b.name}
+                className={`flex flex-col p-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+                  b.wide ? "sm:col-span-2" : ""
+                }`}
                 style={{
                   background: "#fff",
                   border: "1px solid rgba(124,58,237,0.12)",
@@ -159,10 +224,40 @@ export default function Contact() {
                   className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl"
                   style={{ background: "rgba(124,58,237,0.08)" }}
                 >
-                  {item.icon}
+                  {b.icon}
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{item.name}</h3>
-                <p className="text-sm text-text-secondary leading-relaxed">{item.blurb}</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">{b.name}</h3>
+                <p className="text-sm text-text-secondary leading-relaxed">{b.blurb}</p>
+
+                <ul className={`mt-4 grid gap-2.5 ${b.wide ? "sm:grid-cols-2 sm:gap-x-8" : ""}`}>
+                  {b.tasks.map((t) => (
+                    <li key={t} className="flex gap-2.5 text-sm text-text-secondary leading-relaxed">
+                      <span
+                        aria-hidden="true"
+                        className="mt-2 h-1 w-1 shrink-0 rounded-full"
+                        style={{ background: "rgba(124,58,237,0.5)" }}
+                      />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p
+                  className="mt-4 rounded-lg px-3 py-2.5 text-sm leading-relaxed text-foreground"
+                  style={{ background: "rgba(124,58,237,0.06)" }}
+                >
+                  <span className="font-semibold">Good fit if</span> {b.fit}
+                </p>
+
+                {b.link && (
+                  <a
+                    href={b.link}
+                    className="mt-auto pt-5 text-sm font-semibold transition-colors"
+                    style={{ color: "#7C3AED" }}
+                  >
+                    {b.linkLabel} →
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -242,44 +337,13 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Contact info in bigger font */}
-      <section className="px-4 py-12">
-        <div className="max-w-5xl mx-auto">
-          <div
-            className="rounded-xl p-6 sm:p-8 text-center"
-            style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}
-          >
-            <h2 className="text-2xl font-bold text-foreground mb-4">Contact Us Directly</h2>
-            <p className="text-base text-text-secondary leading-relaxed mb-6" style={{ maxWidth: 640, margin: "0 auto" }}>
-              Reach out by phone or email and we will get back to you.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <a
-                href="tel:+17408194003"
-                className="text-2xl font-bold transition-colors"
-                style={{ color: "#7C3AED" }}
-              >
-                (740) 819-4003
-              </a>
-              <a
-                href="mailto:info@purplefireflies.org"
-                className="text-2xl font-bold transition-colors"
-                style={{ color: "#7C3AED" }}
-              >
-                info@purplefireflies.org
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Contact cards */}
       <section className="px-4 py-16 bg-white">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold text-foreground mb-3">Get in Touch</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-10" style={{ maxWidth: 640 }}>
-            Whichever way you reach us, mention the interests you are open to. It gets you matched
-            faster.
+            Whichever way you reach us, mention the branch or branches you are interested in. It
+            gets you matched faster.
           </p>
 
           <div className="grid gap-6 sm:grid-cols-2">
