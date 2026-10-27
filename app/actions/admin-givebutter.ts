@@ -38,11 +38,11 @@ export async function refreshGivebutterTotalsAction(
   try {
     const result = await refreshCampaignTotals();
 
-    revalidatePath("/admin/programs/community-pets");
+    revalidatePath("/admin/programs/sponsor-a-pet");
     revalidatePath("/admin/programs");
     // "layout" reaches the pet detail pages too, so each profile picks up its
     // new totals instead of waiting for its own revalidation window.
-    revalidatePath("/programs/community-pets", "layout");
+    revalidatePath("/programs/sponsor-a-pet", "layout");
 
     const updatedLabel = `${result.updated} pet${result.updated === 1 ? "" : "s"}`;
     const parts = [

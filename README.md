@@ -18,8 +18,8 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/programs/legal-observers/signup` | Legal Observer signup form |
 | `/programs/legal-observers/request` | Coverage request form |
 | `/programs/springfield-neighbors` | Springfield Neighbors donation program info (pantry staples + Walmart eGift cards) |
-| `/programs/community-pets` | Community Pet Fund program info, transparency totals, and published pets |
-| `/programs/community-pets/[slug]` | One pet profile with photos, needs list, and sponsorship progress |
+| `/programs/sponsor-a-pet` | Sponsor a Pet Program info, transparency totals, and published pets |
+| `/programs/sponsor-a-pet/[slug]` | One pet profile with photos, needs list, and sponsorship progress |
 | `/events` | Upcoming and past community events |
 | `/community` | Community groups Purple Fireflies collaborates with (Athens County Food Info, Love Light Movement) |
 | `/news` | Articles about Purple Fireflies in the news |

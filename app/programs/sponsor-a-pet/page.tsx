@@ -13,57 +13,16 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Sponsor a Pet Program | Purple Fireflies",
   description:
-    "The Sponsor a Pet Program helps Athens County neighbors keep their pets. Money is paid as vouchers and through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored.",
+    "The Sponsor a Pet Program helps Athens County neighbors keep their pets. Money is paid through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored.",
+
 };
 
-const steps = [
-  {
-    title: "A neighbor applies",
-    body: "A pet owner, a friend, or a caseworker tells us about a pet whose household cannot cover a vet bill, medication, food, or supplies. We ask for the basics: who the pet lives with, what the need is, and what it costs.",
-  },
-  {
-    title: "The board approves a vendor payment",
-    body: "The board reviews the request and approves the amount. Money never goes to the owner in cash. Money is paid as vouchers and through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored. The receipt is recorded as an expense on the pet's page.",
-  },
-  {
-    title: "Neighbors sponsor the pet",
-    body: "Each pet gets a profile with photos, a needs list, and real costs. Neighbors give any amount, one time or monthly, and every gift is tied to that pet while it is in the program.",
-  },
-];
-
 const eligibility = [
-  "The pet lives with a neighbor in our Athens County service area.",
-  "The need is a real cost: a vet bill, medication, food, or supplies the household cannot cover.",
-  "The cost would otherwise mean the pet goes without care or leaves the home.",
-  "The owner signs a photo and story consent form before anything is published.",
-  "The vendor invoices us directly. We do not reimburse owners in cash.",
-  "Neighbors caring for colony cats can receive food and outdoor shelters through the general pet fund.",
+  "Live in Athens County",
+  "The need fills vet bills, food, or medical supplies that the household is unable to cover",
+  "Owner/Carer agrees to having someone come out to photograph pet/animal and fills out their questionnaire about their animal, as well as liability waiver.",
 ];
 
-// The tax answer is deliberately absent from this list. It is built from
-// NONPROFIT_STATUS inside the page so neither version is hardcoded here.
-const faqs = [
-  {
-    q: "What happens when a pet's needs are met?",
-    a: "Designations are honored while the pet is in the program. If the pet's needs are fully met, or the pet leaves the program, the remaining gifts stay in the Sponsor a Pet Program and go to other neighbors' pets. We say the same thing on every acknowledgment.",
-  },
-  {
-    q: "Can't choose just one pet to sponsor?",
-    a: "Donate to the general pet fund. The money goes toward food for all the pets in the program, and helps pay for outdoor shelters for those caring for colony cats.",
-  },
-  {
-    q: "How do I nominate a pet?",
-    a: "Get in touch and tell us about the pet and the cost. A vet clinic or supplier can reach out too, with the owner's permission. We follow up with the owner directly before anything is published.",
-  },
-  {
-    q: "Is this adoption?",
-    a: "No. This is not a shelter and the pets are not up for adoption. The point is to keep a pet in the home it already has by covering a cost the household cannot carry.",
-  },
-  {
-    q: "Will my name be published?",
-    a: "No. We never publish donor names, email addresses, or amounts. The pages show totals only, and owners are never named or described in a way that identifies where they live.",
-  },
-];
 
 function PetCard({ animal }: { animal: AnimalWithPhotos }) {
   const cover = animal.photos[0];
@@ -83,7 +42,7 @@ function PetCard({ animal }: { animal: AnimalWithPhotos }) {
 
   return (
     <Link
-      href={`/programs/community-pets/${animal.slug}`}
+      href={`/programs/sponsor-a-pet/${animal.slug}`}
       className="group flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
       style={{
         background: "#fff",
@@ -172,10 +131,6 @@ export default async function CommunityPetsPage() {
   );
 
   const taxCopy = getTaxStatusCopy(config.nonprofitStatus);
-  const faqsWithTax = [
-    { q: "Is my gift tax-deductible?", a: taxCopy },
-    ...faqs,
-  ];
   const hasGeneralFund =
     config.donationsEnabled &&
     Boolean(config.generalFundCampaignCode?.trim());
@@ -204,7 +159,7 @@ export default async function CommunityPetsPage() {
               Many neighbors are caring for pets and colony cats that would
               otherwise have no shelter or food. When household budgets run
               short, the Sponsor a Pet Program steps in so a pet never loses its
-              home over a vet bill. Money is paid as vouchers and through
+              home over a vet bill. Money is paid through
               agreements with vets in the area, and food is purchased by Purple
               Fireflies and distributed to the pets that are sponsored.
             </p>
@@ -251,40 +206,18 @@ export default async function CommunityPetsPage() {
           <div className="mb-8 space-y-5 text-lg leading-relaxed text-text-secondary">
             <p>
               The Sponsor a Pet Program is a neighbors helping neighbors program.
-              Funds for each pet go toward vet services - spay or neuter,
-              shots, food, and flea and tick collars - plus other care a
-              household cannot cover. Money is paid as vouchers and through
-              agreements with vets in the area, and food is purchased by Purple
-              Fireflies and distributed to the pets that are sponsored. It is not a
-              shelter, a rescue, or adoption.
+              The funds for each pet will go towards vet services
+              (spay/neuter/shots, food, and/or flea &amp; tick collar). You pick a
+              pet to sponsor with many options for how that looks for you. You set
+              the amount, and also if this is a one time donation or a monthly
+              amount. The money will go directly to those items needed; we would
+              pay the vet and purchase the food for the sponsored pet.
             </p>
             <p>
-              Purple Fireflies runs the fund as a fund, not as a crowdfunding
-              page for one person. There are published eligibility rules, a
-              board that approves each award, and an expense record for every
-              dollar. Owners are never paid in cash.
-            </p>
-            <p>
-              You can sponsor a specific pet, or donate to the general pet
-              fund to help feed all pets in the program and support outdoor
-              shelters for those caring for colony cats.
-            </p>
-          </div>
-
-          <div
-            className="mb-8 rounded-xl p-5"
-            style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}
-          >
-            <p className="font-semibold text-foreground">
-              Money is paid as vouchers and through agreements with vets
-            </p>
-            <p className="mt-2 text-base leading-relaxed text-text-secondary">
-              Money is paid as vouchers and through agreements with vets in the
-              area, and food is purchased by Purple Fireflies and distributed to
-              the pets that are sponsored. We do not pay the pet owner in cash.
-              That keeps the money tied to the actual cost, gives us a receipt for
-              every expense, and means the totals on this page are backed by
-              records rather than estimates.
+              Can&apos;t choose just one to sponsor? Donate to the general pet
+              fund and it will go towards all the pets in the programs. Also, it
+              will help pay for outdoor shelters for those caring for colony
+              cats.
             </p>
           </div>
 
@@ -292,8 +225,7 @@ export default async function CommunityPetsPage() {
             Who qualifies
           </h2>
           <p className="mb-6 text-lg leading-relaxed text-text-secondary">
-            Every request is reviewed on its own facts, and the list below is the
-            whole test:
+            To qualify, a pet must meet the following:
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {eligibility.map((item) => (
@@ -314,6 +246,10 @@ export default async function CommunityPetsPage() {
               </div>
             ))}
           </div>
+          <p className="mt-6 text-base italic leading-relaxed text-text-secondary">
+            *Please be aware we will sponsor your pet for up to 12 months, with a
+            review of needs every 3 months.
+          </p>
         </div>
       </section>
 
@@ -321,37 +257,25 @@ export default async function CommunityPetsPage() {
       <section className="px-4 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-3 text-2xl font-bold text-foreground">
-            How it works
+            How this works
           </h2>
-          <p className="mb-8 max-w-2xl text-lg leading-relaxed text-text-secondary">
-            Three steps, in this order. The vendor payment comes before any
-            fundraising, so a pet is never waiting on a campaign to start.
-          </p>
-          <div className="grid gap-6 sm:grid-cols-3">
-            {steps.map((step, index) => (
-              <div
-                key={step.title}
-                className="flex flex-col rounded-xl p-6"
-                style={{
-                  background: "#fff",
-                  border: "1px solid rgba(124,58,237,0.12)",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                }}
-              >
-                <span
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-base font-bold"
-                  style={{ background: "rgba(124,58,237,0.08)", color: "#7C3AED" }}
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mb-2 text-lg font-bold text-foreground">
-                  {step.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-text-secondary">
-                  {step.body}
-                </p>
-              </div>
-            ))}
+          <div className="mb-8 space-y-5 text-lg leading-relaxed text-text-secondary">
+            <p>
+              As funds come in for each pet the money will go towards that
+              animal&apos;s needs. Many owners are looking for assistance
+              getting their pets spayed/neutered, basic shots, and food. All
+              funds will go directly to the vet for services, and we will
+              purchase pet food. Any excess money for one pet will be put in
+              the general pet fund that will go towards the pets in the
+              program, and extra will go towards building outdoor shelters for
+              community pets.
+            </p>
+            <p>
+              Our goal is to collaborate with local vets or other organizations
+              who may be able to assist us with this program. If you are a vet or
+              an organization that would like to collaborate with us, please
+              reach out.
+            </p>
           </div>
         </div>
       </section>
@@ -409,7 +333,7 @@ export default async function CommunityPetsPage() {
       <section id="pets" className="scroll-mt-20 px-4 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-3 text-2xl font-bold text-foreground">
-            Pets in the fund
+            Pets to Sponsor
           </h2>
           <p className="mb-8 max-w-2xl text-lg leading-relaxed text-text-secondary">
             Each profile lists what the pet actually needs, what it costs, and
@@ -514,29 +438,6 @@ export default async function CommunityPetsPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="px-4 py-16">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="mb-3 text-2xl font-bold text-foreground">
-            Questions people ask
-          </h2>
-          <p className="mb-10 max-w-2xl text-lg leading-relaxed text-text-secondary">
-            If yours is not here, get in touch and we will answer it directly.
-          </p>
-          <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
-            {faqsWithTax.map((faq) => (
-              <div key={faq.q}>
-                <h3 className="mb-2 text-base font-bold text-foreground">
-                  {faq.q}
-                </h3>
-                <p className="text-sm leading-relaxed text-text-secondary">
-                  {faq.a}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Closing CTA */}
       <section className="px-4 pb-20">

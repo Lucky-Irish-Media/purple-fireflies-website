@@ -25,8 +25,8 @@ const programs = [
   {
     icon: "🐾",
     title: "Sponsor a Pet Program",
-    desc: "Help Athens County neighbors keep their pets. Money is paid as vouchers and through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored.",
-    href: "/programs/community-pets",
+    desc: "Help Athens County neighbors keep their pets. Money is paid through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored.",
+    href: "/programs/sponsor-a-pet",
     cta: "Learn more",
   },
 ];

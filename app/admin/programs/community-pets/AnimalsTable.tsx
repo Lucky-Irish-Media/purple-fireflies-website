@@ -178,7 +178,7 @@ function AnimalFormFields({
             className={inputClass}
           />
           <p className="mt-1 text-xs text-text-secondary">
-            Public URL: /programs/community-pets/{slug || "pet-slug"}
+            Public URL: /programs/sponsor-a-pet/{slug || "pet-slug"}
           </p>
           {state?.errors?.slug && (
             <p className="mt-1 text-sm text-red-500">{state.errors.slug[0]}</p>

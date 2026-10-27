@@ -185,9 +185,9 @@ async function currentState() {
 }
 
 function revalidateAnimalPaths() {
-  revalidatePath("/admin/programs/community-pets");
+  revalidatePath("/admin/programs/sponsor-a-pet");
   revalidatePath("/admin/programs");
-  revalidatePath("/programs/community-pets");
+  revalidatePath("/programs/sponsor-a-pet");
 }
 
 export async function createAnimalAction(

@@ -81,11 +81,11 @@ export default function Navbar() {
                       Springfield Neighbors
                     </Link>
                     <Link
-                      href="/programs/community-pets"
+                      href="/programs/sponsor-a-pet"
                       className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                       onClick={() => setIsProgramsOpen(false)}
                     >
-                      Community Pet Fund
+                      Sponsor a Pet
                     </Link>
                   </div>
                 </div>
@@ -175,11 +175,11 @@ export default function Navbar() {
               Programs — Springfield Neighbors
             </Link>
             <Link
-              href="/programs/community-pets"
+              href="/programs/sponsor-a-pet"
               className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
               onClick={() => setIsMobileOpen(false)}
             >
-              Programs - Community Pet Fund
+              Programs - Sponsor a Pet
             </Link>
             <Link
               href="/news"

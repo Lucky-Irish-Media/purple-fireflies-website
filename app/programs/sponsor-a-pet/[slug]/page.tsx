@@ -267,7 +267,7 @@ function SponsorBlock({
             <span className="font-semibold text-foreground">
               Where the money goes:
             </span>{" "}
-            money is paid as vouchers and through agreements with vets in the
+            money is paid through agreements with vets in the
             area, and food is purchased by Purple Fireflies and distributed to
             the pets that are sponsored. Leftover funds stay in the Sponsor a Pet
             Program for other neighbors&apos; pets.
@@ -355,7 +355,7 @@ export default async function CommunityPetPage({ params }: AnimalPageProps) {
         <div className="px-4 pb-10 pt-12">
           <div className="mx-auto max-w-5xl">
             <Link
-              href="/programs/community-pets"
+              href="/programs/sponsor-a-pet"
               className="text-sm font-semibold text-white/70 transition-colors hover:text-white"
             >
               ← Sponsor a Pet Program
@@ -498,7 +498,7 @@ export default async function CommunityPetPage({ params }: AnimalPageProps) {
             </div>
 
             <Link
-              href="/programs/community-pets"
+              href="/programs/sponsor-a-pet"
               className="inline-flex items-center gap-1 text-sm font-semibold"
               style={{ color: "#7C3AED" }}
             >
