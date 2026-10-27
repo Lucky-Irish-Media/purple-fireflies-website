@@ -466,6 +466,13 @@ export default async function CommunityPetsPage() {
                 <p className="mt-4 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
                   {taxCopy}
                 </p>
+                <p className="mt-4 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  Prefer to give through our main donation page?{" "}
+                  <Link href="/donate" className="font-semibold underline">
+                    Visit the Donate page
+                  </Link>
+                  .
+                </p>
               </div>
               <div className="rounded-xl bg-white p-6">
                 <GivebutterWidget
