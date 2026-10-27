@@ -288,19 +288,12 @@ export default async function CommunityPetsPage() {
             style={{ background: "#fff", border: "1px solid rgba(124,58,237,0.12)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
           >
             <h2 className="text-xl font-bold text-foreground">
-              Have a pet in Need?
+              Have a pet in need?
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-text-secondary">
               Tell us about your pet and the cost. We will follow up with the
               you, and nothing is published without your written consent.
             </p>
-            <Link
-              href="/contact"
-              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold"
-              style={{ color: "#7C3AED" }}
-            >
-              Nominate a pet →
-            </Link>
           </div>
         </div>
       </section>
