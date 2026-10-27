@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Sponsor a Pet Program | Purple Fireflies",
   description:
-    "The Sponsor a Pet Program helps Athens County neighbors keep their pets by paying vet clinics and suppliers directly. See the pets in the program, what has been raised and spent, and how to nominate a pet.",
+    "The Sponsor a Pet Program helps Athens County neighbors keep their pets. Money is paid as vouchers and through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored.",
 };
 
 const steps = [
@@ -23,7 +23,7 @@ const steps = [
   },
   {
     title: "The board approves a vendor payment",
-    body: "The board reviews the request and approves the amount. Money never goes to the owner in cash. We pay the vet clinic or the supplier directly, and the receipt is recorded as an expense on the pet's page.",
+    body: "The board reviews the request and approves the amount. Money never goes to the owner in cash. Money is paid as vouchers and through agreements with vets in the area, and food is purchased by Purple Fireflies and distributed to the pets that are sponsored. The receipt is recorded as an expense on the pet's page.",
   },
   {
     title: "Neighbors sponsor the pet",
@@ -204,8 +204,9 @@ export default async function CommunityPetsPage() {
               Many neighbors are caring for pets and colony cats that would
               otherwise have no shelter or food. When household budgets run
               short, the Sponsor a Pet Program steps in so a pet never loses its
-              home over a vet bill. The fund pays clinics and suppliers
-              directly.
+              home over a vet bill. Money is paid as vouchers and through
+              agreements with vets in the area, and food is purchased by Purple
+              Fireflies and distributed to the pets that are sponsored.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
@@ -252,8 +253,9 @@ export default async function CommunityPetsPage() {
               The Sponsor a Pet Program is a neighbors helping neighbors program.
               Funds for each pet go toward vet services - spay or neuter,
               shots, food, and flea and tick collars - plus other care a
-              household cannot cover. We pay the vet and purchase the food
-              directly, so the money goes to the items needed. It is not a
+              household cannot cover. Money is paid as vouchers and through
+              agreements with vets in the area, and food is purchased by Purple
+              Fireflies and distributed to the pets that are sponsored. It is not a
               shelter, a rescue, or adoption.
             </p>
             <p>
@@ -274,13 +276,15 @@ export default async function CommunityPetsPage() {
             style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}
           >
             <p className="font-semibold text-foreground">
-              Money pays vendors directly
+              Money is paid as vouchers and through agreements with vets
             </p>
             <p className="mt-2 text-base leading-relaxed text-text-secondary">
-              We pay the vet clinic or the supplier, not the pet owner. That keeps
-              the money tied to the actual cost, gives us a receipt for every
-              expense, and means the totals on this page are backed by records
-              rather than estimates.
+              Money is paid as vouchers and through agreements with vets in the
+              area, and food is purchased by Purple Fireflies and distributed to
+              the pets that are sponsored. We do not pay the pet owner in cash.
+              That keeps the money tied to the actual cost, gives us a receipt for
+              every expense, and means the totals on this page are backed by
+              records rather than estimates.
             </p>
           </div>
 

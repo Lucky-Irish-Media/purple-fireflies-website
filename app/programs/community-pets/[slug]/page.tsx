@@ -267,9 +267,10 @@ function SponsorBlock({
             <span className="font-semibold text-foreground">
               Where the money goes:
             </span>{" "}
-            gifts pay vet clinics and suppliers directly for the needs listed on
-            this page. Leftover funds stay in the Sponsor a Pet Program for other
-            neighbors&apos; pets.
+            money is paid as vouchers and through agreements with vets in the
+            area, and food is purchased by Purple Fireflies and distributed to
+            the pets that are sponsored. Leftover funds stay in the Sponsor a Pet
+            Program for other neighbors&apos; pets.
           </p>
           <p className="mt-3 text-xs leading-relaxed text-text-secondary">
             {taxCopy}
