@@ -21,7 +21,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/events` | Upcoming and past community events |
 | `/community` | Community groups Purple Fireflies collaborates with (Athens County Food Info, Love Light Movement) |
 | `/news` | Articles about Purple Fireflies in the news |
-| `/donate` | Donations page (Venmo, PayPal, Cash App, Give Butter) |
+| `/donate` | Donations page (embedded Givebutter campaigns: General Donation and Community Pets) |
 | `/contact` | Get Involved page — 7 volunteer branch cards, signup process, FAQ |
 | `/login` | Sign in (admins and volunteers) |
 | `/admin` | Admin dashboard |
