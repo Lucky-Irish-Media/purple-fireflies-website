@@ -76,18 +76,11 @@ export default function GivebutterDonationWidget({
           </a>
         </div>
       ) : (
-        <>
-          {status === "pending" ? (
-            <p className="px-1 text-sm text-text-secondary">
-              Loading the donation form...
-            </p>
-          ) : null}
-          <givebutter-giving-form
-            campaign={campaignCode}
-            account={accountId}
-            theme-color="#7C3AED"
-          />
-        </>
+        <givebutter-giving-form
+          campaign={campaignCode}
+          account={accountId}
+          theme-color="#7C3AED"
+        />
       )}
     </div>
   );
