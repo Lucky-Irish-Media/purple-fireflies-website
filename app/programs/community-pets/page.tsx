@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GivebutterWidget from "@/components/GivebutterWidget";
 import { getAnimalExpenses, getPublishedAnimals } from "@/app/lib/db";
 import {
   getCommunityPetsConfig,
@@ -36,6 +37,7 @@ const eligibility = [
   "The cost would otherwise mean the pet goes without care or leaves the home.",
   "The owner signs a photo and story consent form before anything is published.",
   "The vendor invoices us directly. We do not reimburse owners in cash.",
+  "Neighbors caring for colony cats can receive food and outdoor shelters through the general pet fund.",
 ];
 
 // The tax answer is deliberately absent from this list. It is built from
@@ -44,6 +46,10 @@ const faqs = [
   {
     q: "What happens when a pet's needs are met?",
     a: "Designations are honored while the pet is in the program. If the pet's needs are fully met, or the pet leaves the program, the remaining gifts stay in the Community Pet Fund and go to other neighbors' pets. We say the same thing on every acknowledgment.",
+  },
+  {
+    q: "Can't choose just one pet to sponsor?",
+    a: "Donate to the general pet fund. The money goes toward food for all the pets in the program, and helps pay for outdoor shelters for those caring for colony cats.",
   },
   {
     q: "How do I nominate a pet?",
@@ -170,6 +176,9 @@ export default async function CommunityPetsPage() {
     { q: "Is my gift tax-deductible?", a: taxCopy },
     ...faqs,
   ];
+  const hasGeneralFund =
+    config.donationsEnabled &&
+    Boolean(config.generalFundCampaignCode?.trim());
 
   return (
     <div className="flex flex-1 flex-col font-sans">
@@ -192,9 +201,11 @@ export default async function CommunityPetsPage() {
               className="text-lg leading-8"
               style={{ color: "rgba(255,255,255,0.75)", maxWidth: 560, margin: "0 auto 2rem" }}
             >
-              A vet bill should not be the reason a pet loses its home. The
-              Community Pet Fund covers care for neighbors&apos; pets by paying
-              clinics and suppliers directly.
+              Many neighbors are caring for pets and colony cats that would
+              otherwise have no shelter or food. When household budgets run
+              short, the Community Pet Fund steps in so a pet never loses its
+              home over a vet bill. The fund pays clinics and suppliers
+              directly.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
@@ -205,13 +216,24 @@ export default async function CommunityPetsPage() {
                 Meet the pets
               </Link>
               {config.donationsEnabled ? (
-                <Link
-                  href="#pets"
-                  className="rounded-full px-7 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20"
-                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)" }}
-                >
-                  Sponsor a pet
-                </Link>
+                <>
+                  <Link
+                    href="#pets"
+                    className="rounded-full px-7 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20"
+                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)" }}
+                  >
+                    Sponsor a pet
+                  </Link>
+                  {hasGeneralFund ? (
+                    <Link
+                      href="#general-pet-fund"
+                      className="rounded-full px-7 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20"
+                      style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)" }}
+                    >
+                      Donate to the general pet fund
+                    </Link>
+                  ) : null}
+                </>
               ) : (
                 <Link
                   href="/contact"
@@ -235,15 +257,22 @@ export default async function CommunityPetsPage() {
           <div className="mb-8 space-y-5 text-lg leading-relaxed text-text-secondary">
             <p>
               The Community Pet Fund is a neighbors helping neighbors program.
-              When a household cannot cover a vet visit, medication, food, or
-              supplies, the fund pays the bill so the pet can stay where it
-              already lives. It is not a shelter, a rescue, or adoption.
+              Funds for each pet go toward vet services - spay or neuter,
+              shots, food, and flea and tick collars - plus other care a
+              household cannot cover. We pay the vet and purchase the food
+              directly, so the money goes to the items needed. It is not a
+              shelter, a rescue, or adoption.
             </p>
             <p>
               Purple Fireflies runs the fund as a fund, not as a crowdfunding
               page for one person. There are published eligibility rules, a
               board that approves each award, and an expense record for every
               dollar. Owners are never paid in cash.
+            </p>
+            <p>
+              You can sponsor a specific pet, or donate to the general pet
+              fund to help feed all pets in the program and support outdoor
+              shelters for those caring for colony cats.
             </p>
           </div>
 
@@ -422,6 +451,40 @@ export default async function CommunityPetsPage() {
           )}
         </div>
       </section>
+
+      {/* General pet fund, the option for donors who can't pick just one */} 
+      {hasGeneralFund ? (
+        <section
+          id="general-pet-fund"
+          className="scroll-mt-20 px-4 py-16"
+          style={{ background: "linear-gradient(160deg, #3b0764 0%, #5B21B6 45%, #7C3AED 100%)" }}
+        >
+          <div className="mx-auto max-w-5xl">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <div className="text-white">
+                <h2 className="mb-3 text-2xl font-bold">
+                  Can&apos;t choose just one?
+                </h2>
+                <p className="text-lg leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  Donate to the general pet fund. Your gift goes toward food for
+                  all the pets in the program, and helps pay for outdoor shelters
+                  for those caring for colony cats.
+                </p>
+                <p className="mt-4 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  {taxCopy}
+                </p>
+              </div>
+              <div className="rounded-xl bg-white p-6">
+                <GivebutterWidget
+                  campaignCode={config.generalFundCampaignCode}
+                  accountId={config.givebutterAccountId}
+                  campaignUrl={config.generalFundCampaignUrl}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* Surplus policy, its own block rather than an FAQ footnote */}
       <section className="bg-white px-4 py-16">

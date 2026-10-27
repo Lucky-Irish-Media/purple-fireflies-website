@@ -24,13 +24,22 @@ export interface CommunityPetsConfig {
    * plain campaign link instead of an empty form.
    */
   givebutterAccountId: string;
-}
+  /**
+   * Givebutter campaign code for donations to the general pet fund (food for
+   * all pets, outdoor shelters for colony cats). When set and donations are
+   * enabled, the main page shows a "Donate to the general pet fund" option.
+   */
+  generalFundCampaignCode: string;
+  generalFundCampaignUrl: string | null;
+} 
 
 export async function getCommunityPetsConfig(): Promise<CommunityPetsConfig> {
-  const [donationsRaw, nonprofitRaw, widgetAccountRaw] = await Promise.all([
+  const [donationsRaw, nonprofitRaw, widgetAccountRaw, generalFundCodeRaw, generalFundUrlRaw] = await Promise.all([
     readEnvVar("COMMUNITY_PETS_DONATIONS_ENABLED"),
     readEnvVar("NONPROFIT_STATUS"),
     readEnvVar("GIVEBUTTER_WIDGET_ACCOUNT_ID"),
+    readEnvVar("COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_CODE"),
+    readEnvVar("COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_URL"),
   ]);
 
   return {
@@ -41,6 +50,8 @@ export async function getCommunityPetsConfig(): Promise<CommunityPetsConfig> {
     // not exactly "501c3" renders the state-only copy.
     nonprofitStatus: nonprofitRaw === "501c3" ? "501c3" : "state_only",
     givebutterAccountId: widgetAccountRaw?.trim() ?? "",
+    generalFundCampaignCode: generalFundCodeRaw?.trim() ?? "",
+    generalFundCampaignUrl: generalFundUrlRaw?.trim() || null,
   };
 }
 
