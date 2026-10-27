@@ -3,7 +3,7 @@ import "server-only";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 /**
- * Community Pet Fund photos live in a private R2 bucket and are served by the
+ * Sponsor a Pet Program photos live in a private R2 bucket and are served by the
  * Worker at `/api/media/[...key]`. Nothing outside this module talks to R2, so
  * the bucket name, key layout, and validation rules live in one place.
  *

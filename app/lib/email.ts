@@ -279,7 +279,7 @@ ${tableRows}
 }
 
 /**
- * Community Pet Fund gift acknowledgement.
+ * Sponsor a Pet Program gift acknowledgement.
  *
  * Sent once per donor per pet (the first gift), not on every recurring charge,
  * so a monthly sponsor does not get twelve near-identical emails a year. The tax
@@ -309,10 +309,10 @@ export async function sendSponsorshipAcknowledgementEmail(params: {
 
   const text = `Hi ${greeting},
 
-Thank you for sponsoring ${params.animalName} through the Community Pet Fund. Your gift of ${amount} has been received and will go toward this pet's care.
+Thank you for sponsoring ${params.animalName} through the Sponsor a Pet Program. Your gift of ${amount} has been received and will go toward this pet's care.
 
 ${taxCopy}${recurringLine}${campaignLine}
-If ${params.animalName}'s listed needs are fully met, or the pet leaves the program, any remaining gifts stay in the Community Pet Fund and support other neighbors' pets. We do not pay leftovers to the owner. We never publish donor names, email addresses, or individual gift amounts.
+If ${params.animalName}'s listed needs are fully met, or the pet leaves the program, any remaining gifts stay in the Sponsor a Pet Program and support other neighbors' pets. We do not pay leftovers to the owner. We never publish donor names, email addresses, or individual gift amounts.
 
 With gratitude,
 Purple Fireflies`;
@@ -350,7 +350,7 @@ export async function sendPlanFailureEmail(params: {
     `Next bill date: ${params.nextBillDate || "unknown"}`,
   ];
 
-  const text = `A recurring Community Pet Fund plan failed in Givebutter.
+  const text = `A recurring Sponsor a Pet Program plan failed in Givebutter.
 
 ${lines.join("\n")}
 

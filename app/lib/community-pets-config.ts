@@ -3,7 +3,7 @@ import "server-only";
 import { readEnvVar } from "@/app/lib/env";
 
 /**
- * Deployment-level switches for the public Community Pet Fund pages.
+ * Deployment-level switches for the public Sponsor a Pet Program pages.
  *
  * Both values are plain vars, not secrets: `wrangler.toml` keeps production
  * turned off until the launch gates clear and turns preview on so the sponsor

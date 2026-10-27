@@ -44,9 +44,9 @@ export async function generateMetadata({
   // An unpublished pet must not leak a title or an image through metadata.
   if (!animal || animal.is_published !== 1) {
     return {
-      title: "Pet not found | Community Pet Fund | Purple Fireflies",
+      title: "Pet not found | Sponsor a Pet Program | Purple Fireflies",
       description:
-        "This pet profile is not published. Browse the pets in the Community Pet Fund instead.",
+        "This pet profile is not published. Browse the pets in the Sponsor a Pet Program instead.",
     };
   }
 
@@ -55,7 +55,7 @@ export async function generateMetadata({
     animal.tagline?.trim() || animal.bio,
     160,
   );
-  const title = `${animal.name} | Community Pet Fund | Purple Fireflies`;
+  const title = `${animal.name} | Sponsor a Pet Program | Purple Fireflies`;
 
   return {
     title,
@@ -111,7 +111,7 @@ function PetGallery({ animal }: { animal: AnimalWithPhotos }) {
         src={`/api/media/${cover.photo_key}`}
         alt={
           cover.alt?.trim() ||
-          `${animal.name}, a ${animal.species.toLowerCase()} in the Community Pet Fund`
+          `${animal.name}, a ${animal.species.toLowerCase()} in the Sponsor a Pet Program`
         }
         width={1200}
         height={900}
@@ -268,7 +268,7 @@ function SponsorBlock({
               Where the money goes:
             </span>{" "}
             gifts pay vet clinics and suppliers directly for the needs listed on
-            this page. Leftover funds stay in the Community Pet Fund for other
+            this page. Leftover funds stay in the Sponsor a Pet Program for other
             neighbors&apos; pets.
           </p>
           <p className="mt-3 text-xs leading-relaxed text-text-secondary">
@@ -287,7 +287,7 @@ function SponsorBlock({
         </p>
         <p className="mt-2 text-sm leading-relaxed text-text-secondary">
           Sponsorship for {name} is paused because the listed needs are covered.
-          Anything given to the Community Pet Fund beyond this pet&apos;s needs
+          Anything given to the Sponsor a Pet Program beyond this pet&apos;s needs
           supports other neighbors&apos; pets.
         </p>
         <p className="mt-4 text-xs leading-relaxed text-text-secondary">
@@ -357,7 +357,7 @@ export default async function CommunityPetPage({ params }: AnimalPageProps) {
               href="/programs/community-pets"
               className="text-sm font-semibold text-white/70 transition-colors hover:text-white"
             >
-              ← Community Pet Fund
+              ← Sponsor a Pet Program
             </Link>
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <span
@@ -483,7 +483,7 @@ export default async function CommunityPetPage({ params }: AnimalPageProps) {
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">
                 Designations are honored while the pet is in the program. If the
                 listed needs are fully met, or the pet leaves the program, any
-                remaining gifts stay in the Community Pet Fund and support other
+                remaining gifts stay in the Sponsor a Pet Program and support other
                 neighbors&apos; pets. We do not pay leftovers to the owner.
               </p>
               <p className="mt-4 border-t pt-4 text-sm leading-relaxed text-text-secondary" style={{ borderColor: "rgba(245,158,11,0.25)" }}>

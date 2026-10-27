@@ -17,7 +17,7 @@ export default async function AdminCommunityPetsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-foreground">Community Pet Fund</h1>
+      <h1 className="text-2xl font-bold text-foreground">Sponsor a Pet Program</h1>
       <CommunityPetTabs
         animals={animals}
         expenses={expenses}

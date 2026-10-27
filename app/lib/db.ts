@@ -1394,7 +1394,7 @@ export async function getWaiverSignatureByParticipantId(participantId: number): 
 }
 
 // ---------------------------------------------------------------------------
-// Community Pet Fund
+// Sponsor a Pet Program
 //
 // These functions are deliberately thin: they read and write rows, nothing else.
 // The publish gate (owner consent + Givebutter campaign) and the rule that donor

@@ -11,9 +11,9 @@ import type { AnimalWithPhotos } from "@/app/lib/definitions";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Community Pet Fund | Purple Fireflies",
+  title: "Sponsor a Pet Program | Purple Fireflies",
   description:
-    "The Community Pet Fund helps Athens County neighbors keep their pets by paying vet clinics and suppliers directly. See the pets in the program, what has been raised and spent, and how to nominate a pet.",
+    "The Sponsor a Pet Program helps Athens County neighbors keep their pets by paying vet clinics and suppliers directly. See the pets in the program, what has been raised and spent, and how to nominate a pet.",
 };
 
 const steps = [
@@ -45,7 +45,7 @@ const eligibility = [
 const faqs = [
   {
     q: "What happens when a pet's needs are met?",
-    a: "Designations are honored while the pet is in the program. If the pet's needs are fully met, or the pet leaves the program, the remaining gifts stay in the Community Pet Fund and go to other neighbors' pets. We say the same thing on every acknowledgment.",
+    a: "Designations are honored while the pet is in the program. If the pet's needs are fully met, or the pet leaves the program, the remaining gifts stay in the Sponsor a Pet Program and go to other neighbors' pets. We say the same thing on every acknowledgment.",
   },
   {
     q: "Can't choose just one pet to sponsor?",
@@ -98,7 +98,7 @@ function PetCard({ animal }: { animal: AnimalWithPhotos }) {
         {cover ? (
           <img
             src={`/api/media/${cover.photo_key}`}
-            alt={cover.alt?.trim() || `${animal.name}, a ${animal.species.toLowerCase()} in the Community Pet Fund`}
+            alt={cover.alt?.trim() || `${animal.name}, a ${animal.species.toLowerCase()} in the Sponsor a Pet Program`}
             width={640}
             height={480}
             loading="lazy"
@@ -203,7 +203,7 @@ export default async function CommunityPetsPage() {
             >
               Many neighbors are caring for pets and colony cats that would
               otherwise have no shelter or food. When household budgets run
-              short, the Community Pet Fund steps in so a pet never loses its
+              short, the Sponsor a Pet Program steps in so a pet never loses its
               home over a vet bill. The fund pays clinics and suppliers
               directly.
             </p>
@@ -249,7 +249,7 @@ export default async function CommunityPetsPage() {
           </h2>
           <div className="mb-8 space-y-5 text-lg leading-relaxed text-text-secondary">
             <p>
-              The Community Pet Fund is a neighbors helping neighbors program.
+              The Sponsor a Pet Program is a neighbors helping neighbors program.
               Funds for each pet go toward vet services - spay or neuter,
               shots, food, and flea and tick collars - plus other care a
               household cannot cover. We pay the vet and purchase the food
@@ -502,7 +502,7 @@ export default async function CommunityPetsPage() {
             <p className="mt-2 text-base leading-relaxed text-text-secondary">
               A gift designated for a pet is honored while that pet is in the
               program. If the pet&apos;s needs are fully met, or the pet leaves
-              the program, any remaining money stays in the Community Pet Fund
+              the program, any remaining money stays in the Sponsor a Pet Program
               and supports other neighbors&apos; pets. We do not refund the
               difference to the donor and we do not pay it to the owner.
             </p>

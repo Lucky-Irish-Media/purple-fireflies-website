@@ -1,7 +1,7 @@
 import { getMediaObject, isServableMediaKey } from "@/app/lib/media";
 
 /**
- * Public, read-only image route for Community Pet Fund photos.
+ * Public, read-only image route for Sponsor a Pet Program photos.
  *
  * Keys are content-addressed by a UUID, so an object at a given key never
  * changes. That is what makes the year-long immutable cache safe: replacing a
