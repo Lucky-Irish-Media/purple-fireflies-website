@@ -192,10 +192,10 @@ export default async function CommunityPetsPage() {
               className="mb-5 inline-block rounded-full px-4 py-1.5 text-sm font-semibold text-white"
               style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
             >
-              Programs
+              Sponsor a Pet Program
             </span>
             <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
-              Community Pet Fund
+              Sponsor a Pet Program
             </h1>
             <p
               className="text-lg leading-8"
@@ -217,13 +217,6 @@ export default async function CommunityPetsPage() {
               </Link>
               {config.donationsEnabled ? (
                 <>
-                  <Link
-                    href="#pets"
-                    className="rounded-full px-7 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20"
-                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)" }}
-                  >
-                    Sponsor a pet
-                  </Link>
                   {hasGeneralFund ? (
                     <Link
                       href="#general-pet-fund"

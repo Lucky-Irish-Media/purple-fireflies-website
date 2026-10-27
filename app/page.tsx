@@ -24,7 +24,7 @@ const programs = [
   },
   {
     icon: "🐾",
-    title: "Community Pet Fund",
+    title: "Sponsor a Pet Program",
     desc: "Help neighbors keep their pets by covering vet and supply costs.",
     href: "/programs/community-pets",
     cta: "Learn more",
