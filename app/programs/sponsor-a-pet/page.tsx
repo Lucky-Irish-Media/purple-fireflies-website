@@ -280,6 +280,31 @@ export default async function CommunityPetsPage() {
         </div>
       </section>
 
+      {/* Have a pet in need */}
+      <section className="px-4 pb-20">
+        <div className="mx-auto max-w-5xl">
+          <div
+            className="rounded-xl p-8 text-center"
+            style={{ background: "#fff", border: "1px solid rgba(124,58,237,0.12)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+          >
+            <h2 className="text-xl font-bold text-foreground">
+              Have a pet in Need?
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-text-secondary">
+              Tell us about your pet and the cost. We will follow up with the
+              you, and nothing is published without your written consent.
+            </p>
+            <Link
+              href="/contact"
+              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold"
+              style={{ color: "#7C3AED" }}
+            >
+              Nominate a pet →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Transparency */}
       <section className="bg-white px-4 py-16">
         <div className="mx-auto max-w-5xl">
@@ -414,55 +439,8 @@ export default async function CommunityPetsPage() {
         </section>
       ) : null}
 
-      {/* Surplus policy, its own block rather than an FAQ footnote */}
-      <section className="bg-white px-4 py-16">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="mb-3 text-2xl font-bold text-foreground">
-            If a pet&apos;s needs are met
-          </h2>
-          <div
-            className="rounded-xl p-6"
-            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}
-          >
-            <p className="font-semibold text-foreground">
-              Leftover gifts stay in the fund, for other pets
-            </p>
-            <p className="mt-2 text-base leading-relaxed text-text-secondary">
-              A gift designated for a pet is honored while that pet is in the
-              program. If the pet&apos;s needs are fully met, or the pet leaves
-              the program, any remaining money stays in the Sponsor a Pet Program
-              and supports other neighbors&apos; pets. We do not refund the
-              difference to the donor and we do not pay it to the owner.
-            </p>
-          </div>
-        </div>
-      </section>
 
 
-      {/* Closing CTA */}
-      <section className="px-4 pb-20">
-        <div className="mx-auto max-w-5xl">
-          <div
-            className="rounded-xl p-8 text-center"
-            style={{ background: "#fff", border: "1px solid rgba(124,58,237,0.12)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
-          >
-            <h2 className="text-xl font-bold text-foreground">
-              Know a pet who needs a hand?
-            </h2>
-            <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-text-secondary">
-              Tell us about the pet and the cost. We will follow up with the
-              owner, and nothing is published without their written consent.
-            </p>
-            <Link
-              href="/contact"
-              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold"
-              style={{ color: "#7C3AED" }}
-            >
-              Nominate a pet →
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
