@@ -44,7 +44,7 @@ export default async function Donate() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-bold text-foreground">Community Pets</h2>
+            <h2 className="text-xl font-bold text-foreground">Sponsor Pets Program</h2>
             <p className="text-sm leading-relaxed text-text-secondary">
               Help neighbors keep their pets by covering vet bills, medication, food, and supplies.
             </p>
