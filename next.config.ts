@@ -6,11 +6,12 @@ initOpenNextCloudflareForDev();
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://widgets.givebutter.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://givebutter.com https://givebuttercdn.com",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://givebutter.com https://widgets.givebutter.com",
+  "frame-src https://givebutter.com https://*.givebutter.com",
   "base-uri 'self'",
   "form-action 'self'",
 ].join("; ");

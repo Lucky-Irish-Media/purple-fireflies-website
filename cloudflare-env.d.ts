@@ -5,4 +5,5 @@ interface CloudflareEnv {
   EMAIL_FROM?: string;
   EMAIL_API_URL?: string;
   SPRINGFIELD_BOXES_DELIVERED?: string;
+  GIVEBUTTER_WIDGET_ACCOUNT_ID?: string;
 }
