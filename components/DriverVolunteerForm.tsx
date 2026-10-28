@@ -5,6 +5,7 @@ import { submitDriverVolunteer, checkDriverWaiverStatus } from "@/app/actions/dr
 import type { DriverVolunteerFormState } from "@/app/lib/definitions";
 import { WAIVER_TEXT, WAIVER_CERTIFICATION_BULLETS, WAIVER_VERSION, WAIVER_SOURCE_URL } from "@/app/lib/waiver";
 import { LookupModal } from "@/components/LookupModal";
+import { isHolidayClosure } from "@/app/lib/delivery-day";
 
 const regions = ["North", "South", "East", "West", "The Plains", "Chauncey", "Glouster/Jacksonville/Trimble"];
 
@@ -21,14 +22,14 @@ function generateDriverDateOptions() {
 
   for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
     const dayOfWeek = d.getDay();
+    const dateStr = d.toISOString().split("T")[0];
+    if (isHolidayClosure(dateStr)) continue;
     if (dayOfWeek === 3) {
-      const dateStr = d.toISOString().split("T")[0];
       options.push({
         value: dateStr,
         label: `Wednesday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 12:00 PM`,
       });
     } else if (dayOfWeek === 4) {
-      const dateStr = d.toISOString().split("T")[0];
       options.push({
         value: dateStr,
         label: `Thursday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 5:00 PM`,

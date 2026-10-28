@@ -4,7 +4,7 @@ import { MealSignupSchema, type MealSignupFormState } from "@/app/lib/definition
 import { createMealSignup, getParticipantByEmail, createParticipant, updateParticipant, getMealSignupsByEmail, getMealSignupCountForDate, isDeliveryDateClosed, addToWaitlist } from "@/app/lib/db";
 import { sendMealSignupConfirmation } from "@/app/lib/email";
 import { checkRateLimit } from "@/app/lib/rate-limit";
-import { isStandardDeliveryDay, getMealsCapForDate } from "@/app/lib/delivery-day";
+import { isStandardDeliveryDay, getMealsCapForDate, isHolidayClosure } from "@/app/lib/delivery-day";
 
 function isFirstWednesday(dateStr: string): boolean {
   const date = new Date(dateStr + "T00:00:00");
@@ -55,6 +55,11 @@ export async function submitMealSignup(
     const nonStandardDates = data.deliveryDates.filter((d) => !isStandardDeliveryDay(d));
     if (nonStandardDates.length > 0) {
       return { message: "Meal delivery signups are only available on Wednesdays and Thursdays." };
+    }
+
+    const holidayDates = data.deliveryDates.filter((d) => isHolidayClosure(d));
+    if (holidayDates.length > 0) {
+      return { message: "Meal delivery is not available on UCM-closed holidays." };
     }
 
     if (data.veganQuantity > 0) {
