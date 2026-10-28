@@ -112,3 +112,65 @@ export function getMealsCapForDay(day: DeliveryDay): number {
 export function getMealsCapForDate(dateStr: string): number {
   return getMealsCapForDay(getDeliveryDay(dateStr));
 }
+
+// UCM (and the Episcopal Church) are closed on certain holidays, so no
+// Wednesday/Thursday meal delivery or driver pickup happens on those dates.
+// These dates are removed from the public signup forms and rejected by the
+// server actions. Admins can still schedule other days.
+function nthWeekdayOfMonth(year: number, month: number, weekday: number, n: number): Date {
+  // month is 0-based; weekday is 0 (Sun) .. 6 (Sat).
+  const first = new Date(Date.UTC(year, month, 1));
+  const offset = (weekday - first.getUTCDay() + 7) % 7;
+  const day = 1 + offset + (n - 1) * 7;
+  return new Date(Date.UTC(year, month, day));
+}
+
+function lastWeekdayOfMonth(year: number, month: number, weekday: number): Date {
+  const last = new Date(Date.UTC(year, month + 1, 0));
+  const offset = (last.getUTCDay() - weekday + 7) % 7;
+  return new Date(Date.UTC(year, month + 1, 0 - offset));
+}
+
+export function getHolidayClosureDates(year: number): Set<string> {
+  const iso = (d: Date) => d.toISOString().split("T")[0];
+  const dates = new Set<string>();
+
+  // Fixed-date holidays (with weekend observance).
+  const fixed: Array<[number, number]> = [
+    [1, 1],   // New Year's Day
+    [6, 19],  // Juneteenth
+    [7, 4],   // Independence Day
+    [11, 11], // Veterans Day
+    [12, 25], // Christmas Day
+  ];
+  for (const [m, day] of fixed) {
+    const d = new Date(Date.UTC(year, m - 1, day));
+    const dow = d.getUTCDay();
+    let observed = d;
+    if (dow === 6) observed = new Date(Date.UTC(year, m - 1, day - 1)); // Sat -> Fri
+    if (dow === 0) observed = new Date(Date.UTC(year, m - 1, day + 1)); // Sun -> Mon
+    dates.add(iso(observed));
+  }
+
+  // Weekday-based holidays.
+  dates.add(iso(nthWeekdayOfMonth(year, 0, 1, 3)));   // MLK Day: 3rd Monday Jan
+  dates.add(iso(nthWeekdayOfMonth(year, 1, 1, 3)));   // Presidents Day: 3rd Monday Feb
+  dates.add(iso(lastWeekdayOfMonth(year, 4, 1)));     // Memorial Day: last Monday May
+  dates.add(iso(nthWeekdayOfMonth(year, 8, 1, 1)));   // Labor Day: 1st Monday Sep
+  dates.add(iso(nthWeekdayOfMonth(year, 9, 1, 2)));   // Columbus Day: 2nd Monday Oct
+  dates.add(iso(nthWeekdayOfMonth(year, 10, 4, 4)));  // Thanksgiving: 4th Thursday Nov
+
+  return dates;
+}
+
+export function isHolidayClosure(dateStr: string): boolean {
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return false;
+  return getHolidayClosureDates(d.getFullYear()).has(dateStr);
+}
+
+// Backwards/alternative names for the same check.
+export const isUcmClosedDate = isHolidayClosure;
+export const isUcmClosedOnDate = isHolidayClosure;
+export const isClosedHoliday = isHolidayClosure;
+export const isHoliday = isHolidayClosure;
