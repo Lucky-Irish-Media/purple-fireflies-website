@@ -23,8 +23,21 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
-  if (path.startsWith("/admin") && session?.userId && session.role !== "admin") {
-    return NextResponse.redirect(new URL("/volunteer", req.nextUrl));
+  if (path.startsWith("/admin") && session?.userId) {
+    if (session.role !== "admin" && session.role !== "meal_coordinator") {
+      return NextResponse.redirect(new URL("/volunteer", req.nextUrl));
+    }
+
+    if (session.role === "meal_coordinator") {
+      const allowed =
+        path === "/admin/programs/meal-delivery" ||
+        path.startsWith("/admin/programs/meal-delivery/");
+      if (!allowed) {
+        return NextResponse.redirect(
+          new URL("/admin/programs/meal-delivery", req.nextUrl)
+        );
+      }
+    }
   }
 
   if (isPublicRoute && session?.userId) {

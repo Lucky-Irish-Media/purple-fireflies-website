@@ -18,7 +18,7 @@ const navLinks = [
   { href: "/admin/users", label: "Users", section: true },
 ];
 
-export function MobileSidebar() {
+export function MobileSidebar({ role }: { role?: string }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -59,7 +59,10 @@ export function MobileSidebar() {
             </div>
 
             <nav className="flex flex-col gap-1">
-              {navLinks.map((link) => {
+              {(role === "meal_coordinator"
+                ? navLinks.filter((l) => "href" in l && l.href === "/admin/programs/meal-delivery")
+                : navLinks
+              ).map((link) => {
                 if ("type" in link && link.type === "heading") {
                   return (
                     <span key={link.label} className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary">

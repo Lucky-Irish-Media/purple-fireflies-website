@@ -12,7 +12,7 @@ export default async function AdminLayout({
 }) {
   const session = await verifySession();
 
-  if (session.role !== "admin") {
+  if (session.role !== "admin" && session.role !== "meal_coordinator") {
     redirect("/volunteer");
   }
 
@@ -21,7 +21,7 @@ export default async function AdminLayout({
       <header className="bg-gradient-to-r from-primary-dark to-primary shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-2 sm:gap-6">
-            <MobileSidebar />
+            <MobileSidebar role={session.role} />
             <Link
               href="/admin"
               className="text-lg font-bold text-white tracking-tight"
@@ -52,7 +52,7 @@ export default async function AdminLayout({
         </div>
       </header>
 
-      <DesktopNav />
+      <DesktopNav role={session.role} />
 
       <main className="flex-1 p-4 sm:p-6">{children}</main>
     </div>

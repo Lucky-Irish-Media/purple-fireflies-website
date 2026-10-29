@@ -72,6 +72,7 @@ function UserFormFields({ state, user }: {
           >
             <option value="member">Member</option>
             <option value="volunteer">Volunteer</option>
+            <option value="meal_coordinator">Meal Coordinator</option>
             <option value="admin">Admin</option>
           </select>
           {state?.errors?.role && (
