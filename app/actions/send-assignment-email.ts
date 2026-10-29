@@ -15,7 +15,10 @@ export async function sendAssignmentEmail(
   formData: FormData,
 ): Promise<SendAssignmentEmailState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role === "reports_viewer") {
+      return { success: false, message: "Unauthorized. Reports viewers have read-only access." };
+    }
 
     const signupId = Number(formData.get("signup_id"));
     const driverId = Number(formData.get("driver_id"));

@@ -352,7 +352,7 @@ export async function getDriverVolunteersByEmailOrPhone(email: string, phone: st
   return result.results || [];
 }
 
-export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator";
+export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator" | "content_editor" | "reports_viewer";
 export type UserStatus = "active" | "pending";
 
 export interface DriverAssignment {

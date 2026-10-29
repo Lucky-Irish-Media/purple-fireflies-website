@@ -6,6 +6,8 @@ import { getHomePathForRole } from "@/app/lib/auth-utils";
 const protectedRoutes = ["/admin", "/volunteer"];
 const publicRoutes = ["/login"];
 
+const ADMIN_ROLES = ["admin", "meal_coordinator", "content_editor", "reports_viewer"];
+
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
@@ -24,7 +26,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   if (path.startsWith("/admin") && session?.userId) {
-    if (session.role !== "admin" && session.role !== "meal_coordinator") {
+    if (!ADMIN_ROLES.includes(session.role)) {
       return NextResponse.redirect(new URL("/volunteer", req.nextUrl));
     }
 
@@ -36,6 +38,25 @@ export default async function middleware(req: NextRequest) {
         return NextResponse.redirect(
           new URL("/admin/programs/meal-delivery", req.nextUrl)
         );
+      }
+    }
+
+    if (session.role === "content_editor") {
+      const allowed =
+        path === "/admin/events" ||
+        path.startsWith("/admin/events/") ||
+        path === "/admin/news" ||
+        path.startsWith("/admin/news/");
+      if (!allowed) {
+        return NextResponse.redirect(new URL("/admin/events", req.nextUrl));
+      }
+    }
+
+    if (session.role === "reports_viewer") {
+      const allowed =
+        path === "/admin/reports" || path.startsWith("/admin/reports/");
+      if (!allowed) {
+        return NextResponse.redirect(new URL("/admin/reports", req.nextUrl));
       }
     }
   }

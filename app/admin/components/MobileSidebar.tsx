@@ -61,6 +61,10 @@ export function MobileSidebar({ role }: { role?: string }) {
             <nav className="flex flex-col gap-1">
               {(role === "meal_coordinator"
                 ? navLinks.filter((l) => "href" in l && l.href === "/admin/programs/meal-delivery")
+                : role === "content_editor"
+                ? navLinks.filter((l) => "href" in l && (l.href === "/admin/events" || l.href === "/admin/news"))
+                : role === "reports_viewer"
+                ? navLinks.filter((l) => "href" in l && l.href === "/admin/reports")
                 : navLinks
               ).map((link) => {
                 if ("type" in link && link.type === "heading") {

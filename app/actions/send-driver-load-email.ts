@@ -16,7 +16,10 @@ export async function sendDriverLoadEmail(
   formData: FormData,
 ): Promise<SendDriverLoadEmailState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role === "reports_viewer") {
+      return { success: false, message: "Unauthorized. Reports viewers have read-only access." };
+    }
 
     const driverId = Number(formData.get("driver_id"));
     const deliveryDate = formData.get("delivery_date") as string;

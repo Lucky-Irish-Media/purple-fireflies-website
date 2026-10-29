@@ -11,7 +11,7 @@ import { sendInviteEmail } from "@/app/lib/email";
 const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required.").trim(),
   email: z.string().email("Please enter a valid email.").trim(),
-  role: z.enum(["admin", "member", "volunteer", "meal_coordinator"], "Please select a role."),
+  role: z.enum(["admin", "member", "volunteer", "meal_coordinator", "content_editor", "reports_viewer"], "Please select a role."),
 });
 
 export type UsersActionState = {
@@ -25,7 +25,7 @@ const UpdateUserSchema = z.object({
   id: z.coerce.number(),
   name: z.string().min(1, "Name is required.").trim(),
   email: z.string().email("Please enter a valid email.").trim(),
-  role: z.enum(["admin", "member", "volunteer", "meal_coordinator"], "Please select a role."),
+  role: z.enum(["admin", "member", "volunteer", "meal_coordinator", "content_editor", "reports_viewer"], "Please select a role."),
 });
 
 export async function updateUserAction(

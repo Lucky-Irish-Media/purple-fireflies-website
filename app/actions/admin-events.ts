@@ -32,7 +32,10 @@ export async function createEventAction(
   formData: FormData,
 ): Promise<EventsActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role !== "admin" && session.role !== "content_editor") {
+      return { success: false, message: "Unauthorized. Only content editors can manage events." };
+    }
 
     const validated = EventSchema.safeParse({
       title: toField(formData.get("title")),
@@ -76,7 +79,10 @@ export async function updateEventAction(
   formData: FormData,
 ): Promise<EventsActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role !== "admin" && session.role !== "content_editor") {
+      return { success: false, message: "Unauthorized. Only content editors can manage events." };
+    }
 
     const validated = UpdateEventSchema.safeParse({
       id: formData.get("id"),
@@ -121,7 +127,10 @@ export async function deleteEventAction(
   formData: FormData,
 ): Promise<EventsActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role !== "admin" && session.role !== "content_editor") {
+      return { success: false, message: "Unauthorized. Only content editors can manage events." };
+    }
 
     const id = Number(formData.get("id"));
     if (!id) {

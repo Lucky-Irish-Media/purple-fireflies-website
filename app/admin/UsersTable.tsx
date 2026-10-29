@@ -73,6 +73,8 @@ function UserFormFields({ state, user }: {
             <option value="member">Member</option>
             <option value="volunteer">Volunteer</option>
             <option value="meal_coordinator">Meal Coordinator</option>
+            <option value="content_editor">Content Editor</option>
+            <option value="reports_viewer">Reports Viewer</option>
             <option value="admin">Admin</option>
           </select>
           {state?.errors?.role && (
@@ -105,10 +107,44 @@ function UserFormFields({ state, user }: {
   );
 }
 
+const ROLE_INFO: { role: string; description: string; permissions: string }[] = [
+  {
+    role: "member",
+    description: "Standard authenticated member account with no admin access.",
+    permissions: "No admin surfaces.",
+  },
+  {
+    role: "volunteer",
+    description: "Volunteer account created from public signup; pending admin approval before login.",
+    permissions: "Volunteer portal only.",
+  },
+  {
+    role: "meal_coordinator",
+    description: "Coordinates meal delivery without full admin access.",
+    permissions: "Meal signups, driver volunteers, assignments, waitlist, closed delivery dates.",
+  },
+  {
+    role: "content_editor",
+    description: "Manages public-facing content only.",
+    permissions: "Events and news (create, edit, delete). No users, meal delivery, reports, or finance.",
+  },
+  {
+    role: "reports_viewer",
+    description: "Read-only access to meal delivery reports and dashboards.",
+    permissions: "All report tabs (read-only). Cannot send emails or modify data.",
+  },
+  {
+    role: "admin",
+    description: "Full access to every admin surface and user management.",
+    permissions: "All admin pages and actions, including user management.",
+  },
+];
+
 export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [rolesModalOpen, setRolesModalOpen] = useState(false);
 
   const [createState, createAction, createPending] = useActionState<
     UsersActionState,
@@ -295,12 +331,20 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     <section className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-foreground">Users</h2>
-        <button
-          onClick={handleCreateAddForm}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
-        >
-          Add User
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setRolesModalOpen(true)}
+            className="rounded-lg border border-primary/10 px-4 py-2 text-sm font-semibold text-foreground transition-all hover:bg-primary/5"
+          >
+            View Roles
+          </button>
+          <button
+            onClick={handleCreateAddForm}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
+          >
+            Add User
+          </button>
+        </div>
       </div>
 
       <p className="text-text-secondary">Total users: {users.length}</p>
@@ -333,6 +377,33 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
               : (editingUser ? "Save Changes" : "Create User")}
           </button>
         </form>
+      </Modal>
+
+      <Modal open={rolesModalOpen} onClose={() => setRolesModalOpen(false)} title="Roles & Permissions">
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Available roles and what each can access in the admin panel.
+          </p>
+          <div className="space-y-3">
+            {ROLE_INFO.map((info) => (
+              <div
+                key={info.role}
+                className="rounded-lg border border-primary/10 p-3 space-y-1"
+              >
+                <div className="flex items-center gap-2">
+                  {getRoleBadge(info.role)}
+                  <span className="text-sm font-semibold text-foreground capitalize">
+                    {info.role.replace(/_/g, " ")}
+                  </span>
+                </div>
+                <p className="text-sm text-text-secondary">{info.description}</p>
+                <p className="text-xs text-text-secondary">
+                  <span className="font-medium text-foreground">Access:</span> {info.permissions}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </Modal>
 
       {deleteState?.message && (

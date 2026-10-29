@@ -37,7 +37,10 @@ export async function createNewsAction(
   formData: FormData,
 ): Promise<NewsActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role !== "admin" && session.role !== "content_editor") {
+      return { success: false, message: "Unauthorized. Only content editors can manage news." };
+    }
 
     const validated = NewsArticleSchema.safeParse({
       title: toField(formData.get("title")),
@@ -77,7 +80,10 @@ export async function updateNewsArticleAction(
   formData: FormData,
 ): Promise<NewsActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role !== "admin" && session.role !== "content_editor") {
+      return { success: false, message: "Unauthorized. Only content editors can manage news." };
+    }
 
     const validated = UpdateNewsArticleSchema.safeParse({
       id: formData.get("id"),
@@ -118,7 +124,10 @@ export async function deleteNewsArticleAction(
   formData: FormData,
 ): Promise<NewsActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
+    if (session.role !== "admin" && session.role !== "content_editor") {
+      return { success: false, message: "Unauthorized. Only content editors can manage news." };
+    }
 
     const id = Number(formData.get("id"));
     if (!id) {
