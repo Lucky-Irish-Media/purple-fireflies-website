@@ -120,6 +120,12 @@ export function getRoleBadge(role: string) {
           ? "bg-purple-100 text-purple-800"
           : role === "volunteer"
           ? "bg-green-100 text-green-800"
+          : role === "meal_coordinator"
+          ? "bg-orange-100 text-orange-800"
+          : role === "content_editor"
+          ? "bg-indigo-100 text-indigo-800"
+          : role === "reports_viewer"
+          ? "bg-teal-100 text-teal-800"
           : "bg-blue-100 text-blue-800"
       }`}
     >

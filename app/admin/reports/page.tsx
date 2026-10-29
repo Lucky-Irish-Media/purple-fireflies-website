@@ -1,3 +1,4 @@
+import { verifySession } from "@/app/lib/dal";
 import {
   getWeeklyAssignments,
   getUnassignedSignups,
@@ -11,6 +12,8 @@ import {
 import ReportsTabs from "./ReportsTabs";
 
 export default async function AdminReportsPage() {
+  const session = await verifySession();
+
   const [
     weeklyAssignments,
     unassignedSignups,
@@ -35,6 +38,7 @@ export default async function AdminReportsPage() {
 
   return (
     <ReportsTabs
+      role={session.role}
       weeklyAssignments={weeklyAssignments}
       unassignedSignups={unassignedSignups}
       driverLoad={driverLoad}

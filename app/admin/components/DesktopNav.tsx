@@ -13,12 +13,23 @@ const navLinks = [
   { href: "/admin/users", label: "Users" },
 ];
 
-export function DesktopNav() {
+export function DesktopNav({ role }: { role?: string }) {
   const pathname = usePathname();
+
+  let visibleLinks = navLinks;
+  if (role === "meal_coordinator") {
+    visibleLinks = navLinks.filter((link) => link.href === "/admin/programs/meal-delivery");
+  } else if (role === "content_editor") {
+    visibleLinks = navLinks.filter(
+      (link) => link.href === "/admin/events" || link.href === "/admin/news",
+    );
+  } else if (role === "reports_viewer") {
+    visibleLinks = navLinks.filter((link) => link.href === "/admin/reports");
+  }
 
   return (
     <nav className="hidden sm:flex items-center gap-1 px-4 sm:px-6 lg:px-8 py-2 bg-card border-b border-primary/10">
-      {navLinks.map((link, i) => {
+      {visibleLinks.map((link, i) => {
         const isActive = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href));
         return (
           <span key={link.href} className="flex items-center gap-1">

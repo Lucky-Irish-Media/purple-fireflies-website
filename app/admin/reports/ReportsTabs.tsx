@@ -239,6 +239,7 @@ const mtotCols = [
 ];
 
 interface Props {
+  role?: string;
   weeklyAssignments: WeeklyAssignmentRow[];
   unassignedSignups: UnassignedSignup[];
   driverLoad: DriverLoadRow[];
@@ -251,6 +252,7 @@ interface Props {
 }
 
 export default function ReportsTabs({
+  role,
   weeklyAssignments,
   unassignedSignups,
   driverLoad,
@@ -262,6 +264,14 @@ export default function ReportsTabs({
   weeks,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("weekly");
+
+  const showEmailActions = role !== "reports_viewer";
+  const weeklyColumns = showEmailActions
+    ? weekCols
+    : weekCols.filter((c) => (c as { id?: string }).id !== "send_email");
+  const driverLoadColumns = showEmailActions
+    ? dlCols
+    : dlCols.filter((c) => (c as { id?: string }).id !== "send_email");
 
   return (
     <div className="space-y-6">
@@ -304,7 +314,7 @@ export default function ReportsTabs({
                 <div className="p-4">
                   <DataTable
                     data={weekRows}
-                    columns={weekCols}
+                    columns={weeklyColumns}
                     enableFiltering={false}
                     pageSize={50}
                   />
@@ -355,7 +365,7 @@ export default function ReportsTabs({
           {driverLoad.length > 0 ? (
             <DataTable
               data={driverLoad}
-              columns={dlCols}
+              columns={driverLoadColumns}
               pageSize={20}
               initialSorting={[{ id: "delivery_date", desc: true }]}
             />
