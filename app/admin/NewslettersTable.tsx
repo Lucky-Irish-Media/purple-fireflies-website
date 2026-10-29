@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useMemo } from "react";
+import { useState, useActionState, useMemo, useRef } from "react";
 import type { Newsletter } from "@/app/lib/definitions";
 import {
   createNewsletterAction,
@@ -35,6 +35,32 @@ export default function NewslettersTable({
   const [testEmail, setTestEmail] = useState("");
   const [testingId, setTestingId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  function wrapSelection(open: string, close: string = open) {
+    const el = bodyRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const value = el.value;
+    const selected = value.slice(start, end);
+    const replacement = `${open}${selected || "text"}${close}`;
+    el.value = value.slice(0, start) + replacement + value.slice(end);
+    el.focus();
+    el.selectionStart = start + open.length;
+    el.selectionEnd = start + open.length + (selected ? selected.length : 4);
+  }
+
+  function insertBlock(tag: string) {
+    const el = bodyRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const value = el.value;
+    const block = `<${tag}>New ${tag}</${tag}>\n`;
+    el.value = value.slice(0, start) + block + value.slice(start);
+    el.focus();
+    el.selectionStart = el.selectionEnd = start + block.length;
+  }
 
   const [createState, createAction, createPending] = useActionState<NewsletterActionState, FormData>(
     async (prev, formData) => {
@@ -110,7 +136,7 @@ export default function NewslettersTable({
     fd.append("file", file);
     const result = await uploadNewsletterImageAction(fd);
     if (result.success && result.url) {
-      const bodyEl = document.getElementById("nl-body") as HTMLTextAreaElement | null;
+      const bodyEl = bodyRef.current;
       if (bodyEl) {
         const imgTag = `<img src="${result.url}" alt="" style="max-width:100%;" />`;
         bodyEl.value = bodyEl.value + "\n" + imgTag;
@@ -285,9 +311,22 @@ export default function NewslettersTable({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Body (HTML)</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Body (rich text)</label>
+              <div className="flex flex-wrap gap-1 mb-2">
+                <button type="button" onClick={() => insertBlock("h2")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H2</button>
+                <button type="button" onClick={() => insertBlock("h3")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H3</button>
+                <button type="button" onClick={() => wrapSelection("<strong>", "</strong>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bold</button>
+                <button type="button" onClick={() => wrapSelection("<em>", "</em>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Italic</button>
+                <button type="button" onClick={() => {
+                  const url = prompt("Link URL:");
+                  if (url) wrapSelection(`<a href="${url}">`, "</a>");
+                }} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Link</button>
+                <button type="button" onClick={() => insertBlock("ul")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">List</button>
+                <button type="button" onClick={() => insertBlock("p")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Paragraph</button>
+              </div>
               <textarea
                 id="nl-body"
+                ref={bodyRef}
                 name="body"
                 rows={12}
                 defaultValue={editing?.body || ""}
