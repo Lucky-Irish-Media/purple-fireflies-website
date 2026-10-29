@@ -1,3 +1,5 @@
+import NewsletterSubscribeForm from "@/components/NewsletterSubscribeForm";
+
 export const metadata = {
   title: "Get Involved | Purple Fireflies",
   description:
@@ -115,6 +117,13 @@ export default function Contact() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-12" style={{ background: "linear-gradient(160deg, #3b0764 0%, #5B21B6 45%, #7C3AED 100%)" }}>
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Subscribe to our newsletter</h2>
+          <NewsletterSubscribeForm />
         </div>
       </section>
     </div>

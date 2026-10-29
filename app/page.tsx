@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { getLatestPublishedNewsletter } from "@/app/lib/db";
+
+export const dynamic = "force-dynamic";
 
 const programs = [
   {
@@ -38,7 +41,8 @@ const programs = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const latest = await getLatestPublishedNewsletter();
   return (
     <div className="flex flex-col flex-1 font-sans">
       {/* Hero */}
@@ -115,6 +119,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Featured newsletter */}
+      {latest && (
+        <section className="px-4 py-12 bg-white border-t border-primary/10">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Latest Newsletter</h2>
+            <Link
+              href={`/newsletters/${latest.slug}`}
+              className="block rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-md"
+              style={{
+                background: "#fff",
+                border: "1px solid rgba(124,58,237,0.12)",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              }}
+            >
+              <h3 className="text-lg font-bold text-foreground mb-1">{latest.title}</h3>
+              {latest.excerpt && <p className="text-sm text-text-secondary leading-relaxed">{latest.excerpt}</p>}
+              <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: "#7C3AED" }}>
+                Read issue →
+              </span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Donate CTA */}
       <section className="px-4 py-12" style={{ background: "#F59E0B" }}>
