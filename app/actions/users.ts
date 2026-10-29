@@ -108,7 +108,8 @@ export async function createUserAction(
     };
   } catch (e) {
     console.error("createUser action error:", e);
-    return { message: "Failed to create user." };
+    const detail = e instanceof Error ? e.message : String(e);
+    return { message: `Failed to create user: ${detail}` };
   }
 }
 
