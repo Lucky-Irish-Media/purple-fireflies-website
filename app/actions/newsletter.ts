@@ -372,8 +372,7 @@ export async function uploadNewsletterImageAction(
     });
     return { success: true, url: `/newsletter-images/${key}` };
   } catch (e) {
-    const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-    console.error("uploadNewsletterImageAction error:", msg);
-    return { success: false, message: `Failed to upload image: ${msg}` };
+    console.error("uploadNewsletterImageAction error:", e);
+    return { success: false, message: "Failed to upload image." };
   }
 }
