@@ -36,34 +36,28 @@ export default function NewslettersTable({
   const [uploading, setUploading] = useState(false);
   const [bodyValue, setBodyValue] = useState("");
   useEffect(() => {
-    setBodyValue(editing?.body || "");
+    const html = editing?.body || "";
+    if (contentRef.current) {
+      contentRef.current.innerHTML = html;
+    }
+    setBodyValue(html);
+    if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
   }, [editing, modalOpen]);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const hiddenBodyRef = useRef<HTMLInputElement>(null);
 
-  function wrapSelection(open: string, close: string = open) {
-    const el = bodyRef.current;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const value = el.value;
-    const selected = value.slice(start, end);
-    const replacement = `${open}${selected || "text"}${close}`;
-    el.value = value.slice(0, start) + replacement + value.slice(end);
-    el.focus();
-    el.selectionStart = start + open.length;
-    el.selectionEnd = start + open.length + (selected ? selected.length : 4);
+  function syncBody() {
+    const html = contentRef.current?.innerHTML || "";
+    setBodyValue(html);
+    if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
   }
 
-  function insertBlock(tag: string) {
-    const el = bodyRef.current;
-    if (!el) return;
-    const start = el.selectionStart;
-    const value = el.value;
-    const block = `<${tag}>New ${tag}</${tag}>\n`;
-    el.value = value.slice(0, start) + block + value.slice(start);
-    el.focus();
-    el.selectionStart = el.selectionEnd = start + block.length;
+  function execCommand(command: string, value?: string) {
+    document.execCommand(command, false, value);
+    syncBody();
   }
+
+
 
   const [createState, createAction, createPending] = useActionState<NewsletterActionState, FormData>(
     async (prev, formData) => {
@@ -135,12 +129,11 @@ export default function NewslettersTable({
     fd.append("file", file);
     const result = await uploadNewsletterImageAction(fd);
     if (result.success && result.url) {
-      const bodyEl = bodyRef.current;
-      if (bodyEl) {
-        const imgTag = `<img src="${result.url}" alt="" style="max-width:100%;" />`;
-        const newValue = bodyEl.value + "\n" + imgTag;
-        bodyEl.value = newValue;
-        setBodyValue(newValue);
+      const el = contentRef.current;
+      if (el) {
+        el.focus();
+        document.execCommand("insertImage", false, result.url);
+        syncBody();
       }
       setActionMessage({ text: "Image uploaded. Tag appended to body.", success: true });
     } else {
@@ -257,7 +250,7 @@ export default function NewslettersTable({
       <p className="text-text-secondary">Total: {newsletters.length}</p>
 
       <Modal open={modalOpen} onClose={handleModalClose} title={editing ? "Edit Newsletter" : "New Newsletter"}>
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="space-y-4" onSubmit={() => syncBody()}>
           {editing && <input type="hidden" name="id" value={editing.id} />}
           <div className="grid grid-cols-1 gap-4">
             <div>
@@ -294,26 +287,25 @@ export default function NewslettersTable({
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Body (rich text)</label>
               <div className="flex flex-wrap gap-1 mb-2">
-                <button type="button" onClick={() => insertBlock("h2")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H2</button>
-                <button type="button" onClick={() => insertBlock("h3")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H3</button>
-                <button type="button" onClick={() => wrapSelection("<strong>", "</strong>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bold</button>
-                <button type="button" onClick={() => wrapSelection("<em>", "</em>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Italic</button>
+                <button type="button" onClick={() => execCommand("formatBlock", "h2")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H2</button>
+                <button type="button" onClick={() => execCommand("formatBlock", "h3")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H3</button>
+                <button type="button" onClick={() => execCommand("bold")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bold</button>
+                <button type="button" onClick={() => execCommand("italic")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Italic</button>
                 <button type="button" onClick={() => {
                   const url = prompt("Link URL:");
-                  if (url) wrapSelection(`<a href="${url}">`, "</a>");
+                  if (url) execCommand("createLink", url);
                 }} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Link</button>
-                <button type="button" onClick={() => insertBlock("ul")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">List</button>
-                <button type="button" onClick={() => insertBlock("p")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Paragraph</button>
+                <button type="button" onClick={() => execCommand("insertUnorderedList")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bullet List</button>
+                <button type="button" onClick={() => execCommand("insertOrderedList")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Numbered List</button>
               </div>
-              <textarea
-                id="nl-body"
-                ref={bodyRef}
-                name="body"
-                rows={12}
-                value={bodyValue}
-                onChange={(e) => setBodyValue(e.target.value)}
-                className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+              <div
+                ref={contentRef}
+                contentEditable
+                onInput={syncBody}
+                className="w-full min-h-[240px] rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                style={{ whiteSpace: "pre-wrap" }}
               />
+              <input type="hidden" name="body" ref={hiddenBodyRef} defaultValue={editing?.body || ""} />
               <div className="mt-2 flex items-center gap-2">
                 <label className="text-xs text-text-secondary">
                   Upload image:
