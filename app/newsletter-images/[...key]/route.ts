@@ -19,7 +19,8 @@ export async function GET(
     headers.set("etag", obj.httpEtag);
     return new NextResponse(obj.body, { headers });
   } catch (e) {
-    console.error("newsletter image fetch error:", e);
-    return new NextResponse("Error", { status: 500 });
+    const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    console.error("newsletter image fetch error:", msg);
+    return new NextResponse(`Error: ${msg}`, { status: 500 });
   }
 }

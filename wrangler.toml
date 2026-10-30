@@ -40,14 +40,17 @@ GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
 binding = "purple_fireflies_db"
 database_name = "purple-fireflies-db-preview"
 database_id = "dcb6e0de-2d20-40bc-82c3-1ccd96f0a540"
+remote = true
 
 [[env.preview.kv_namespaces]]
 binding = "PURPLE_FIREFLIES_KV"
 id = "88406a0a7e974df5a9203b64977bab25"
+remote = true
 
 [[env.preview.r2_buckets]]
 binding = "NEWSLETTER_IMAGES"
 bucket_name = "purple-fireflies-newsletter-images-preview"
+remote = true
 
 [observability]
 [observability.logs]

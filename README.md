@@ -76,6 +76,23 @@ Open [http://localhost:3000](http://localhost:3000) to see the result.
 - `SESSION_SECRET` — Required. Set in `.dev.vars` for local development.
 - `SPRINGFIELD_BOXES_DELIVERED` — Running total of boxes delivered by Springfield Neighbors volunteers, shown in the hero stats strip on `/programs/springfield-neighbors`. Manually maintained — bump it in `wrangler.toml` under `[vars]` (production) and `[env.preview.vars]` (preview). Anything that isn't a non-negative integer renders as `0`.
 
+### Local development against preview Cloudflare bindings
+
+By default `npm run dev` runs against a local (miniflare) emulation of the bindings. To run the Next.js dev server locally while pointing the D1/KV/R2 bindings at the **preview** Cloudflare resources instead, set `NEXT_DEV_WRANGLER_ENV=preview`:
+
+```bash
+NEXT_DEV_WRANGLER_ENV=preview npm run dev
+```
+
+The preview bindings in `wrangler.toml` have `remote = true`, so the dev server keeps running on your machine but reads/writes the preview D1 database, KV namespace, and R2 bucket. Requires an authenticated wrangler session (`npx wrangler whoami`).
+
+For the built worker, use:
+
+```bash
+npm run cf:build
+npx opennextjs-cloudflare preview --env preview
+```
+
 ## Deployment
 
 This project uses Cloudflare Workers Builds. Push to `main` and Cloudflare automatically builds and deploys.
