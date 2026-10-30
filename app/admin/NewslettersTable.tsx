@@ -33,16 +33,14 @@ export default function NewslettersTable({
   const [actionMessage, setActionMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [sendPending, setSendPending] = useState(false);
   const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
-  const [bodyValue, setBodyValue] = useState("");
   const hiddenBodyRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const html = editing?.body || "";
-    setBodyValue(html);
     if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
   }, [editing, modalOpen]);
 
   function syncBody() {
-    if (hiddenBodyRef.current) hiddenBodyRef.current.value = bodyValue;
+    // No-op: the hidden field is kept in sync by QuillEditor's onChange.
   }
 
 
@@ -258,19 +256,12 @@ export default function NewslettersTable({
                 key={editing?.id ?? "new"}
                 defaultValue={editing?.body || ""}
                 onChange={(html) => {
-                  setBodyValue(html);
                   if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
                 }}
               />
               <input type="hidden" name="body" ref={hiddenBodyRef} defaultValue={editing?.body || ""} />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Preview</label>
-              <div
-                className="rounded-lg border border-primary/10 bg-background p-4 max-h-64 overflow-auto text-sm text-foreground"
-                dangerouslySetInnerHTML={{ __html: bodyValue || "<p style='color:#9ca3af'>Nothing to preview yet.</p>" }}
-              />
-            </div>
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Status</label>
               <select
@@ -305,8 +296,8 @@ export default function NewslettersTable({
                     onClick={() => {
                       const email = testEmailRefs.current[editing.id]?.value?.trim() || "";
                       if (!email) return;
-                      syncBody();
-                      handleTest(editing.id, email, bodyValue);
+                      const body = hiddenBodyRef.current?.value || "";
+                      handleTest(editing.id, email, body);
                     }}
                     className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
                   >

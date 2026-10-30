@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { uploadNewsletterImageAction } from "@/app/actions/newsletter";
 
@@ -20,60 +19,72 @@ export default function QuillEditor({
     const container = containerRef.current;
     if (!container) return;
 
-    const quill = new Quill(container, {
-      theme: "snow",
-      placeholder: "Write your newsletter here...",
-      modules: {
-        toolbar: [
-          [{ header: [2, 3, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ color: [] }, { background: [] }],
-          ["link"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ align: [] }],
-          ["blockquote", "code-block"],
-          ["image"],
-          ["clean"],
-        ],
-      },
-    });
+    let quill: any = null;
+    let cancelled = false;
 
-    if (defaultValue) {
-      quill.clipboard.dangerouslyPasteHTML(defaultValue);
-    }
+    (async () => {
+      const mod = await import("quill");
+      const Quill = mod.default;
+      if (cancelled || !containerRef.current) return;
 
-    const emit = () => {
-      onChangeRef.current?.(quill.root.innerHTML);
-    };
-    quill.on("text-change", emit);
+      quill = new Quill(container, {
+        theme: "snow",
+        placeholder: "Write your newsletter here...",
+        modules: {
+          toolbar: [
+            [{ header: [2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            ["link"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ align: [] }],
+            ["blockquote", "code-block"],
+            ["image"],
+            ["clean"],
+          ],
+        },
+      });
 
-    const toolbar = quill.getModule("toolbar") as {
-      addHandler: (name: string, fn: () => void) => void;
-    } | null;
-    toolbar?.addHandler("image", () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        const fd = new FormData();
-        fd.append("file", file);
-        const result = await uploadNewsletterImageAction(fd);
-        if (result.success && result.url) {
-          const range = quill.getSelection(true);
-          quill.insertEmbed(range.index, "image", result.url, "user");
-          quill.setSelection(range.index + 1, 0, "user");
-        }
+      if (defaultValue) {
+        quill.clipboard.dangerouslyPasteHTML(defaultValue);
+      }
+
+      const emit = () => {
+        onChangeRef.current?.(quill.root.innerHTML);
       };
-      input.click();
-    });
+      quill.on("text-change", emit);
 
-    // Emit initial value so parent state stays in sync.
-    emit();
+      const toolbar = quill.getModule("toolbar") as {
+        addHandler: (name: string, fn: () => void) => void;
+      } | null;
+      toolbar?.addHandler("image", () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          const fd = new FormData();
+          fd.append("file", file);
+          const result = await uploadNewsletterImageAction(fd);
+          if (result.success && result.url) {
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, "image", result.url, "user");
+            quill.setSelection(range.index + 1, 0, "user");
+          }
+        };
+        input.click();
+      });
+
+      // Emit initial value so parent state stays in sync.
+      emit();
+    })();
 
     return () => {
-      quill.off("text-change", emit);
+      cancelled = true;
+      if (quill) {
+        quill.off("text-change", () => {});
+      }
       if (container) container.innerHTML = "";
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
