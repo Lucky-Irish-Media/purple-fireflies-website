@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useMemo, useRef } from "react";
+import { useState, useActionState, useMemo, useRef, useEffect } from "react";
 import type { Newsletter } from "@/app/lib/definitions";
 import {
   createNewsletterAction,
@@ -34,6 +34,10 @@ export default function NewslettersTable({
   const [sendPending, setSendPending] = useState(false);
   const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const [uploading, setUploading] = useState(false);
+  const [bodyValue, setBodyValue] = useState("");
+  useEffect(() => {
+    setBodyValue(editing?.body || "");
+  }, [editing, modalOpen]);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   function wrapSelection(open: string, close: string = open) {
@@ -134,7 +138,9 @@ export default function NewslettersTable({
       const bodyEl = bodyRef.current;
       if (bodyEl) {
         const imgTag = `<img src="${result.url}" alt="" style="max-width:100%;" />`;
-        bodyEl.value = bodyEl.value + "\n" + imgTag;
+        const newValue = bodyEl.value + "\n" + imgTag;
+        bodyEl.value = newValue;
+        setBodyValue(newValue);
       }
       setActionMessage({ text: "Image uploaded. Tag appended to body.", success: true });
     } else {
@@ -304,7 +310,8 @@ export default function NewslettersTable({
                 ref={bodyRef}
                 name="body"
                 rows={12}
-                defaultValue={editing?.body || ""}
+                value={bodyValue}
+                onChange={(e) => setBodyValue(e.target.value)}
                 className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <div className="mt-2 flex items-center gap-2">
@@ -320,6 +327,13 @@ export default function NewslettersTable({
                 </label>
                 {uploading && <span className="text-xs text-text-secondary">Uploading...</span>}
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Preview</label>
+              <div
+                className="rounded-lg border border-primary/10 bg-background p-4 max-h-64 overflow-auto text-sm text-foreground"
+                dangerouslySetInnerHTML={{ __html: bodyValue || "<p style='color:#9ca3af'>Nothing to preview yet.</p>" }}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Status</label>
