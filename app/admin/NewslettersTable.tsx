@@ -8,12 +8,12 @@ import {
   deleteNewsletterAction,
   sendNewsletterAction,
   sendTestNewsletterAction,
-  uploadNewsletterImageAction,
   type NewsletterActionState,
 } from "@/app/actions/newsletter";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate } from "./lib/utils";
+import QuillEditor from "./components/QuillEditor";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<Newsletter>();
@@ -33,29 +33,16 @@ export default function NewslettersTable({
   const [actionMessage, setActionMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [sendPending, setSendPending] = useState(false);
   const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
-  const [uploading, setUploading] = useState(false);
   const [bodyValue, setBodyValue] = useState("");
+  const hiddenBodyRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const html = editing?.body || "";
-    if (contentRef.current) {
-      contentRef.current.innerHTML = html;
-    }
     setBodyValue(html);
     if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
   }, [editing, modalOpen]);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const hiddenBodyRef = useRef<HTMLInputElement>(null);
 
   function syncBody() {
-    const html = contentRef.current?.innerHTML || "";
-    setBodyValue(html);
-    if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
-  }
-
-  function execCommand(command: string, value?: string) {
-    contentRef.current?.focus();
-    document.execCommand(command, false, value);
-    syncBody();
+    if (hiddenBodyRef.current) hiddenBodyRef.current.value = bodyValue;
   }
 
 
@@ -122,27 +109,6 @@ export default function NewslettersTable({
     setActionMessage({ text: result.message, success: result.success });
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const result = await uploadNewsletterImageAction(fd);
-    if (result.success && result.url) {
-      const el = contentRef.current;
-      if (el) {
-        el.focus();
-        document.execCommand("insertImage", false, result.url);
-        syncBody();
-      }
-      setActionMessage({ text: "Image uploaded. Tag appended to body.", success: true });
-    } else {
-      setActionMessage({ text: result.message || "Upload failed.", success: false });
-    }
-    setUploading(false);
-    e.target.value = "";
-  }
 
   const columns = useMemo(() => [
     columnHelper.accessor((row) => row.title, {
@@ -287,39 +253,16 @@ export default function NewslettersTable({
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Body (rich text)</label>
-              <div className="flex flex-wrap gap-1 mb-2">
-                <button type="button" onClick={() => execCommand("formatBlock", "<h2>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H2</button>
-                <button type="button" onClick={() => execCommand("formatBlock", "<h3>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H3</button>
-                <button type="button" onClick={() => execCommand("bold")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bold</button>
-                <button type="button" onClick={() => execCommand("italic")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Italic</button>
-                <button type="button" onClick={() => {
-                  const url = prompt("Link URL:");
-                  if (url) execCommand("createLink", url);
-                }} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Link</button>
-                <button type="button" onClick={() => execCommand("insertUnorderedList")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bullet List</button>
-                <button type="button" onClick={() => execCommand("insertOrderedList")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Numbered List</button>
-              </div>
-              <div
-                ref={contentRef}
-                contentEditable
-                onInput={syncBody}
-                className="w-full min-h-[240px] rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                style={{ whiteSpace: "pre-wrap" }}
+              <p className="mb-2 text-xs text-text-secondary">Use the toolbar to format text. Use the image button to upload an image to R2.</p>
+              <QuillEditor
+                key={editing?.id ?? "new"}
+                defaultValue={editing?.body || ""}
+                onChange={(html) => {
+                  setBodyValue(html);
+                  if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
+                }}
               />
               <input type="hidden" name="body" ref={hiddenBodyRef} defaultValue={editing?.body || ""} />
-              <div className="mt-2 flex items-center gap-2">
-                <label className="text-xs text-text-secondary">
-                  Upload image:
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="ml-2 text-xs"
-                  />
-                </label>
-                {uploading && <span className="text-xs text-text-secondary">Uploading...</span>}
-              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Preview</label>
