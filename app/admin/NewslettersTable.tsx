@@ -53,6 +53,7 @@ export default function NewslettersTable({
   }
 
   function execCommand(command: string, value?: string) {
+    contentRef.current?.focus();
     document.execCommand(command, false, value);
     syncBody();
   }
@@ -116,8 +117,8 @@ export default function NewslettersTable({
     window.location.reload();
   }
 
-  async function handleTest(id: number, email: string) {
-    const result = await sendTestNewsletterAction(id, email);
+  async function handleTest(id: number, email: string, body?: string) {
+    const result = await sendTestNewsletterAction(id, email, body);
     setActionMessage({ text: result.message, success: result.success });
   }
 
@@ -287,8 +288,8 @@ export default function NewslettersTable({
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Body (rich text)</label>
               <div className="flex flex-wrap gap-1 mb-2">
-                <button type="button" onClick={() => execCommand("formatBlock", "h2")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H2</button>
-                <button type="button" onClick={() => execCommand("formatBlock", "h3")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H3</button>
+                <button type="button" onClick={() => execCommand("formatBlock", "<h2>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H2</button>
+                <button type="button" onClick={() => execCommand("formatBlock", "<h3>")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">H3</button>
                 <button type="button" onClick={() => execCommand("bold")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Bold</button>
                 <button type="button" onClick={() => execCommand("italic")} className="rounded border border-primary/10 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/5">Italic</button>
                 <button type="button" onClick={() => {
@@ -361,7 +362,8 @@ export default function NewslettersTable({
                     onClick={() => {
                       const email = testEmailRefs.current[editing.id]?.value?.trim() || "";
                       if (!email) return;
-                      handleTest(editing.id, email);
+                      syncBody();
+                      handleTest(editing.id, email, bodyValue);
                     }}
                     className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
                   >

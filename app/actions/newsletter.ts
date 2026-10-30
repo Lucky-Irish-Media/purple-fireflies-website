@@ -323,6 +323,7 @@ export async function sendNewsletterAction(
 export async function sendTestNewsletterAction(
   id: number,
   toEmail: string,
+  body?: string,
 ): Promise<{ success: boolean; message: string }> {
   try {
     const session = await verifySession();
@@ -331,11 +332,12 @@ export async function sendTestNewsletterAction(
     }
     const newsletter = await getNewsletterById(id);
     if (!newsletter) return { success: false, message: "Newsletter not found." };
+    const htmlBody = body && body.trim() !== "" ? body : (newsletter.body || "");
     const fakeToken = crypto.randomUUID();
     await sendNewsletterIssue({
       to: toEmail,
       subject: `[TEST] ${newsletter.title}`,
-      htmlBody: newsletter.body || "",
+      htmlBody,
       unsubscribeToken: fakeToken,
     });
     return { success: true, message: `Test sent to ${toEmail}.` };
