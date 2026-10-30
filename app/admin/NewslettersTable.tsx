@@ -255,6 +255,7 @@ export default function NewslettersTable({
               <QuillEditor
                 key={editing?.id ?? "new"}
                 defaultValue={editing?.body || ""}
+                slug={editing?.slug || ""}
                 onChange={(html) => {
                   if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
                 }}

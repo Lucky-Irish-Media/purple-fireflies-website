@@ -6,9 +6,11 @@ import { uploadNewsletterImageAction } from "@/app/actions/newsletter";
 
 export default function QuillEditor({
   defaultValue = "",
+  slug,
   onChange,
 }: {
   defaultValue?: string;
+  slug?: string;
   onChange?: (html: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +68,7 @@ export default function QuillEditor({
           if (!file) return;
           const fd = new FormData();
           fd.append("file", file);
+          if (slug) fd.append("slug", slug);
           const result = await uploadNewsletterImageAction(fd);
           if (result.success && result.url) {
             const range = quill.getSelection(true);

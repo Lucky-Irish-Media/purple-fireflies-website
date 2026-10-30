@@ -358,9 +358,14 @@ export async function uploadNewsletterImageAction(
     const file = formData.get("file") as File | null;
     if (!file) return { success: false, message: "No file provided." };
 
+    const slugRaw = (formData.get("slug") as string | null) || "";
+    const slug = slugRaw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+
     const { env } = await getCloudflareContext({ async: true });
     const bucket = env.NEWSLETTER_IMAGES;
-    const key = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const folder = slug ? `newsletters/${slug}` : "newsletters/drafts";
+    const key = `${folder}/${crypto.randomUUID()}-${safeName}`;
     const arrayBuffer = await file.arrayBuffer();
     await bucket.put(key, arrayBuffer, {
       httpMetadata: { contentType: file.type || "application/octet-stream" },
