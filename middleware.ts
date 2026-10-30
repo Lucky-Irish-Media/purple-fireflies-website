@@ -46,7 +46,9 @@ export default async function middleware(req: NextRequest) {
         path === "/admin/events" ||
         path.startsWith("/admin/events/") ||
         path === "/admin/news" ||
-        path.startsWith("/admin/news/");
+        path.startsWith("/admin/news/") ||
+        path === "/admin/newsletters" ||
+        path.startsWith("/admin/newsletters/");
       if (!allowed) {
         return NextResponse.redirect(new URL("/admin/events", req.nextUrl));
       }

@@ -12,6 +12,7 @@ const navLinks = [
   { type: "heading", label: "Community" },
   { href: "/admin/events", label: "Events", section: true },
   { href: "/admin/news", label: "News", section: true },
+  { href: "/admin/newsletters", label: "Newsletters", section: true },
   { type: "heading", label: "Reports" },
   { href: "/admin/reports", label: "Meal Delivery Reports", section: true },
   { type: "heading", label: "Administration" },
@@ -62,7 +63,7 @@ export function MobileSidebar({ role }: { role?: string }) {
               {(role === "meal_coordinator"
                 ? navLinks.filter((l) => "href" in l && l.href === "/admin/programs/meal-delivery")
                 : role === "content_editor"
-                ? navLinks.filter((l) => "href" in l && (l.href === "/admin/events" || l.href === "/admin/news"))
+                ? navLinks.filter((l) => "href" in l && (l.href === "/admin/events" || l.href === "/admin/news" || l.href === "/admin/newsletters"))
                 : role === "reports_viewer"
                 ? navLinks.filter((l) => "href" in l && l.href === "/admin/reports")
                 : navLinks
@@ -75,7 +76,7 @@ export function MobileSidebar({ role }: { role?: string }) {
                   );
                 }
                 const href = "href" in link ? (link.href ?? "") : "";
-                const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+                const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"));
                 return (
                   <Link
                     key={href}
