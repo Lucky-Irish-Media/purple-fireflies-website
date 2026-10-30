@@ -32,8 +32,7 @@ export default function NewslettersTable({
   const [editing, setEditing] = useState<Newsletter | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [sendPending, setSendPending] = useState(false);
-  const [testEmail, setTestEmail] = useState("");
-  const [testingId, setTestingId] = useState<number | null>(null);
+  const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const [uploading, setUploading] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -119,13 +118,9 @@ export default function NewslettersTable({
     window.location.reload();
   }
 
-  async function handleTest(id: number) {
-    const email = testEmail || prompt("Send test to which email?", "") || "";
-    if (!email) return;
-    setTestingId(id);
+  async function handleTest(id: number, email: string) {
     const result = await sendTestNewsletterAction(id, email);
     setActionMessage({ text: result.message, success: result.success });
-    setTestingId(null);
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -207,16 +202,17 @@ export default function NewslettersTable({
                 <input
                   type="email"
                   placeholder="test email"
-                  value={testingId === nl.id ? testEmail : ""}
-                  onChange={(e) => {
-                    setTestingId(nl.id);
-                    setTestEmail(e.target.value);
+                  ref={(el) => {
+                    testEmailRefs.current[nl.id] = el;
                   }}
                   className="rounded border border-primary/10 px-2 py-1 text-xs w-36"
                 />
                 <button
-                  onClick={() => handleTest(nl.id)}
-                  disabled={testingId === nl.id && !testEmail}
+                  onClick={() => {
+                    const email = testEmailRefs.current[nl.id]?.value?.trim() || "";
+                    if (!email) return;
+                    handleTest(nl.id, email);
+                  }}
                   className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
                 >
                   Test
@@ -245,7 +241,7 @@ export default function NewslettersTable({
         );
       },
     }),
-  ] as const, [deletePending, deleteAction, canEdit, canSend, sendPending, testingId, testEmail]);
+  ] as const, [deletePending, deleteAction, canEdit, canSend, sendPending]);
 
   const typedColumns = columns as unknown as ColumnDef<Newsletter, unknown>[];
 
