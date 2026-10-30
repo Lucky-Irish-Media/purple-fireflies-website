@@ -197,28 +197,7 @@ export default function NewslettersTable({
                 Send
               </button>
             )}
-            {canEdit && (
-              <>
-                <input
-                  type="email"
-                  placeholder="test email"
-                  ref={(el) => {
-                    testEmailRefs.current[nl.id] = el;
-                  }}
-                  className="rounded border border-primary/10 px-2 py-1 text-xs w-36"
-                />
-                <button
-                  onClick={() => {
-                    const email = testEmailRefs.current[nl.id]?.value?.trim() || "";
-                    if (!email) return;
-                    handleTest(nl.id, email);
-                  }}
-                  className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
-                >
-                  Test
-                </button>
-              </>
-            )}
+            {null}
             {canEdit && (
               <form
                 action={deleteAction}
@@ -359,13 +338,40 @@ export default function NewslettersTable({
             <p className="text-sm text-red-500">{formState.message}</p>
           )}
 
-          <button
-            type="submit"
-            disabled={formPending}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
-          >
-            {formPending ? "Saving..." : editing ? "Save Changes" : "Create Newsletter"}
-          </button>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {editing && canEdit && (
+                <>
+                  <input
+                    type="email"
+                    placeholder="test email"
+                    ref={(el) => {
+                      if (el) testEmailRefs.current[editing.id] = el;
+                    }}
+                    className="rounded border border-primary/10 px-2 py-1 text-xs w-40"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const email = testEmailRefs.current[editing.id]?.value?.trim() || "";
+                      if (!email) return;
+                      handleTest(editing.id, email);
+                    }}
+                    className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+                  >
+                    Test
+                  </button>
+                </>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={formPending}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark disabled:opacity-50"
+            >
+              {formPending ? "Saving..." : editing ? "Save Changes" : "Create Newsletter"}
+            </button>
+          </div>
         </form>
       </Modal>
 
