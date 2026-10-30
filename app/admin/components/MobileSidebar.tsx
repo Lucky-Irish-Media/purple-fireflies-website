@@ -76,7 +76,7 @@ export function MobileSidebar({ role }: { role?: string }) {
                   );
                 }
                 const href = "href" in link ? (link.href ?? "") : "";
-                const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+                const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"));
                 return (
                   <Link
                     key={href}
