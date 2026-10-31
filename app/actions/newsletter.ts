@@ -362,7 +362,7 @@ export async function uploadNewsletterImageAction(
     const slug = slugRaw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
 
     const { env } = await getCloudflareContext({ async: true });
-    const bucket = env.NEWSLETTER_IMAGES;
+    const bucket = env.MEDIA_BUCKET;
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const folder = slug ? `newsletters/${slug}` : "newsletters/drafts";
     const key = `${folder}/${crypto.randomUUID()}-${safeName}`;

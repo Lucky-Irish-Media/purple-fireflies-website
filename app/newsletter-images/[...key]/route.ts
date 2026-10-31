@@ -9,7 +9,7 @@ export async function GET(
   const objectKey = Array.isArray(key) ? key.join("/") : String(key);
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const bucket = env.NEWSLETTER_IMAGES;
+    const bucket = env.MEDIA_BUCKET;
     const obj = await bucket.get(objectKey);
     if (!obj) {
       return new NextResponse("Not found", { status: 404 });

@@ -11,3 +11,15 @@ EMAIL_FROM=Mel <mel@purplefireflies.org>
 # strip on /programs/springfield-neighbors. Manually bumped (or set the Worker var
 # in wrangler.toml). Any value that isn't a non-negative integer renders as 0.
 SPRINGFIELD_BOXES_DELIVERED=95
+
+# Community Pet Fund - Givebutter
+# API key: Givebutter dashboard > Settings > API. Powers the admin "Refresh from
+# Givebutter" button, which copies campaign totals into D1.
+GIVEBUTTER_API_KEY=your_givebutter_api_key_here
+# Webhook signing secret: Givebutter dashboard > Webhooks. Givebutter sends this
+# value verbatim in a `Signature` header on every delivery.
+GIVEBUTTER_WEBHOOK_SECRET=your_webhook_signing_secret_here
+
+# Internal alerts (Givebutter plan failures). Falls back to
+# info@purplefireflies.org when unset.
+# ADMIN_EMAIL=info@purplefireflies.org

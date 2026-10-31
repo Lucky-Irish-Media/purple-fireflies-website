@@ -7,6 +7,10 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+# Production resources. These are the only resources a plain `wrangler deploy`
+# can touch. Do not add a `[env.<name>]` block here: an environment is a whole
+# separate Worker, and a `--env` deploy is how the preview bindings once landed
+# on production.
 [[d1_databases]]
 binding = "purple_fireflies_db"
 database_name = "purple-fireflies-db"
@@ -16,41 +20,57 @@ database_id = "295c9661-624c-4964-8d1f-69f6c991a4f0"
 binding = "PURPLE_FIREFLIES_KV"
 id = "c7014b56c6d343e8a223d8a41d034731"
 
+# All uploaded media (newsletter images and Community Pet Fund photos) live in
+# one private R2 bucket, served by the Worker at /newsletter-images/[...key]
+# and /api/media/[...key]. Keys are namespaced by folder (newsletters/, animals/).
 [[r2_buckets]]
-binding = "NEWSLETTER_IMAGES"
-bucket_name = "purple-fireflies-newsletter-images"
+binding = "MEDIA_BUCKET"
+bucket_name = "purple-fireflies-media"
 
 [vars]
 # Running total of boxes delivered by Springfield Neighbors volunteers, shown on
-# /programs/springfield-neighbors. Manually bumped; not a D1 aggregate.
+# /programs/springfield-neighbors. Manually bumped, not a D1 aggregate.
 SPRINGFIELD_BOXES_DELIVERED = "130"
-# Givebutter Widgets account ID. Public by nature; appears in the library script URL.
+# Community Pet Fund launch state. Production stays off until the Ohio AG
+# registration, Givebutter onboarding, and board policies are in place, and the
+# tax line stays state-only until a 501(c)(3) determination letter exists.
+COMMUNITY_PETS_DONATIONS_ENABLED = "false"
+NONPROFIT_STATUS = "state_only"
+# Givebutter Widgets account ID (Dashboard > Settings > Integrations). The
+# embedded donation form cannot load without it, so the sponsor block falls back
+# to a plain campaign link while it is empty. Public by nature: it appears in the
+# library script URL on the pet page.
 GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
 
-[env.preview]
-name = "purple-fireflies-website-preview"
-workers_dev = true
-
-[env.preview.vars]
+# Worker Previews back the feature-branch deployments that Workers Builds
+# creates for every branch except main. They run on the same Worker with
+# branch-specific URLs and never take production traffic. `wrangler preview`
+# reads this block; `wrangler deploy` ignores it. Previews do not inherit the
+# top-level bindings above, so every binding they need is repeated here pointed
+# at preview resources. Requires Wrangler 4.135.0 or later.
+[previews.vars]
 SPRINGFIELD_BOXES_DELIVERED = "130"
-# Givebutter Widgets account ID. Public by nature; appears in the library script URL.
+# Preview differs on purpose: donations are on so the sponsor block can be
+# exercised before launch, and the tax line is still state-only because a
+# preview deploy is not a 501(c)(3) either.
+COMMUNITY_PETS_DONATIONS_ENABLED = "true"
+NONPROFIT_STATUS = "state_only"
+# Same Widgets account ID as production; preview embeds the form so the sponsor
+# path can be exercised before launch.
 GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
 
-[[env.preview.d1_databases]]
+[[previews.d1_databases]]
 binding = "purple_fireflies_db"
 database_name = "purple-fireflies-db-preview"
 database_id = "dcb6e0de-2d20-40bc-82c3-1ccd96f0a540"
-remote = true
 
-[[env.preview.kv_namespaces]]
+[[previews.kv_namespaces]]
 binding = "PURPLE_FIREFLIES_KV"
 id = "88406a0a7e974df5a9203b64977bab25"
-remote = true
 
-[[env.preview.r2_buckets]]
-binding = "NEWSLETTER_IMAGES"
-bucket_name = "purple-fireflies-newsletter-images-preview"
-remote = true
+[[previews.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "purple-fireflies-media-preview"
 
 [observability]
 [observability.logs]

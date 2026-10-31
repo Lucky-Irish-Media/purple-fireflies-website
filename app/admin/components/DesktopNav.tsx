@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/programs/meal-delivery", label: "Meal Delivery" },
   { href: "/admin/programs/legal-observers", label: "Legal Observers" },
+  { href: "/admin/programs/community-pets", label: "Community Pets" },
   { href: "/admin/events", label: "Events" },
   { href: "/admin/news", label: "News" },
   { href: "/admin/newsletters", label: "Newsletters" },

@@ -26,6 +26,13 @@ const programs = [
     cta: "Learn more",
   },
   {
+    icon: "🐾",
+    title: "Sponsor a Pet Program",
+    desc: "Help neighbors keep their pets by covering vet and supply costs.",
+    href: "/programs/sponsor-a-pet",
+    cta: "Learn more",
+  },
+  {
     icon: "🤝",
     title: "Community",
     desc: "Events and resources that connect neighbors and build shared purpose.",

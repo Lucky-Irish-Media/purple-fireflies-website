@@ -600,6 +600,19 @@ export interface AnimalSponsorship {
 }
 
 /**
+ * Admin-only: one sponsorship row joined to its animal. Carries donor PII
+ * (`donor_email`), so it must never be passed into a public page, a public
+ * component, or a public route handler. Only the admin sponsors table reads it.
+ *
+ * `animal_name` and `animal_slug` are null when the row has no `animal_id`, or
+ * when the pet was deleted, so the donor ledger keeps the transaction either way.
+ */
+export interface AnimalSponsorshipWithAnimal extends AnimalSponsorship {
+  animal_name: string | null;
+  animal_slug: string | null;
+}
+
+/**
  * Writable animal fields. Cached Givebutter totals and timestamps are owned by
  * `updateGivebutterTotals()`, not by the admin form.
  */

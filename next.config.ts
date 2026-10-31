@@ -17,13 +17,17 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.resolve(import.meta.dirname ?? process.cwd()),
-  },
   experimental: {
+    // Newsletter image and pet photo uploads go through server actions. The
+    // browser resizes pet photos to well under a megabyte, but the action
+    // accepts up to 8 MB, so the 1 MB default would reject a valid file
+    // before the action ever ran.
     serverActions: {
       bodySizeLimit: "10mb",
     },
+  },
+  turbopack: {
+    root: path.resolve(import.meta.dirname ?? process.cwd()),
   },
   async headers() {
     return [
@@ -41,3 +45,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+EOF
+git add next.config.ts
