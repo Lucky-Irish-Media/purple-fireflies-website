@@ -14,6 +14,10 @@ import type {
   WaitlistEntryWithParticipant,
   Event,
   NewsArticle,
+  Newsletter,
+  NewsletterSubscriber,
+  NewsletterSubscriberStatus,
+  NewsletterStatus,
   VolunteerDashboard,
   VolunteerSignupWithDeliveries,
   LegalObserverSignup,
@@ -354,7 +358,7 @@ export async function getDriverVolunteersByEmailOrPhone(email: string, phone: st
   return result.results || [];
 }
 
-export type UserRole = "admin" | "member" | "volunteer";
+export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator" | "content_editor" | "reports_viewer";
 export type UserStatus = "active" | "pending";
 
 export interface DriverAssignment {
@@ -1840,6 +1844,218 @@ export async function setSponsorshipStatus(id: number, status: SponsorshipStatus
   const db = await getDB();
   await db
     .prepare("UPDATE animal_sponsorships SET status = ? WHERE id = ?")
+// Newsletters
+// ---------------------------------------------------------------------------
+
+export async function getNewsletters(): Promise<Newsletter[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletters ORDER BY created_at DESC, id DESC")
+    .all<Newsletter>();
+  return result.results || [];
+}
+
+export async function getPublishedNewsletters(): Promise<Newsletter[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletters WHERE status IN ('published', 'sent') ORDER BY COALESCE(published_at, created_at) DESC, id DESC")
+    .all<Newsletter>();
+  return result.results || [];
+}
+
+export async function getLatestPublishedNewsletter(): Promise<Newsletter | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletters WHERE status IN ('published', 'sent') ORDER BY COALESCE(published_at, created_at) DESC, id DESC LIMIT 1")
+    .first<Newsletter>();
+  return result || null;
+}
+
+export async function getNewsletterById(id: number): Promise<Newsletter | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletters WHERE id = ?")
+    .bind(id)
+    .first<Newsletter>();
+  return result || null;
+}
+
+export async function getNewsletterBySlug(slug: string): Promise<Newsletter | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletters WHERE slug = ?")
+    .bind(slug)
+    .first<Newsletter>();
+  return result || null;
+}
+
+export async function createNewsletter(data: {
+  title: string;
+  slug: string;
+  body?: string;
+  excerpt?: string | null;
+  status?: NewsletterStatus;
+  publishedAt?: string | null;
+  authorUserId?: number | null;
+}): Promise<Newsletter> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO newsletters (title, slug, body, excerpt, status, published_at, author_user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(
+      data.title,
+      data.slug,
+      data.body || "",
+      data.excerpt || null,
+      data.status || "draft",
+      data.publishedAt || null,
+      data.authorUserId || null
+    )
+    .first<Newsletter>();
+  if (!result) throw new Error("Failed to create newsletter");
+  return result;
+}
+
+export async function updateNewsletter(id: number, data: {
+  title: string;
+  slug: string;
+  body?: string;
+  excerpt?: string | null;
+  status?: NewsletterStatus;
+  publishedAt?: string | null;
+}): Promise<Newsletter> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `UPDATE newsletters
+       SET title = ?, slug = ?, body = ?, excerpt = ?, status = ?, published_at = COALESCE(?, published_at), updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(data.title, data.slug, data.body || "", data.excerpt || null, data.status || "draft", data.publishedAt || null, id)
+    .first<Newsletter>();
+  if (!result) throw new Error("Failed to update newsletter");
+  return result;
+}
+
+export async function deleteNewsletter(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM newsletters WHERE id = ?").bind(id).run();
+}
+
+export async function markNewsletterSent(id: number, recipientCount: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `UPDATE newsletters
+       SET status = 'sent', sent_at = datetime('now'), recipient_count = ?, updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(recipientCount, id)
+    .run();
+}
+
+export async function publishNewsletter(id: number): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `UPDATE newsletters
+       SET status = CASE WHEN status = 'draft' THEN 'published' ELSE status END,
+           published_at = COALESCE(published_at, datetime('now')),
+           updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(id)
+    .run();
+}
+
+// ---------------------------------------------------------------------------
+// Newsletter subscribers
+// ---------------------------------------------------------------------------
+
+export async function getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletter_subscribers ORDER BY created_at DESC, id DESC")
+    .all<NewsletterSubscriber>();
+  return result.results || [];
+}
+
+export async function getConfirmedSubscribers(tags?: string[]): Promise<NewsletterSubscriber[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletter_subscribers WHERE status = 'confirmed'")
+    .all<NewsletterSubscriber>();
+  const rows = result.results || [];
+  if (!tags || tags.length === 0) return rows;
+  const tagSet = new Set(tags.map((t) => t.trim().toLowerCase()).filter(Boolean));
+  return rows.filter((r) => {
+    const rowTags = (r.tags || "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+    if (rowTags.length === 0) return tagSet.size === 0 ? true : false;
+    return rowTags.some((t) => tagSet.has(t));
+  });
+}
+
+export async function getSubscriberByEmail(email: string): Promise<NewsletterSubscriber | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletter_subscribers WHERE LOWER(email) = LOWER(?)")
+    .bind(email)
+    .first<NewsletterSubscriber>();
+  return result || null;
+}
+
+export async function getSubscriberByConfirmToken(token: string): Promise<NewsletterSubscriber | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletter_subscribers WHERE confirm_token = ?")
+    .bind(token)
+    .first<NewsletterSubscriber>();
+  return result || null;
+}
+
+export async function getSubscriberByUnsubscribeToken(token: string): Promise<NewsletterSubscriber | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM newsletter_subscribers WHERE unsubscribe_token = ?")
+    .bind(token)
+    .first<NewsletterSubscriber>();
+  return result || null;
+}
+
+export async function createSubscriber(data: {
+  email: string;
+  name?: string | null;
+  tags?: string;
+  confirmToken: string;
+  unsubscribeToken: string;
+}): Promise<NewsletterSubscriber> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO newsletter_subscribers (email, name, status, tags, confirm_token, unsubscribe_token)
+       VALUES (?, ?, 'pending', ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(data.email, data.name || null, data.tags || "", data.confirmToken, data.unsubscribeToken)
+    .first<NewsletterSubscriber>();
+  if (!result) throw new Error("Failed to create subscriber");
+  return result;
+}
+
+export async function updateSubscriberStatus(id: number, status: NewsletterSubscriberStatus): Promise<void> {
+  const db = await getDB();
+  const extra =
+    status === "confirmed"
+      ? ", confirmed_at = datetime('now'), unsubscribed_at = NULL"
+      : status === "unsubscribed"
+      ? ", unsubscribed_at = datetime('now')"
+      : "";
+  await db
+    .prepare(`UPDATE newsletter_subscribers SET status = ?, updated_at = datetime('now')${extra} WHERE id = ?`)
     .bind(status, id)
     .run();
 }
@@ -1922,4 +2138,32 @@ export async function hasOtherSucceededSponsorship(
     .bind(animalId, email.trim(), excludeId)
     .first<{ found: number }>();
   return Boolean(result);
+export async function resetSubscriberForResubscribe(id: number, confirmToken: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `UPDATE newsletter_subscribers
+       SET status = 'pending', confirm_token = ?, confirmed_at = NULL, unsubscribed_at = NULL, updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(confirmToken, id)
+    .run();
+}
+
+export async function deleteSubscriber(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM newsletter_subscribers WHERE id = ?").bind(id).run();
+}
+
+export async function getSubscriberCounts(): Promise<{ pending: number; confirmed: number; unsubscribed: number; total: number }> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT status, COUNT(*) as c FROM newsletter_subscribers GROUP BY status")
+    .all<{ status: string; c: number }>();
+  const counts = { pending: 0, confirmed: 0, unsubscribed: 0, total: 0 };
+  for (const row of result.results || []) {
+    if (row.status in counts) counts[row.status as keyof typeof counts] = row.c;
+    counts.total += row.c;
+  }
+  return counts;
 }

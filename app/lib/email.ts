@@ -370,4 +370,66 @@ function formatUsd(cents: number): string {
     style: "currency",
     currency: "USD",
   }).format((Number.isFinite(cents) ? cents : 0) / 100);
+export async function sendNewsletterConfirmation(email: string, name: string | null, confirmToken: string): Promise<void> {
+  const link = `https://purplefireflies.org/newsletters/confirm?token=${confirmToken}`;
+  const subject = "Confirm your Purple Fireflies newsletter subscription";
+  const text = `Hi${name ? " " + name : ""},
+
+Thanks for subscribing to the Purple Fireflies newsletter. Please confirm your email address by clicking the link below:
+
+${link}
+
+If you didn't request this, you can ignore this email.
+
+Take care,
+Purple Fireflies`;
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f9fafb;">
+  <div style="max-width:560px;margin:20px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <div style="background-color:#6b21a8;padding:16px 24px;">
+      <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">Confirm your subscription</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="margin:0 0 12px;font-size:14px;color:#374151;">Hi${name ? " " + name : ""},</p>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151;">Thanks for subscribing to the Purple Fireflies newsletter. Please confirm your email address by clicking the button below.</p>
+      <p style="text-align:center;margin:24px 0;">
+        <a href="${link}" style="display:inline-block;background-color:#7C3AED;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Confirm subscription</a>
+      </p>
+      <p style="margin:0;font-size:12px;color:#6b7280;">If you didn't request this, you can ignore this email.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+  await sendEmail({ to: email, subject, text, html });
+}
+
+export async function sendNewsletterIssue(params: {
+  to: string;
+  subject: string;
+  htmlBody: string;
+  unsubscribeToken: string;
+}): Promise<void> {
+  const unsubLink = `https://purplefireflies.org/newsletters/unsubscribe?token=${params.unsubscribeToken}`;
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f9fafb;">
+  <div style="max-width:640px;margin:20px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <div style="background-color:#6b21a8;padding:16px 24px;">
+      <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">${params.subject}</h1>
+    </div>
+    <div style="padding:24px;font-size:14px;color:#374151;line-height:1.6;">
+      ${params.htmlBody}
+    </div>
+    <div style="padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
+      <p style="margin:0;">You are receiving this because you subscribed to the Purple Fireflies newsletter.</p>
+      <p style="margin:4px 0 0;"><a href="${unsubLink}" style="color:#7C3AED;">Unsubscribe</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+  const text = `${params.subject}\n\n${params.htmlBody.replace(/<[^>]+>/g, "")}\n\nUnsubscribe: ${unsubLink}`;
+  await sendEmail({ to: params.to, subject: params.subject, text, html });
 }

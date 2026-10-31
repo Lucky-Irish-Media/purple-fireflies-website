@@ -1,10 +1,12 @@
-export default function Donate() {
-  const paymentMethods = [
-    { name: "Venmo", image: "/qr-codes/venmo.png" },
-    { name: "PayPal", image: "/qr-codes/paypal.png" },
-    { name: "Cash App", image: "/qr-codes/cash_app.png" },
-    { name: "Give Butter", image: "/qr-codes/give_butter.png" },
-  ];
+import GivebutterDonationWidget from "@/components/GivebutterDonationWidget";
+import { readEnvVar } from "@/app/lib/env";
+
+export const dynamic = "force-dynamic";
+
+export default async function Donate() {
+  const accountId =
+    (await readEnvVar("GIVEBUTTER_WIDGET_ACCOUNT_ID"))?.trim() ||
+    "WCsdHvZKyriW1GgL";
 
   return (
     <div className="flex flex-col flex-1 font-sans">
@@ -24,36 +26,29 @@ export default function Donate() {
               Donate
             </h1>
             <p className="text-lg leading-8" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 480, margin: "0 auto" }}>
-              Every contribution helps us continue our mission. Choose any method below to support Purple Fireflies.
+              Every contribution helps us continue our mission. Choose a campaign below to support Purple Fireflies.
             </p>
           </div>
         </div>
       </section>
 
-      {/* QR codes */}
+      {/* Campaigns */}
       <section className="px-4 py-16 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.name}
-                className="flex flex-col items-center gap-4 p-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-                style={{
-                  background: "#fff",
-                  border: "1px solid rgba(124,58,237,0.12)",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                }}
-              >
-                <h2 className="text-lg font-bold text-foreground">{method.name}</h2>
-                <div className="w-44 h-44">
-                  <img
-                    src={method.image}
-                    alt={`${method.name} QR Code`}
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                </div>
-              </div>
-            ))}
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-foreground">General Donation</h2>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Support Purple Fireflies&apos; day-to-day work feeding neighbors across Athens and Meigs counties.
+            </p>
+            <GivebutterDonationWidget campaignCode="GTIM3Q" accountId={accountId} />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-foreground">General Sponsor a Pet Fund</h2>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Help neighbors keep their pets by covering vet bills, medication, food, and supplies.
+            </p>
+            <GivebutterDonationWidget campaignCode="QXB4GF" accountId={accountId} />
           </div>
         </div>
       </section>

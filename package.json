@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:preview": "NEXT_DEV_WRANGLER_ENV=preview next dev",
     "build": "next build",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
@@ -15,6 +16,7 @@
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "next": "16.2.9",
+    "quill": "^2.0.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"

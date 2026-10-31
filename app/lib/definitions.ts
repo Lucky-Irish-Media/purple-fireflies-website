@@ -313,6 +313,58 @@ export const NewsArticleSchema = z.object({
   excerpt: z.string().optional(),
 });
 
+export const NEWSLETTER_STATUS_VALUES = ["draft", "published", "sent"] as const;
+export type NewsletterStatus = (typeof NEWSLETTER_STATUS_VALUES)[number];
+
+export const NewsletterSchema = z.object({
+  title: z.string().min(1, { message: "Title is required." }).trim(),
+  slug: z
+    .string()
+    .min(1, { message: "Slug is required." })
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: "Use lowercase letters, numbers, and hyphens." })
+    .trim(),
+  body: z.string().default(""),
+  excerpt: z.string().optional(),
+  status: z.enum(NEWSLETTER_STATUS_VALUES).default("draft"),
+});
+
+export interface Newsletter {
+  id: number;
+  title: string;
+  slug: string;
+  body: string;
+  excerpt: string | null;
+  status: NewsletterStatus;
+  published_at: string | null;
+  sent_at: string | null;
+  recipient_count: number;
+  author_user_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const NewsletterSubscriberSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  name: z.string().optional(),
+  tags: z.string().optional(),
+});
+
+export type NewsletterSubscriberStatus = "pending" | "confirmed" | "unsubscribed";
+
+export interface NewsletterSubscriber {
+  id: number;
+  email: string;
+  name: string | null;
+  status: NewsletterSubscriberStatus;
+  tags: string;
+  confirm_token: string;
+  unsubscribe_token: string;
+  confirmed_at: string | null;
+  unsubscribed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export const LegalObserverSignupSchema = z.object({
   name: z.string().min(1, { message: "Name is required." }).trim(),
   email: z.string().email({ message: "Please enter a valid email." }).trim(),

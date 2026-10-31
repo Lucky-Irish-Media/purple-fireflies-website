@@ -4,7 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { submitMealSignup } from "@/app/actions/meal-signup";
 import type { MealSignupFormState } from "@/app/lib/definitions";
 import { LookupModal } from "@/components/LookupModal";
-import { getMealsCapForDate } from "@/app/lib/delivery-day";
+import { getMealsCapForDate, isHolidayClosure } from "@/app/lib/delivery-day";
 
 const stateOptions = [
   { value: "AL", label: "AL" }, { value: "AK", label: "AK" }, { value: "AZ", label: "AZ" }, { value: "AR", label: "AR" },
@@ -35,14 +35,14 @@ function generateDeliveryDateOptions() {
 
   for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
     const dayOfWeek = d.getDay();
+    const dateStr = d.toISOString().split("T")[0];
+    if (isHolidayClosure(dateStr)) continue;
     if (dayOfWeek === 3) {
-      const dateStr = d.toISOString().split("T")[0];
       options.push({
         value: dateStr,
         label: `Wednesday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 12:00 PM`,
       });
     } else if (dayOfWeek === 4) {
-      const dateStr = d.toISOString().split("T")[0];
       options.push({
         value: dateStr,
         label: `Thursday, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 5:00 PM`,

@@ -4,11 +4,11 @@ import { headers } from "next/headers";
 
 import bcrypt from "bcryptjs";
 import { DriverVolunteerSchema, type DriverVolunteerFormState } from "@/app/lib/definitions";
-import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone, getUserByEmail, createUser, createWaiverSignature, getWaiverSignatureByParticipantId, updateDriverParticipantStatus } from "@/app/lib/db";
+import { createDriverVolunteer, getParticipantByEmail, createParticipant, updateParticipant, getDriverVolunteersByEmailOrPhone, getUserByEmail, createUser, createWaiverSignature, getWaiverSignatureByParticipantId, updateDriverParticipantStatus, isDeliveryDateClosed } from "@/app/lib/db";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 import { generateRandomPassword } from "@/app/lib/password";
 import { sendVolunteerAccountEmail } from "@/app/lib/email";
-import { isStandardDeliveryDay } from "@/app/lib/delivery-day";
+import { isStandardDeliveryDay, isHolidayClosure } from "@/app/lib/delivery-day";
 import { WAIVER_VERSION } from "@/app/lib/waiver";
 
 function getErrorMessage(): string {
@@ -58,6 +58,17 @@ export async function submitDriverVolunteer(
     const nonStandardDates = data.deliveryDates.filter((d) => !isStandardDeliveryDay(d));
     if (nonStandardDates.length > 0) {
       return { message: "Driver volunteer signups are only available on Wednesdays and Thursdays." };
+    }
+
+    const holidayDates = data.deliveryDates.filter((d) => isHolidayClosure(d));
+    if (holidayDates.length > 0) {
+      return { message: "Driver volunteer signups are not available on UCM-closed holidays." };
+    }
+
+    for (const date of data.deliveryDates) {
+      if (await isDeliveryDateClosed(date)) {
+        return { message: `${new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} is closed to new signups.` };
+      }
     }
 
     let participant = await getParticipantByEmail(data.email);
