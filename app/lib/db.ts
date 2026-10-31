@@ -1844,6 +1844,10 @@ export async function setSponsorshipStatus(id: number, status: SponsorshipStatus
   const db = await getDB();
   await db
     .prepare("UPDATE animal_sponsorships SET status = ? WHERE id = ?")
+    .bind(status, id)
+    .run();
+}
+
 // Newsletters
 // ---------------------------------------------------------------------------
 
@@ -2138,6 +2142,8 @@ export async function hasOtherSucceededSponsorship(
     .bind(animalId, email.trim(), excludeId)
     .first<{ found: number }>();
   return Boolean(result);
+}
+
 export async function resetSubscriberForResubscribe(id: number, confirmToken: string): Promise<void> {
   const db = await getDB();
   await db

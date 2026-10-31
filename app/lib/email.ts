@@ -370,6 +370,8 @@ function formatUsd(cents: number): string {
     style: "currency",
     currency: "USD",
   }).format((Number.isFinite(cents) ? cents : 0) / 100);
+}
+
 export async function sendNewsletterConfirmation(email: string, name: string | null, confirmToken: string): Promise<void> {
   const link = `https://purplefireflies.org/newsletters/confirm?token=${confirmToken}`;
   const subject = "Confirm your Purple Fireflies newsletter subscription";

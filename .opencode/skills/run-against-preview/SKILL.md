@@ -5,7 +5,7 @@ description: Run the Purple Fireflies website locally (Next.js dev server or bui
 
 # Run Locally Against Preview Cloudflare Bindings
 
-This project's Cloudflare bindings (D1 `purple_fireflies_db`, KV `PURPLE_FIREFLIES_KV`, R2 `NEWSLETTER_IMAGES`) default to **local miniflare emulation** during dev. To point them at the **remote preview** resources instead, use the remote-bindings feature.
+This project's Cloudflare bindings (D1 `purple_fireflies_db`, KV `PURPLE_FIREFLIES_KV`, R2 `MEDIA_BUCKET`) default to **local miniflare emulation** during dev. To point them at the **remote preview** resources instead, use the remote-bindings feature.
 
 ## Prerequisites
 
