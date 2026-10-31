@@ -45,5 +45,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-EOF
-git add next.config.ts
