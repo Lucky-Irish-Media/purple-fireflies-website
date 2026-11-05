@@ -193,6 +193,8 @@ export async function createNewsletterAction(
     const newsletters = await getNewsletters();
     revalidatePath("/admin/newsletters");
     revalidatePath("/newsletters");
+    revalidatePath("/news");
+    revalidatePath("/");
     return { success: true, message: `Newsletter "${t}" created.`, newsletters };
   } catch (e) {
     console.error("createNewsletterAction error:", e);
@@ -230,6 +232,9 @@ export async function updateNewsletterAction(
 
     const { id: nid, title: t, slug: s, body, excerpt, status } = validated.data;
 
+    const existing = await getNewsletterById(nid);
+    const oldSlug = existing?.slug ?? null;
+
     await updateNewsletter(nid, {
       title: t,
       slug: s,
@@ -243,6 +248,11 @@ export async function updateNewsletterAction(
     revalidatePath("/admin/newsletters");
     revalidatePath("/newsletters");
     revalidatePath(`/newsletters/${s}`);
+    if (oldSlug && oldSlug !== s) {
+      revalidatePath(`/newsletters/${oldSlug}`);
+    }
+    revalidatePath("/news");
+    revalidatePath("/");
     return { success: true, message: `Newsletter "${t}" updated.`, newsletters };
   } catch (e) {
     console.error("updateNewsletterAction error:", e);
@@ -268,6 +278,8 @@ export async function deleteNewsletterAction(
     const newsletters = await getNewsletters();
     revalidatePath("/admin/newsletters");
     revalidatePath("/newsletters");
+    revalidatePath("/news");
+    revalidatePath("/");
     return { success: true, message: "Newsletter deleted.", newsletters };
   } catch (e) {
     console.error("deleteNewsletterAction error:", e);
@@ -314,6 +326,8 @@ export async function sendNewsletterAction(
 
     revalidatePath("/admin/newsletters");
     revalidatePath("/newsletters");
+    revalidatePath("/news");
+    revalidatePath("/");
     return { success: true, message: `Sent to ${recipients.length} subscriber(s).`, count: recipients.length };
   } catch (e) {
     console.error("sendNewsletterAction error:", e);

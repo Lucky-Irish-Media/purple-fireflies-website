@@ -3,8 +3,7 @@ import NewsletterSubscribeForm from "@/components/NewsletterSubscribeForm";
 
 const footerLinks = [
   { href: "/programs", label: "Programs" },
-  { href: "/news", label: "News" },
-  { href: "/newsletters", label: "Newsletters" },
+  { href: "/news", label: "News & Updates" },
   { href: "/events", label: "Events" },
   { href: "/community", label: "Community" },
   { href: "/donate", label: "Donate" },
@@ -15,8 +14,8 @@ const footerLinks = [
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-primary-dark to-primary text-white py-6 px-4">
-      <div className="max-w-7xl mx-auto mb-4">
-        <p className="text-sm font-semibold mb-2 text-center sm:text-left">Subscribe to our newsletter</p>
+      <div className="max-w-2xl mx-auto mb-4 text-center">
+        <p className="text-sm font-semibold mb-2 text-center">Subscribe to our newsletter</p>
         <NewsletterSubscribeForm />
       </div>
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">

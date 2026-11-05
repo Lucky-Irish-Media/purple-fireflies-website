@@ -42,8 +42,8 @@ export default async function NewsletterDetailPage({
             dangerouslySetInnerHTML={{ __html: normalizeQuillLists(newsletter.body || "") }}
           />
           <div className="mt-8">
-            <Link href="/newsletters" className="text-primary hover:underline">
-              ← Back to newsletters
+            <Link href="/news" className="text-primary hover:underline">
+              ← Back to News & Updates
             </Link>
           </div>
         </div>
