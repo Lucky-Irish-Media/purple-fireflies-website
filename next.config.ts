@@ -2,7 +2,17 @@ import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import path from "path";
 
-initOpenNextCloudflareForDev();
+// When running locally against the preview Cloudflare resources, point the
+// OpenNext dev integration at the preview-only wrangler config instead of the
+// production one. This keeps `wrangler deploy` (production) untouched.
+const usePreview =
+  process.env.NEXT_DEV_PREVIEW === "1" ||
+  process.env.NEXT_DEV_WRANGLER_ENV === "preview";
+if (usePreview) {
+  // Prevent OpenNext from trying to select a non-existent [env.preview] block.
+  delete process.env.NEXT_DEV_WRANGLER_ENV;
+}
+initOpenNextCloudflareForDev(usePreview ? { configPath: "wrangler.preview.toml" } : undefined);
 
 const csp = [
   "default-src 'self'",

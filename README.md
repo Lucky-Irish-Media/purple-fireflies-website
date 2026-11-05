@@ -97,11 +97,16 @@ Open [http://localhost:3000](http://localhost:3000) to see the result.
 
 ### Local development against preview Cloudflare bindings
 
-By default `npm run dev` runs against a local (miniflare) emulation of the bindings. To run the Next.js dev server locally while pointing the D1/KV/R2 bindings at the **preview** Cloudflare resources instead, set `NEXT_DEV_WRANGLER_ENV=preview`:
+By default `npm run dev` runs against a local (miniflare) emulation of the bindings. To run the Next.js dev server locally while pointing the D1/KV/R2 bindings at the **preview** Cloudflare resources instead:
 
 ```bash
-NEXT_DEV_WRANGLER_ENV=preview npm run dev
+npm run dev:preview
 ```
+
+This uses `wrangler.preview.toml`, whose bindings point at the preview D1/KV/R2
+resources with `remote = true` (the production `wrangler.toml` is never touched).
+`NEXT_DEV_WRANGLER_ENV=preview npm run dev` is still accepted for backwards
+compatibility.
 
 The preview bindings in `wrangler.toml` have `remote = true`, so the dev server keeps running on your machine but reads/writes the preview D1 database, KV namespace, and R2 bucket. Requires an authenticated wrangler session (`npx wrangler whoami`).
 

@@ -17,8 +17,12 @@ This project's Cloudflare bindings (D1 `purple_fireflies_db`, KV `PURPLE_FIREFLI
 ```bash
 npm run dev:preview
 # equivalent to:
-NEXT_DEV_WRANGLER_ENV=preview npm run dev
+NEXT_DEV_PREVIEW=1 next dev
 ```
+
+This selects `wrangler.preview.toml`, whose bindings point at the preview D1/KV/R2
+resources with `remote = true`. `NEXT_DEV_WRANGLER_ENV=preview` is still accepted
+for backwards compatibility.
 
 - Code runs on your machine; bindings hit preview D1/KV/R2.
 - `SESSION_SECRET` etc. still come from `.env.local` / process env (Next.js loads it). Wrangler loads `.dev.vars` for vars.
