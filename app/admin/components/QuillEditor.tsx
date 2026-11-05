@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import "quill/dist/quill.snow.css";
 import { uploadNewsletterImageAction } from "@/app/actions/newsletter";
+import { normalizeQuillLists } from "@/app/lib/html";
 
 export default function QuillEditor({
   defaultValue = "",
@@ -52,7 +53,7 @@ export default function QuillEditor({
       }
 
       const emit = () => {
-        onChangeRef.current?.(quill.root.innerHTML);
+        onChangeRef.current?.(normalizeQuillLists(quill.root.innerHTML));
       };
       quill.on("text-change", emit);
 

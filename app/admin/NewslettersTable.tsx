@@ -14,6 +14,7 @@ import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate } from "./lib/utils";
 import QuillEditor from "./components/QuillEditor";
+import { normalizeQuillLists } from "@/app/lib/html";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<Newsletter>();
@@ -35,7 +36,7 @@ export default function NewslettersTable({
   const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const hiddenBodyRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    const html = editing?.body || "";
+    const html = normalizeQuillLists(editing?.body || "");
     if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
   }, [editing, modalOpen]);
 

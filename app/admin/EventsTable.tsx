@@ -12,6 +12,7 @@ import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate } from "./lib/utils";
 import QuillEditor from "./components/QuillEditor";
+import { normalizeQuillLists } from "@/app/lib/html";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<Event>();
@@ -22,7 +23,7 @@ function EventFormFields({ state, event }: {
 }) {
   const hiddenBodyRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    const html = event?.body || "";
+    const html = normalizeQuillLists(event?.body || "");
     if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
   }, [event]);
 

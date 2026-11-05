@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEventBySlug } from "@/app/lib/db";
+import { normalizeQuillLists } from "@/app/lib/html";
 import type { Event } from "@/app/lib/definitions";
 
 export const dynamic = "force-dynamic";
@@ -80,7 +81,7 @@ export default async function EventDetailPage({
           {event.body && (
             <div
               className="prose max-w-none text-foreground"
-              dangerouslySetInnerHTML={{ __html: event.body }}
+              dangerouslySetInnerHTML={{ __html: normalizeQuillLists(event.body) }}
             />
           )}
           <div className="mt-8">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getNewsletterBySlug } from "@/app/lib/db";
+import { normalizeQuillLists } from "@/app/lib/html";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export default async function NewsletterDetailPage({
         <div className="max-w-3xl mx-auto">
           <div
             className="prose max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: newsletter.body || "" }}
+            dangerouslySetInnerHTML={{ __html: normalizeQuillLists(newsletter.body || "") }}
           />
           <div className="mt-8">
             <Link href="/newsletters" className="text-primary hover:underline">

@@ -8,6 +8,7 @@ import {
   NewsletterSubscriberSchema,
 } from "@/app/lib/definitions";
 import type { Newsletter, NewsletterSubscriber } from "@/app/lib/definitions";
+import { normalizeQuillLists } from "@/app/lib/html";
 import {
   createNewsletter,
   updateNewsletter,
@@ -182,7 +183,7 @@ export async function createNewsletterAction(
     await createNewsletter({
       title: t,
       slug: s,
-      body: body || "",
+      body: normalizeQuillLists(body || ""),
       excerpt: cleanOptional(excerpt),
       status,
       publishedAt: status === "published" ? new Date().toISOString() : null,
@@ -232,7 +233,7 @@ export async function updateNewsletterAction(
     await updateNewsletter(nid, {
       title: t,
       slug: s,
-      body: body || "",
+      body: normalizeQuillLists(body || ""),
       excerpt: cleanOptional(excerpt),
       status,
       publishedAt: status === "published" ? new Date().toISOString() : null,
@@ -297,7 +298,7 @@ export async function sendNewsletterAction(
         await sendNewsletterIssue({
           to: r.email,
           subject: newsletter.title,
-          htmlBody: newsletter.body || "",
+          htmlBody: normalizeQuillLists(newsletter.body || ""),
           unsubscribeToken: r.unsubscribe_token,
         });
       } catch (err) {
@@ -332,7 +333,7 @@ export async function sendTestNewsletterAction(
     }
     const newsletter = await getNewsletterById(id);
     if (!newsletter) return { success: false, message: "Newsletter not found." };
-    const htmlBody = body && body.trim() !== "" ? body : (newsletter.body || "");
+    const htmlBody = body && body.trim() !== "" ? normalizeQuillLists(body) : normalizeQuillLists(newsletter.body || "");
     const fakeToken = crypto.randomUUID();
     await sendNewsletterIssue({
       to: toEmail,

@@ -6,6 +6,7 @@ import {
   getTaxStatusCopy,
 } from "@/app/lib/community-pets-config";
 import { readEnvVar } from "@/app/lib/env";
+import { normalizeQuillLists } from "@/app/lib/html";
 
 export async function sendMealSignupConfirmation(signups: MealSignup[], participant: Participant, waitlistedDates?: string[]): Promise<void> {
   if (signups.length === 0 && (!waitlistedDates || waitlistedDates.length === 0)) return;
@@ -414,6 +415,7 @@ export async function sendNewsletterIssue(params: {
   unsubscribeToken: string;
 }): Promise<void> {
   const unsubLink = `https://purplefireflies.org/newsletters/unsubscribe?token=${params.unsubscribeToken}`;
+  const htmlBody = normalizeQuillLists(params.htmlBody);
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -423,7 +425,7 @@ export async function sendNewsletterIssue(params: {
       <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">${params.subject}</h1>
     </div>
     <div style="padding:24px;font-size:14px;color:#374151;line-height:1.6;">
-      ${params.htmlBody}
+      ${htmlBody}
     </div>
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
       <p style="margin:0;">You are receiving this because you subscribed to the Purple Fireflies newsletter.</p>
@@ -432,6 +434,6 @@ export async function sendNewsletterIssue(params: {
   </div>
 </body>
 </html>`;
-  const text = `${params.subject}\n\n${params.htmlBody.replace(/<[^>]+>/g, "")}\n\nUnsubscribe: ${unsubLink}`;
+  const text = `${params.subject}\n\n${htmlBody.replace(/<[^>]+>/g, "")}\n\nUnsubscribe: ${unsubLink}`;
   await sendEmail({ to: params.to, subject: params.subject, text, html });
 }
