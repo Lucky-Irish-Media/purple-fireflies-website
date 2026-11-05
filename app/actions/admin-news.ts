@@ -67,6 +67,7 @@ export async function createNewsAction(
     const articles = await getNewsArticles();
 
     revalidatePath("/admin/news");
+    revalidatePath("/news");
 
     return { success: true, message: `Article "${title}" created successfully.`, articles };
   } catch (e) {
@@ -111,6 +112,7 @@ export async function updateNewsArticleAction(
     const articles = await getNewsArticles();
 
     revalidatePath("/admin/news");
+    revalidatePath("/news");
 
     return { success: true, message: `Article "${title}" updated successfully.`, articles };
   } catch (e) {
@@ -139,6 +141,7 @@ export async function deleteNewsArticleAction(
     const articles = await getNewsArticles();
 
     revalidatePath("/admin/news");
+    revalidatePath("/news");
 
     return { success: true, message: "Article deleted successfully.", articles };
   } catch (e) {

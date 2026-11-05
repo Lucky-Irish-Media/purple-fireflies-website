@@ -92,7 +92,7 @@ export default function Navbar() {
               )}
             </div>
             <Link href="/news" className={linkClass("/news")}>
-              News
+              News & Updates
             </Link>
             <Link href="/events" className={linkClass("/events")}>
               Events
@@ -186,7 +186,7 @@ export default function Navbar() {
               className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
               onClick={() => setIsMobileOpen(false)}
             >
-              News
+              News & Updates
             </Link>
             <Link
               href="/events"

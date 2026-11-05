@@ -22,8 +22,8 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/programs/sponsor-a-pet/[slug]` | One pet profile with photos, needs list, and sponsorship progress |
 | `/events` | Upcoming and past community events |
 | `/community` | Community groups Purple Fireflies collaborates with (Athens County Food Info, Love Light Movement) |
-| `/news` | Articles about Purple Fireflies in the news |
-| `/newsletters` | Newsletter archive and subscription (double opt-in) |
+| `/news` | Combined "News & Updates" page: news articles plus newsletter archive, with embedded subscribe form (`#newsletters` anchor) |
+| `/newsletters` | Redirects to `/news#newsletters`; detail pages at `/newsletters/[slug]` still render |
 | `/donate` | Donations page (embedded Givebutter campaigns: General Donation and Community Pets) |
 | `/contact` | Get Involved page — 7 volunteer branch cards, signup process, FAQ |
 | `/login` | Sign in (admins and volunteers) |
@@ -48,7 +48,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 - **Signup Lookup** — Modal to look up existing signups by email
 - **Driver Reminder Emails** — Admin dashboard action to email drivers their delivery assignments for a selected date and email the coordinator a summary; supports sending the summary email only via a checkbox
 - **Events** — Public `/events` page showing upcoming events and a collapsible past events section; clicking an event opens a dedicated detail page (`/events/[slug]`) rendering rich-text content (Quill editor, including images); events can be saved as drafts or published; admin CRUD at `/admin/events` (slug, short description, rich-text body, status)
-- **News** — Public `/news` page linking to news articles that mention Purple Fireflies; admin CRUD at `/admin/news`
+- **News & Updates** — Public `/news` page combines news articles and newsletter issues under a shared "News & Updates" hero with an embedded subscribe form; `/newsletters` redirects to `/news#newsletters` and detail pages remain at `/newsletters/[slug]`; navbar and footer collapse to a single "News & Updates" link; footer subscribe block is half-width and centered; admin CRUD remains at `/admin/news` and `/admin/newsletters`
 - **Newsletter** — In-house newsletter system: double opt-in subscribers, rich-text compose with Quill (headings, formatting, lists, images uploaded to R2 via `MEDIA_BUCKET`), send to all or tag segments, one-click unsubscribe, public `/newsletters` archive, featured latest on home; admin at `/admin/newsletters` (admin sends, content editors draft/preview); migration `0038`
 - **About Page** — Public `/about` page telling the Purple Fireflies story in prose: community helping community, the November 2025 founding (SNAP pause, the Link family's November Grocery Buddy feeding 150 households, and the transportation barrier that led to the Meal Program), the Pet Program origin, and the "Why the name Purple Fireflies?" section (purple as a color that belongs to no group, fireflies tied to the first Ohio summer). Linked from the Navbar (desktop and mobile, between Donate and Get Involved) and the Footer links (same position); simple prose page, no DB. Also fixed the root metadata placeholder description in `app/layout.tsx`
 - **Community** — Public `/community` page listing the groups Purple Fireflies collaborates with, currently Athens County Food Info (a directory of free food programs across Athens County) and Love Light Movement (a volunteer group serving free meals across Athens and Meigs counties). Cards are rendered from a `partners` array at the top of `app/community/page.tsx`, so adding a group is appending one object; each card links to the group's own site in a new tab with `rel="noopener noreferrer"`, and the page closes with a Get Involved CTA back to `/contact`. Linked from the Navbar (desktop and mobile, between Events and Donate) and the Footer; static page, no DB
