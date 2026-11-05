@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useMemo } from "react";
+import { useState, useActionState, useMemo, useRef, useEffect } from "react";
 import type { Event } from "@/app/lib/definitions";
 import {
   createEventAction,
@@ -11,6 +11,7 @@ import {
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
 import { formatDate } from "./lib/utils";
+import QuillEditor from "./components/QuillEditor";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<Event>();
@@ -19,6 +20,12 @@ function EventFormFields({ state, event }: {
   state: EventsActionState;
   event: Event | null;
 }) {
+  const hiddenBodyRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const html = event?.body || "";
+    if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
+  }, [event]);
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -36,6 +43,23 @@ function EventFormFields({ state, event }: {
           />
           {state?.errors?.title && (
             <p className="mt-1 text-sm text-red-500">{state.errors.title[0]}</p>
+          )}
+        </div>
+
+        <div className="sm:col-span-2">
+          <label htmlFor="slug" className="block text-sm font-medium text-foreground mb-1">
+            Slug (optional, auto-generated from title)
+          </label>
+          <input
+            id="slug"
+            name="slug"
+            type="text"
+            defaultValue={event?.slug || ""}
+            placeholder="auto-generated from title"
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          {state?.errors?.slug && (
+            <p className="mt-1 text-sm text-red-500">{state.errors.slug[0]}</p>
           )}
         </div>
 
@@ -114,7 +138,7 @@ function EventFormFields({ state, event }: {
 
         <div className="sm:col-span-2">
           <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
-            Description
+            Description (short summary)
           </label>
           <textarea
             id="description"
@@ -124,6 +148,35 @@ function EventFormFields({ state, event }: {
             className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
+
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-foreground mb-1">
+            Status
+          </label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={event?.status || "draft"}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block text-sm font-medium text-foreground mb-1">Body (rich text)</label>
+        <p className="mb-2 text-xs text-text-secondary">Use the toolbar to format text. Use the image button to upload an image.</p>
+        <QuillEditor
+          key={event?.id ?? "new"}
+          defaultValue={event?.body || ""}
+          slug={event?.slug || ""}
+          onChange={(html) => {
+            if (hiddenBodyRef.current) hiddenBodyRef.current.value = html;
+          }}
+        />
+        <input type="hidden" name="body" ref={hiddenBodyRef} defaultValue={event?.body || ""} />
       </div>
 
       {state?.message && !state.success && (

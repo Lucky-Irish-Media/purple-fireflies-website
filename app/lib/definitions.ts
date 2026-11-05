@@ -273,10 +273,16 @@ export const WaitlistSchema = z.object({
   deliveryDates: z.array(z.string()),
 });
 
+export const EVENT_STATUS_VALUES = ["draft", "published"] as const;
+export type EventStatus = (typeof EVENT_STATUS_VALUES)[number];
+
 export interface Event {
   id: number;
   title: string;
+  slug: string | null;
   description: string | null;
+  body: string | null;
+  status: EventStatus;
   event_date: string;
   start_time: string | null;
   end_time: string | null;
@@ -287,11 +293,18 @@ export interface Event {
 
 export const EventSchema = z.object({
   title: z.string().min(1, { message: "Title is required." }).trim(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: "Use lowercase letters, numbers, and hyphens." })
+    .optional()
+    .or(z.literal("")),
   event_date: z.string().min(1, { message: "Date is required." }),
   start_time: z.string().optional(),
   end_time: z.string().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
+  body: z.string().optional(),
+  status: z.enum(EVENT_STATUS_VALUES).default("draft"),
   url: z.union([z.string().url({ message: "Please enter a valid URL." }), z.literal("")]).optional(),
 });
 

@@ -29,18 +29,34 @@ function EventCard({ event }: { event: Event }) {
       }}
     >
       <div className="flex items-start justify-between gap-4">
-        <h3 className="text-lg font-bold text-foreground mb-1">{event.title}</h3>
-        {event.url && (
-          <Link
-            href={event.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 text-sm font-semibold transition-colors"
-            style={{ color: "#7C3AED" }}
-          >
-            Event Details →
-          </Link>
-        )}
+        <Link
+          href={event.slug ? `/events/${event.slug}` : "#"}
+          className="text-lg font-bold text-foreground mb-1 hover:underline"
+        >
+          {event.title}
+        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          {event.slug && (
+            <Link
+              href={`/events/${event.slug}`}
+              className="text-sm font-semibold transition-colors"
+              style={{ color: "#7C3AED" }}
+            >
+              Read more →
+            </Link>
+          )}
+          {event.url && (
+            <Link
+              href={event.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold transition-colors"
+              style={{ color: "#7C3AED" }}
+            >
+              Event Details →
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="mb-3 space-y-1 text-sm text-text-secondary">
@@ -131,7 +147,13 @@ export default async function EventsPage() {
                       border: "1px solid rgba(124,58,237,0.12)",
                     }}
                   >
-                    <h3 className="font-bold text-foreground mb-1">{event.title}</h3>
+                    {event.slug ? (
+                      <Link href={`/events/${event.slug}`} className="font-bold text-foreground mb-1 hover:underline">
+                        {event.title}
+                      </Link>
+                    ) : (
+                      <h3 className="font-bold text-foreground mb-1">{event.title}</h3>
+                    )}
                     <div className="mb-2 space-y-1 text-sm text-text-secondary">
                       <p>
                         <span className="font-medium text-foreground">{formatEventDate(event.event_date)}</span>
