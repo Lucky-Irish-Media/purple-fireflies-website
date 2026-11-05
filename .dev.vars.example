@@ -5,6 +5,9 @@ SESSION_SECRET=your_secret_key_here
 # Get your API key from https://resend.com/api-keys
 EMAIL_API_KEY=re_your_api_key_here
 EMAIL_FROM=Mel <mel@purplefireflies.org>
+# Newsletter emails (subscription confirmations and issues) are sent from this
+# address instead of EMAIL_FROM above. Defaults to admin@purplefireflies.org.
+# NEWSLETTER_FROM=PF Admin <admin@purplefireflies.org>
 # EMAIL_API_URL=https://api.resend.com/emails
 
 # Springfield Neighbors — running total of boxes delivered, shown in the hero stats

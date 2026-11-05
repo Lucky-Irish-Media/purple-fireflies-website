@@ -4,6 +4,7 @@ interface CloudflareEnv {
   MEDIA_BUCKET: R2Bucket;
   EMAIL_API_KEY?: string;
   EMAIL_FROM?: string;
+  NEWSLETTER_FROM?: string;
   EMAIL_API_URL?: string;
   ADMIN_EMAIL?: string;
   SPRINGFIELD_BOXES_DELIVERED?: string;

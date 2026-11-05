@@ -112,9 +112,10 @@ export async function sendEmail(params: {
   subject: string;
   text: string;
   html?: string;
+  from?: string;
 }): Promise<void> {
   const apiKey = process.env.EMAIL_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const from = params.from?.trim() || process.env.EMAIL_FROM;
 
   if (!apiKey || !from) {
     console.log("[EMAIL STUB] Would send email:", params);
@@ -373,6 +374,19 @@ function formatUsd(cents: number): string {
   }).format((Number.isFinite(cents) ? cents : 0) / 100);
 }
 
+async function getNewsletterFrom(): Promise<string> {
+  for (const name of [
+    "NEWSLETTER_FROM",
+    "NEWSLETTER_EMAIL_FROM",
+    "NEWSLETTER_FROM_EMAIL",
+    "NEWSLETTER_FROM_ADDRESS",
+  ]) {
+    const value = (await readEnvVar(name))?.trim();
+    if (value) return value;
+  }
+  return "PF Admin <admin@purplefireflies.org>";
+}
+
 export async function sendNewsletterConfirmation(email: string, name: string | null, confirmToken: string): Promise<void> {
   const link = `https://purplefireflies.org/newsletters/confirm?token=${confirmToken}`;
   const subject = "Confirm your Purple Fireflies newsletter subscription";
@@ -405,7 +419,7 @@ Purple Fireflies`;
   </div>
 </body>
 </html>`;
-  await sendEmail({ to: email, subject, text, html });
+  await sendEmail({ to: email, subject, text, html, from: await getNewsletterFrom() });
 }
 
 export async function sendNewsletterIssue(params: {
@@ -435,5 +449,5 @@ export async function sendNewsletterIssue(params: {
 </body>
 </html>`;
   const text = `${params.subject}\n\n${htmlBody.replace(/<[^>]+>/g, "")}\n\nUnsubscribe: ${unsubLink}`;
-  await sendEmail({ to: params.to, subject: params.subject, text, html });
+  await sendEmail({ to: params.to, subject: params.subject, text, html, from: await getNewsletterFrom() });
 }

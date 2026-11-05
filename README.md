@@ -92,6 +92,8 @@ Open [http://localhost:3000](http://localhost:3000) to see the result.
 - `COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_URL` - Optional. Givebutter campaign URL for the general pet fund, used as a fallback link.
 - `GIVEBUTTER_WEBHOOK_SECRET` - Signing secret from the Givebutter webhook subscription. Givebutter sends it verbatim in a `Signature` header on every delivery; the receiver compares it in constant time. When unset the webhook returns 500 and records nothing. Worker Previews do not inherit production secrets, so set secrets twice: `npx wrangler secret put GIVEBUTTER_WEBHOOK_SECRET` for production, and `npx wrangler preview base-config secret put GIVEBUTTER_WEBHOOK_SECRET` for new previews. Base preview secrets only apply to previews created after the command; use `npx wrangler preview secret put NAME --name <branch>` to update an existing preview.
 - `ADMIN_EMAIL` - Optional internal alert address for failed Givebutter plans. Falls back to `info@purplefireflies.org`.
+- `EMAIL_FROM` - Sender address for meal delivery and other transactional emails (e.g. `Mel <mel@purplefireflies.org>`).
+- `NEWSLETTER_FROM` - Sender address for newsletter subscription confirmations and issues. Defaults to `PF Admin <admin@purplefireflies.org>` so newsletters come from a different address than meal delivery emails.
 
 ### Local development against preview Cloudflare bindings
 
