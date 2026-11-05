@@ -31,10 +31,8 @@ bucket_name = "purple-fireflies-media"
 # Running total of boxes delivered by Springfield Neighbors volunteers, shown on
 # /programs/springfield-neighbors. Manually bumped, not a D1 aggregate.
 SPRINGFIELD_BOXES_DELIVERED = "130"
-# Community Pet Fund launch state. Production stays off until the Ohio AG
-# registration, Givebutter onboarding, and board policies are in place, and the
-# tax line stays state-only until a 501(c)(3) determination letter exists.
-COMMUNITY_PETS_DONATIONS_ENABLED = "false"
+# Community Pet Fund launch state. Donations enabled (matches production variable).
+COMMUNITY_PETS_DONATIONS_ENABLED = "true"
 NONPROFIT_STATUS = "state_only"
 # Givebutter Widgets account ID (Dashboard > Settings > Integrations). The
 # embedded donation form cannot load without it, so the sponsor block falls back
