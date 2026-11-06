@@ -1,10 +1,11 @@
-import { getNewsletters } from "@/app/lib/db";
+import { getNewsletters, getConfirmedSubscribers } from "@/app/lib/db";
 import { verifySession } from "@/app/lib/dal";
 import NewslettersTable from "@/app/admin/NewslettersTable";
 
 export default async function AdminNewslettersPage() {
   const session = await verifySession();
   const newsletters = await getNewsletters();
+  const confirmedSubscribers = await getConfirmedSubscribers();
 
   return (
     <div className="space-y-8">
@@ -13,6 +14,7 @@ export default async function AdminNewslettersPage() {
         initialNewsletters={newsletters}
         canSend={session.role === "admin"}
         canEdit={session.role === "admin" || session.role === "content_editor"}
+        confirmedSubscriberCount={confirmedSubscribers.length}
       />
     </div>
   );

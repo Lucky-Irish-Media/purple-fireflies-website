@@ -23,10 +23,12 @@ export default function NewslettersTable({
   initialNewsletters,
   canSend,
   canEdit,
+  confirmedSubscriberCount,
 }: {
   initialNewsletters: Newsletter[];
   canSend: boolean;
   canEdit: boolean;
+  confirmedSubscriberCount?: number;
 }) {
   const [newsletters, setNewsletters] = useState(initialNewsletters);
   const [modalOpen, setModalOpen] = useState(false);
@@ -372,7 +374,7 @@ export default function NewslettersTable({
                 onChange={() => toggleSendSegment("all")}
                 className="rounded border-primary/20"
               />
-              All confirmed subscribers
+              All confirmed subscribers (Subscribers){confirmedSubscriberCount !== undefined ? ` (${confirmedSubscriberCount})` : ""}
             </label>
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
