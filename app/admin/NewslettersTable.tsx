@@ -23,16 +23,21 @@ export default function NewslettersTable({
   initialNewsletters,
   canSend,
   canEdit,
+  confirmedSubscriberCount,
 }: {
   initialNewsletters: Newsletter[];
   canSend: boolean;
   canEdit: boolean;
+  confirmedSubscriberCount?: number;
 }) {
   const [newsletters, setNewsletters] = useState(initialNewsletters);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Newsletter | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [sendPending, setSendPending] = useState(false);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [sendTarget, setSendTarget] = useState<{ id: number; alreadySent: boolean } | null>(null);
+  const [sendSegments, setSendSegments] = useState({ all: true, recipient: false, volunteer: false });
   const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const hiddenBodyRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -90,24 +95,55 @@ export default function NewslettersTable({
   const formPending = editing ? updatePending : createPending;
   const formAction = editing ? updateAction : createAction;
 
-  async function handleSend(id: number, alreadySent: boolean = false) {
-    const confirmMsg = alreadySent
-      ? "This newsletter was already marked as sent. Send it again?"
-      : "Send this newsletter to the selected segment?";
+  function openSendDialog(id: number, alreadySent: boolean) {
+    setSendTarget({ id, alreadySent });
+    setSendSegments({ all: true, recipient: false, volunteer: false });
+    setSendDialogOpen(true);
+  }
+
+  function closeSendDialog() {
+    setSendDialogOpen(false);
+    setSendTarget(null);
+  }
+
+  function toggleSendSegment(key: "all" | "recipient" | "volunteer") {
+    setSendSegments((prev) => {
+      if (key === "all") {
+        const nextAll = !prev.all;
+        return { all: nextAll, recipient: nextAll ? false : prev.recipient, volunteer: nextAll ? false : prev.volunteer };
+      }
+      const next = { ...prev, [key]: !prev[key] };
+      if (next.recipient || next.volunteer) next.all = false;
+      if (!next.recipient && !next.volunteer && !next.all) next.all = true;
+      return next;
+    });
+  }
+
+  function sendSegmentLabel(segs: typeof sendSegments): string {
+    if (segs.all) return "all confirmed subscribers";
+    const parts: string[] = [];
+    if (segs.recipient) parts.push("recipients");
+    if (segs.volunteer) parts.push("volunteers");
+    return parts.join(" and ") || "all confirmed subscribers";
+  }
+
+  async function confirmSend() {
+    if (!sendTarget) return;
+    const tags = sendSegments.all
+      ? []
+      : (["recipient", "volunteer"] as const).filter((k) => sendSegments[k]);
+    const label = sendSegmentLabel(sendSegments);
+    const confirmMsg = sendTarget.alreadySent
+      ? `This newsletter was already marked as sent. Send it again to ${label}?`
+      : `Send this newsletter to ${label}?`;
     if (!confirm(confirmMsg)) return;
+    setSendDialogOpen(false);
     setSendPending(true);
-    const tagsInput = prompt("Enter comma-separated tags to target (leave blank for all confirmed subscribers):", "");
-    // Cancel on the prompt (null) means abort - do not send.
-    if (tagsInput === null) {
-      setSendPending(false);
-      return;
-    }
-    const tags = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
-    const result = await sendNewsletterAction(id, tags);
+    const result = await sendNewsletterAction(sendTarget.id, [...tags]);
     setActionMessage({ text: result.message, success: result.success });
     setSendPending(false);
+    setSendTarget(null);
     // refresh list
-    // re-fetch not available; rely on revalidate? client state stale; reload page
     window.location.reload();
   }
 
@@ -163,7 +199,7 @@ export default function NewslettersTable({
             )}
             {canSend && (
               <button
-                onClick={() => handleSend(nl.id, nl.status === "sent")}
+                onClick={() => openSendDialog(nl.id, nl.status === "sent")}
                 disabled={sendPending}
                 className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
@@ -325,6 +361,58 @@ export default function NewslettersTable({
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={sendDialogOpen} onClose={closeSendDialog} title="Send Newsletter">
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">Choose the audience segment to send to:</p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={sendSegments.all}
+                onChange={() => toggleSendSegment("all")}
+                className="rounded border-primary/20"
+              />
+              All confirmed subscribers (Subscribers){confirmedSubscriberCount !== undefined ? ` (${confirmedSubscriberCount})` : ""}
+            </label>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={sendSegments.recipient}
+                onChange={() => toggleSendSegment("recipient")}
+                className="rounded border-primary/20"
+              />
+              Recipients
+            </label>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={sendSegments.volunteer}
+                onChange={() => toggleSendSegment("volunteer")}
+                className="rounded border-primary/20"
+              />
+              Volunteers
+            </label>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={closeSendDialog}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmSend}
+              disabled={sendPending}
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              {sendPending ? "Sending..." : "Send"}
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {actionMessage && (
