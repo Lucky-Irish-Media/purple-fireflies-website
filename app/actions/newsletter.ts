@@ -9,6 +9,7 @@ import {
 } from "@/app/lib/definitions";
 import type { Newsletter, NewsletterSubscriber } from "@/app/lib/definitions";
 import { normalizeQuillLists } from "@/app/lib/html";
+import { readEnvVar } from "@/app/lib/env";
 import {
   createNewsletter,
   updateNewsletter,
@@ -26,6 +27,7 @@ import {
   publishNewsletter,
 } from "@/app/lib/db";
 import {
+  sendEmail,
   sendNewsletterConfirmation,
   sendNewsletterIssue,
   sendNewsletterIssuesBatch,
@@ -313,9 +315,31 @@ export async function sendNewsletterAction(
       unsubscribeToken: r.unsubscribe_token,
     }));
 
-    const { sentCount, errors } = await sendNewsletterIssuesBatch(emails);
+    const { sentCount, errors, failedEmails } = await sendNewsletterIssuesBatch(emails);
     for (const err of errors) {
       console.error("Newsletter batch error:", err);
+    }
+
+    // Document the outcome by email so there is an audit trail if a send is
+    // partial (e.g. rate limits). Best-effort: never fail the action on it.
+    try {
+      const adminEmail = (await readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
+      const failedList = failedEmails.length > 0 ? failedEmails.join("\n") : "(none)";
+      const summary =
+        `Newsletter send outcome\n\n` +
+        `Newsletter: ${newsletter.title} (id ${id})\n` +
+        `Total recipients: ${recipients.length}\n` +
+        `Sent: ${sentCount}\n` +
+        `Failed recipients: ${failedEmails.length}\n\n` +
+        `Failed recipient emails:\n${failedList}\n\n` +
+        (errors.length ? `Errors:\n${errors.join("\n")}\n` : "");
+      await sendEmail({
+        to: adminEmail,
+        subject: `[Newsletter send report] ${newsletter.title}`,
+        text: summary,
+      });
+    } catch (reportErr) {
+      console.error("Failed to send newsletter report email:", reportErr);
     }
 
     if (sentCount === 0) {
