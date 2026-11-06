@@ -7,6 +7,7 @@ import {
   updateNewsletterAction,
   deleteNewsletterAction,
   sendNewsletterAction,
+  sendNewsletterToEmailsAction,
   sendTestNewsletterAction,
   type NewsletterActionState,
 } from "@/app/actions/newsletter";
@@ -38,6 +39,10 @@ export default function NewslettersTable({
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [sendTarget, setSendTarget] = useState<{ id: number; alreadySent: boolean } | null>(null);
   const [sendSegments, setSendSegments] = useState({ all: true, recipient: false, volunteer: false });
+  const [resendDialogOpen, setResendDialogOpen] = useState(false);
+  const [resendTarget, setResendTarget] = useState<number | null>(null);
+  const [resendText, setResendText] = useState("");
+  const [resendPending, setResendPending] = useState(false);
   const testEmailRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const hiddenBodyRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -147,6 +152,24 @@ export default function NewslettersTable({
     window.location.reload();
   }
 
+  async function confirmResend() {
+    if (resendTarget === null) return;
+    const emails = resendText.split(/[\\n,;]+/).map((e) => e.trim()).filter(Boolean);
+    if (emails.length === 0) {
+      setActionMessage({ text: "Paste at least one email address.", success: false });
+      return;
+    }
+    if (!confirm(`Send this newsletter to ${emails.length} specific recipient(s)?`)) return;
+    setResendDialogOpen(false);
+    setResendPending(true);
+    const result = await sendNewsletterToEmailsAction(resendTarget, emails);
+    setActionMessage({ text: result.message, success: result.success });
+    setResendPending(false);
+    setResendTarget(null);
+    setResendText("");
+    window.location.reload();
+  }
+
   async function handleTest(id: number, email: string, body?: string) {
     const result = await sendTestNewsletterAction(id, email, body);
     setActionMessage({ text: result.message, success: result.success });
@@ -198,13 +221,22 @@ export default function NewslettersTable({
               </button>
             )}
             {canSend && (
-              <button
-                onClick={() => openSendDialog(nl.id, nl.status === "sent")}
-                disabled={sendPending}
-                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
-              >
-                {nl.status === "sent" ? "Resend" : "Send"}
-              </button>
+              <>
+                <button
+                  onClick={() => openSendDialog(nl.id, nl.status === "sent")}
+                  disabled={sendPending}
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
+                >
+                  {nl.status === "sent" ? "Resend" : "Send"}
+                </button>
+                <button
+                  onClick={() => { setResendTarget(nl.id); setResendText(""); setResendDialogOpen(true); }}
+                  disabled={resendPending}
+                  className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
+                >
+                  Resend to list
+                </button>
+              </>
             )}
             {null}
             {canEdit && (
@@ -410,6 +442,38 @@ export default function NewslettersTable({
               className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
             >
               {sendPending ? "Sending..." : "Send"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={resendDialogOpen} onClose={() => setResendDialogOpen(false)} title="Resend to specific recipients">
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Paste the email addresses to resend to (one per line, or comma/semicolon separated). Only confirmed subscribers will be sent.
+          </p>
+          <textarea
+            value={resendText}
+            onChange={(e) => setResendText(e.target.value)}
+            rows={8}
+            className="w-full rounded-lg border border-primary/10 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="email1@example.com\nemail2@example.com"
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setResendDialogOpen(false)}
+              className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmResend}
+              disabled={resendPending}
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              {resendPending ? "Sending..." : "Send"}
             </button>
           </div>
         </div>

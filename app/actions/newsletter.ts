@@ -9,6 +9,7 @@ import {
 } from "@/app/lib/definitions";
 import type { Newsletter, NewsletterSubscriber } from "@/app/lib/definitions";
 import { normalizeQuillLists } from "@/app/lib/html";
+import { readEnvVar } from "@/app/lib/env";
 import {
   createNewsletter,
   updateNewsletter,
@@ -26,6 +27,7 @@ import {
   publishNewsletter,
 } from "@/app/lib/db";
 import {
+  sendEmail,
   sendNewsletterConfirmation,
   sendNewsletterIssue,
   sendNewsletterIssuesBatch,
@@ -393,5 +395,84 @@ export async function uploadNewsletterImageAction(
   } catch (e) {
     console.error("uploadNewsletterImageAction error:", e);
     return { success: false, message: "Failed to upload image." };
+  }
+}
+
+
+export async function sendNewsletterToEmailsAction(
+  id: number,
+  emails: string[],
+): Promise<{ success: boolean; message: string; count?: number }> {
+  try {
+    const session = await verifySession();
+    if (session.role !== "admin") {
+      return { success: false, message: "Only admins can send newsletters." };
+    }
+
+    const newsletter = await getNewsletterById(id);
+    if (!newsletter) return { success: false, message: "Newsletter not found." };
+
+    const normalizedEmails = emails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+    if (normalizedEmails.length === 0) {
+      return { success: false, message: "No recipient emails provided." };
+    }
+
+    const recipients: { email: string; unsubscribe_token: string }[] = [];
+    for (const email of normalizedEmails) {
+      const sub = await getSubscriberByEmail(email);
+      if (sub && sub.status === "confirmed") {
+        recipients.push({ email: sub.email, unsubscribe_token: sub.unsubscribe_token });
+      } else {
+        console.warn("Skipping non-confirmed/unknown recipient:", email);
+      }
+    }
+
+    if (recipients.length === 0) {
+      return { success: false, message: "None of the provided emails are confirmed subscribers." };
+    }
+
+    const items = recipients.map((r) => ({
+      to: r.email,
+      subject: newsletter.title,
+      htmlBody: normalizeQuillLists(newsletter.body || ""),
+      unsubscribeToken: r.unsubscribe_token,
+    }));
+
+    const { sentCount, errors, failedEmails } = await sendNewsletterIssuesBatch(items);
+    for (const err of errors) {
+      console.error("Newsletter batch error:", err);
+    }
+
+    // Best-effort audit email
+    try {
+      const adminEmail = (await readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
+      const failedList = failedEmails.length > 0 ? failedEmails.join("\n") : "(none)";
+      await sendEmail({
+        to: adminEmail,
+        subject: `[Newsletter resend report] ${newsletter.title}`,
+        text:
+          `Newsletter resend outcome\n\n` +
+          `Newsletter: ${newsletter.title} (id ${id})\n` +
+          `Requested: ${normalizedEmails.length}\n` +
+          `Sent: ${sentCount}\n` +
+          `Failed: ${failedEmails.length}\n\n` +
+          `Failed recipient emails:\n${failedList}\n\n` +
+          (errors.length ? `Errors:\n${errors.join("\n")}\n` : ""),
+      });
+    } catch (reportErr) {
+      console.error("Failed to send newsletter resend report email:", reportErr);
+    }
+
+    if (sentCount === 0) {
+      return { success: false, message: "Failed to send: no emails were delivered." };
+    }
+    return {
+      success: true,
+      message: `Sent to ${sentCount} of ${recipients.length} recipient(s).`,
+      count: sentCount,
+    };
+  } catch (e) {
+    console.error("sendNewsletterToEmailsAction error:", e);
+    return { success: false, message: "Failed to send newsletter." };
   }
 }
