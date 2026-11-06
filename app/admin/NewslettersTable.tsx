@@ -90,10 +90,18 @@ export default function NewslettersTable({
   const formPending = editing ? updatePending : createPending;
   const formAction = editing ? updateAction : createAction;
 
-  async function handleSend(id: number) {
-    if (!confirm("Send this newsletter to the selected segment?")) return;
+  async function handleSend(id: number, alreadySent: boolean = false) {
+    const confirmMsg = alreadySent
+      ? "This newsletter was already marked as sent. Send it again?"
+      : "Send this newsletter to the selected segment?";
+    if (!confirm(confirmMsg)) return;
     setSendPending(true);
-    const tagsInput = prompt("Enter comma-separated tags to target (leave blank for all confirmed subscribers):", "") || "";
+    const tagsInput = prompt("Enter comma-separated tags to target (leave blank for all confirmed subscribers):", "");
+    // Cancel on the prompt (null) means abort - do not send.
+    if (tagsInput === null) {
+      setSendPending(false);
+      return;
+    }
     const tags = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
     const result = await sendNewsletterAction(id, tags);
     setActionMessage({ text: result.message, success: result.success });
@@ -153,13 +161,13 @@ export default function NewslettersTable({
                 Edit
               </button>
             )}
-            {canSend && nl.status !== "sent" && (
+            {canSend && (
               <button
-                onClick={() => handleSend(nl.id)}
+                onClick={() => handleSend(nl.id, nl.status === "sent")}
                 disabled={sendPending}
                 className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
-                Send
+                {nl.status === "sent" ? "Resend" : "Send"}
               </button>
             )}
             {null}

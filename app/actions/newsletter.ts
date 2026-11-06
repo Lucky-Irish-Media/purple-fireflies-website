@@ -305,6 +305,7 @@ export async function sendNewsletterAction(
       return { success: false, message: "No confirmed subscribers match the selected segment." };
     }
 
+    let sentCount = 0;
     for (const r of recipients) {
       try {
         await sendNewsletterIssue({
@@ -313,12 +314,17 @@ export async function sendNewsletterAction(
           htmlBody: normalizeQuillLists(newsletter.body || ""),
           unsubscribeToken: r.unsubscribe_token,
         });
+        sentCount++;
       } catch (err) {
         console.error("Failed sending to", r.email, err);
       }
     }
 
-    await markNewsletterSent(id, recipients.length);
+    if (sentCount === 0) {
+      return { success: false, message: "Failed to send newsletter: no emails were delivered." };
+    }
+
+    await markNewsletterSent(id, sentCount);
     // also publish if not published
     if (newsletter.status === "draft") {
       await publishNewsletter(id);
@@ -328,7 +334,7 @@ export async function sendNewsletterAction(
     revalidatePath("/newsletters");
     revalidatePath("/news");
     revalidatePath("/");
-    return { success: true, message: `Sent to ${recipients.length} subscriber(s).`, count: recipients.length };
+    return { success: true, message: `Sent to ${sentCount} of ${recipients.length} subscriber(s).`, count: sentCount };
   } catch (e) {
     console.error("sendNewsletterAction error:", e);
     return { success: false, message: "Failed to send newsletter." };
