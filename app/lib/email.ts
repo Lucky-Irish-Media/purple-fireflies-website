@@ -484,9 +484,9 @@ export async function sendNewsletterIssuesBatch(
     htmlBody: string;
     unsubscribeToken: string;
   }>,
-): Promise<{ sentCount: number; errors: string[] }> {
+): Promise<{ sentCount: number; errors: string[]; failedEmails: string[] }> {
   const errors: string[] = [];
-  if (items.length === 0) return { sentCount: 0, errors };
+  if (items.length === 0) return { sentCount: 0, errors, failedEmails: [] };
 
   const apiKey = await readEnvVar("EMAIL_API_KEY");
   const from = await getNewsletterFrom();
@@ -495,7 +495,7 @@ export async function sendNewsletterIssuesBatch(
 
   if (!apiKey || !from) {
     console.log("[EMAIL STUB] Would send newsletter batch:", items.length);
-    return { sentCount: items.length, errors };
+    return { sentCount: items.length, errors, failedEmails: [] };
   }
 
   const payloads = items.map((item) => {
@@ -512,6 +512,7 @@ export async function sendNewsletterIssuesBatch(
 
   const chunkSize = 100;
   let sentCount = 0;
+  const failedEmails: string[] = [];
 
   for (let i = 0; i < payloads.length; i += chunkSize) {
     const chunk = payloads.slice(i, i + chunkSize);
@@ -544,19 +545,22 @@ export async function sendNewsletterIssuesBatch(
             continue;
           }
           errors.push(`Batch ${Math.floor(i / chunkSize) + 1} failed (${response.status}): ${errorText}`);
+          failedEmails.push(...chunk.map((p) => p.to));
           done = true;
         }
       } catch (err) {
         errors.push(
           `Batch ${Math.floor(i / chunkSize) + 1} error: ${err instanceof Error ? err.message : String(err)}`,
         );
+        failedEmails.push(...chunk.map((p) => p.to));
         done = true;
       }
     }
     if (!done) {
       errors.push(`Batch ${Math.floor(i / chunkSize) + 1} failed: max retries exceeded`);
+      failedEmails.push(...chunk.map((p) => p.to));
     }
   }
 
-  return { sentCount, errors };
+  return { sentCount, errors, failedEmails };
 }
