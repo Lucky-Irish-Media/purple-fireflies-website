@@ -36,7 +36,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 | `/api/givebutter/webhook` | Givebutter webhook receiver (signature-authenticated, POST only) |
 | `/admin/events` | Events CRUD |
 | `/admin/news` | News articles CRUD |
-| `/admin/newsletters` | Newsletter compose, preview, send (admin), drafts (content editor) |
+| `/admin/newsletters` | Newsletter compose, preview, send (admin), drafts (content editor); Subscribers tab lists subscribers with status filters, counts, and admin CRUD (create/edit/delete, tags) |
 | `/volunteer` | Volunteer portal (sign-ins only) |
 
 ## Features
