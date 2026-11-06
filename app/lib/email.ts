@@ -107,6 +107,10 @@ Purple Fireflies`;
   await sendEmail({ to, subject, text });
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function sendEmail(params: {
   to: string;
   subject: string;
@@ -134,19 +138,32 @@ export async function sendEmail(params: {
     body.html = params.html;
   }
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-  if (!response.ok) {
+    if (response.ok) {
+      return;
+    }
+
     const error = await response.text();
-    throw new Error(`Email send failed (${response.status}): ${error}`);
+    lastError = new Error(`Email send failed (${response.status}): ${error}`);
+
+    if (response.status === 429 && attempt < 2) {
+      await sleep(1000 * (attempt + 1));
+      continue;
+    }
+    throw lastError;
   }
+
+  if (lastError) throw lastError;
 }
 
 export async function sendDeliverySummaryEmail(date: string, drivers: DateDriver[], waitlistEntries?: WaitlistEntryWithParticipant[]): Promise<void> {
@@ -422,24 +439,17 @@ Purple Fireflies`;
   await sendEmail({ to: email, subject, text, html, from: await getNewsletterFrom() });
 }
 
-export async function sendNewsletterIssue(params: {
-  to: string;
-  subject: string;
-  htmlBody: string;
-  unsubscribeToken: string;
-}): Promise<void> {
-  const unsubLink = `https://purplefireflies.org/newsletters/unsubscribe?token=${params.unsubscribeToken}`;
-  const htmlBody = normalizeQuillLists(params.htmlBody);
-  const html = `<!DOCTYPE html>
+function buildNewsletterHtml(subject: string, normalizedBody: string, unsubLink: string): string {
+  return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f9fafb;">
   <div style="max-width:640px;margin:20px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
     <div style="background-color:#6b21a8;padding:16px 24px;">
-      <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">${params.subject}</h1>
+      <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">${subject}</h1>
     </div>
     <div style="padding:24px;font-size:14px;color:#374151;line-height:1.6;">
-      ${htmlBody}
+      ${normalizedBody}
     </div>
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
       <p style="margin:0;">You are receiving this because you subscribed to the Purple Fireflies newsletter.</p>
@@ -448,6 +458,105 @@ export async function sendNewsletterIssue(params: {
   </div>
 </body>
 </html>`;
-  const text = `${params.subject}\n\n${htmlBody.replace(/<[^>]+>/g, "")}\n\nUnsubscribe: ${unsubLink}`;
+}
+
+function buildNewsletterText(subject: string, normalizedBody: string, unsubLink: string): string {
+  return `${subject}\n\n${normalizedBody.replace(/<[^>]+>/g, "")}\n\nUnsubscribe: ${unsubLink}`;
+}
+
+export async function sendNewsletterIssue(params: {
+  to: string;
+  subject: string;
+  htmlBody: string;
+  unsubscribeToken: string;
+}): Promise<void> {
+  const unsubLink = `https://purplefireflies.org/newsletters/unsubscribe?token=${params.unsubscribeToken}`;
+  const normalized = normalizeQuillLists(params.htmlBody);
+  const html = buildNewsletterHtml(params.subject, normalized, unsubLink);
+  const text = buildNewsletterText(params.subject, normalized, unsubLink);
   await sendEmail({ to: params.to, subject: params.subject, text, html, from: await getNewsletterFrom() });
+}
+
+export async function sendNewsletterIssuesBatch(
+  items: Array<{
+    to: string;
+    subject: string;
+    htmlBody: string;
+    unsubscribeToken: string;
+  }>,
+): Promise<{ sentCount: number; errors: string[] }> {
+  const errors: string[] = [];
+  if (items.length === 0) return { sentCount: 0, errors };
+
+  const apiKey = await readEnvVar("EMAIL_API_KEY");
+  const from = await getNewsletterFrom();
+  const apiUrl = (await readEnvVar("EMAIL_API_URL")) || "https://api.resend.com/emails";
+  const batchUrl = apiUrl.replace(/\/+$/, "").replace(/\/emails$/, "") + "/emails/batch";
+
+  if (!apiKey || !from) {
+    console.log("[EMAIL STUB] Would send newsletter batch:", items.length);
+    return { sentCount: items.length, errors };
+  }
+
+  const payloads = items.map((item) => {
+    const unsubLink = `https://purplefireflies.org/newsletters/unsubscribe?token=${item.unsubscribeToken}`;
+    const normalized = normalizeQuillLists(item.htmlBody);
+    return {
+      from,
+      to: item.to,
+      subject: item.subject,
+      text: buildNewsletterText(item.subject, normalized, unsubLink),
+      html: buildNewsletterHtml(item.subject, normalized, unsubLink),
+    };
+  });
+
+  const chunkSize = 100;
+  let sentCount = 0;
+
+  for (let i = 0; i < payloads.length; i += chunkSize) {
+    const chunk = payloads.slice(i, i + chunkSize);
+    let done = false;
+    for (let attempt = 0; attempt < 3 && !done; attempt++) {
+      try {
+        const response = await fetch(batchUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(chunk),
+        });
+
+        if (response.ok) {
+          let count = chunk.length;
+          try {
+            const data = (await response.json()) as { data?: unknown[] };
+            if (Array.isArray(data?.data)) count = data.data.length;
+          } catch {
+            // keep chunk length
+          }
+          sentCount += count;
+          done = true;
+        } else {
+          const errorText = await response.text();
+          if (response.status === 429 && attempt < 2) {
+            await sleep(1000 * (attempt + 1));
+            continue;
+          }
+          errors.push(`Batch ${Math.floor(i / chunkSize) + 1} failed (${response.status}): ${errorText}`);
+          done = true;
+        }
+      } catch (err) {
+        errors.push(
+          `Batch ${Math.floor(i / chunkSize) + 1} error: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        done = true;
+      }
+    }
+    if (!done) {
+      errors.push(`Batch ${Math.floor(i / chunkSize) + 1} failed: max retries exceeded`);
+    }
+  }
+
+  return { sentCount, errors };
 }

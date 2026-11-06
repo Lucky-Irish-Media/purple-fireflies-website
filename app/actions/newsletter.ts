@@ -28,6 +28,7 @@ import {
 import {
   sendNewsletterConfirmation,
   sendNewsletterIssue,
+  sendNewsletterIssuesBatch,
 } from "@/app/lib/email";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
@@ -305,19 +306,16 @@ export async function sendNewsletterAction(
       return { success: false, message: "No confirmed subscribers match the selected segment." };
     }
 
-    let sentCount = 0;
-    for (const r of recipients) {
-      try {
-        await sendNewsletterIssue({
-          to: r.email,
-          subject: newsletter.title,
-          htmlBody: normalizeQuillLists(newsletter.body || ""),
-          unsubscribeToken: r.unsubscribe_token,
-        });
-        sentCount++;
-      } catch (err) {
-        console.error("Failed sending to", r.email, err);
-      }
+    const emails = recipients.map((r) => ({
+      to: r.email,
+      subject: newsletter.title,
+      htmlBody: normalizeQuillLists(newsletter.body || ""),
+      unsubscribeToken: r.unsubscribe_token,
+    }));
+
+    const { sentCount, errors } = await sendNewsletterIssuesBatch(emails);
+    for (const err of errors) {
+      console.error("Newsletter batch error:", err);
     }
 
     if (sentCount === 0) {
