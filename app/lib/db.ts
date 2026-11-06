@@ -2176,6 +2176,35 @@ export async function deleteSubscriber(id: number): Promise<void> {
   await db.prepare("DELETE FROM newsletter_subscribers WHERE id = ?").bind(id).run();
 }
 
+export async function updateSubscriber(id: number, data: {
+  email: string;
+  name?: string | null;
+  tags?: string;
+  status: NewsletterSubscriberStatus;
+}): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE newsletter_subscribers SET email = ?, name = ?, tags = ?, updated_at = datetime('now') WHERE id = ?")
+    .bind(data.email, data.name ?? null, data.tags ?? "", id)
+    .run();
+  if (data.status === "confirmed") {
+    await db
+      .prepare("UPDATE newsletter_subscribers SET status = 'confirmed', confirmed_at = COALESCE(confirmed_at, datetime('now')), unsubscribed_at = NULL, updated_at = datetime('now') WHERE id = ?")
+      .bind(id)
+      .run();
+  } else if (data.status === "unsubscribed") {
+    await db
+      .prepare("UPDATE newsletter_subscribers SET status = 'unsubscribed', unsubscribed_at = COALESCE(unsubscribed_at, datetime('now')), updated_at = datetime('now') WHERE id = ?")
+      .bind(id)
+      .run();
+  } else {
+    await db
+      .prepare("UPDATE newsletter_subscribers SET status = 'pending', confirmed_at = NULL, unsubscribed_at = NULL, updated_at = datetime('now') WHERE id = ?")
+      .bind(id)
+      .run();
+  }
+}
+
 export async function getSubscriberCounts(): Promise<{ pending: number; confirmed: number; unsubscribed: number; total: number }> {
   const db = await getDB();
   const result = await db
