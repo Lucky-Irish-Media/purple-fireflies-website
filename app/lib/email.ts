@@ -114,15 +114,15 @@ export async function sendEmail(params: {
   html?: string;
   from?: string;
 }): Promise<void> {
-  const apiKey = process.env.EMAIL_API_KEY;
-  const from = params.from?.trim() || process.env.EMAIL_FROM;
+  const apiKey = await readEnvVar("EMAIL_API_KEY");
+  const from = params.from?.trim() || (await readEnvVar("EMAIL_FROM"));
 
   if (!apiKey || !from) {
     console.log("[EMAIL STUB] Would send email:", params);
     return;
   }
 
-  const apiUrl = process.env.EMAIL_API_URL || "https://api.resend.com/emails";
+  const apiUrl = (await readEnvVar("EMAIL_API_URL")) || "https://api.resend.com/emails";
 
   const body: Record<string, string> = {
     from,
