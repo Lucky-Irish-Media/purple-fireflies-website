@@ -378,6 +378,26 @@ export interface NewsletterSubscriber {
   updated_at: string;
 }
 
+export const PetApplicationSchema = z.object({
+  applicant_name: z.string().min(1, { message: "Name is required." }).trim(),
+  applicant_email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  applicant_phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  applicant_address: z.string().optional(),
+  pet_name: z.string().min(1, { message: "Pet name is required." }).trim(),
+  species: z.string().min(1, { message: "Species is required." }).trim(),
+  breed: z.string().optional(),
+  age_text: z.string().optional(),
+  sex: z.string().optional(),
+  story: z.string().min(1, { message: "Please tell us about your pet." }).trim(),
+  needs: z.string().optional(),
+  signature: z.string().optional(),
+  waiverAcknowledged: z.coerce.boolean().optional(),
+});
+
+export type PetApplicationFormState =
+  | { errors?: { applicant_name?: string[]; applicant_email?: string[]; applicant_phone?: string[]; applicant_address?: string[]; pet_name?: string[]; species?: string[]; breed?: string[]; age_text?: string[]; sex?: string[]; story?: string[]; needs?: string[]; signature?: string[]; waiverAcknowledged?: string[] }; message?: string; success?: boolean }
+  | undefined;
+
 export const LegalObserverSignupSchema = z.object({
   name: z.string().min(1, { message: "Name is required." }).trim(),
   email: z.string().email({ message: "Please enter a valid email." }).trim(),
@@ -580,6 +600,42 @@ export interface AnimalPhoto {
 
 export interface AnimalWithPhotos extends Animal {
   photos: AnimalPhoto[];
+}
+
+export const PET_APPLICATION_STATUS_VALUES = ["submitted", "contacted", "approved", "declined", "converted"] as const;
+export type PetApplicationStatus = (typeof PET_APPLICATION_STATUS_VALUES)[number];
+
+export const PET_APPLICATION_STATUS_OPTIONS: { value: PetApplicationStatus; label: string }[] = [
+  { value: "submitted", label: "Submitted" },
+  { value: "contacted", label: "Contacted" },
+  { value: "approved", label: "Approved" },
+  { value: "declined", label: "Declined" },
+  { value: "converted", label: "Converted" },
+];
+
+export interface PetApplication {
+  id: number;
+  applicant_name: string;
+  applicant_email: string;
+  applicant_phone: string;
+  applicant_address: string | null;
+  pet_name: string;
+  species: string;
+  breed: string | null;
+  age_text: string | null;
+  sex: string | null;
+  story: string;
+  needs: string | null;
+  status: PetApplicationStatus;
+  internal_notes: string | null;
+  waiver_signed_at: string | null;
+  waiver_signer_name: string | null;
+  waiver_version: string | null;
+  waiver_ip: string | null;
+  waiver_user_agent: string | null;
+  converted_animal_id: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AnimalExpense {

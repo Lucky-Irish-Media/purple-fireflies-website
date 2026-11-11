@@ -384,6 +384,54 @@ Purple Fireflies`;
   });
 }
 
+export async function sendPetApplicationAdminEmail(params: {
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone: string;
+  applicantAddress?: string | null;
+  petName: string;
+  species: string;
+  breed?: string | null;
+  ageText?: string | null;
+  sex?: string | null;
+  story: string;
+  needs?: string | null;
+}): Promise<void> {
+  const adminEmail = (await readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
+  const lines = [
+    `Applicant: ${params.applicantName} <${params.applicantEmail}>`,
+    `Phone: ${params.applicantPhone}`,
+    params.applicantAddress ? `Address: ${params.applicantAddress}` : null,
+    `Pet: ${params.petName}`,
+    `Species: ${params.species}`,
+    params.breed ? `Breed: ${params.breed}` : null,
+    params.ageText ? `Age: ${params.ageText}` : null,
+    params.sex ? `Sex: ${params.sex}` : null,
+    params.needs ? `Needs: ${params.needs}` : null,
+    "",
+    "Story:",
+    params.story,
+  ].filter((l) => l !== null) as string[];
+  const text = `A new Sponsor a Pet application was submitted.\n\n${lines.join("\n")}\n\nReview it in the admin panel under Community Pets -> Applications.\n\nPurple Fireflies`;
+  await sendEmail({ to: adminEmail, subject: `New Sponsor a Pet application: ${params.petName}`, text });
+}
+
+export async function sendPetApplicationConfirmationEmail(params: {
+  to: string;
+  applicantName: string;
+  petName: string;
+}): Promise<void> {
+  const text = `Hi ${params.applicantName},
+
+Thank you for submitting ${params.petName} to the Sponsor a Pet Program. We have received your application and our team will follow up with you.
+
+Nothing is published without your written consent.
+
+Take care,
+Purple Fireflies`;
+  await sendEmail({ to: params.to, subject: `We received your Sponsor a Pet application for ${params.petName}`, text });
+}
+
 function formatUsd(cents: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

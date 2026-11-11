@@ -294,6 +294,15 @@ export default async function CommunityPetsPage() {
               Tell us about your pet and the cost. We will follow up with the
               you, and nothing is published without your written consent.
             </p>
+            <div className="mt-6">
+              <Link
+                href="/programs/sponsor-a-pet/apply"
+                className="inline-flex items-center gap-1 rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg transition-all duration-200 hover:opacity-90"
+                style={{ background: "#7C3AED" }}
+              >
+                Apply for sponsorship →
+              </Link>
+            </div>
           </div>
         </div>
       </section>

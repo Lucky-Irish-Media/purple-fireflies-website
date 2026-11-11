@@ -6,7 +6,7 @@ import { getHomePathForRole } from "@/app/lib/auth-utils";
 const protectedRoutes = ["/admin", "/volunteer"];
 const publicRoutes = ["/login"];
 
-const ADMIN_ROLES = ["admin", "meal_coordinator", "content_editor", "reports_viewer"];
+const ADMIN_ROLES = ["admin", "meal_coordinator", "content_editor", "reports_viewer", "pet_coordinator"];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -59,6 +59,15 @@ export default async function middleware(req: NextRequest) {
         path === "/admin/reports" || path.startsWith("/admin/reports/");
       if (!allowed) {
         return NextResponse.redirect(new URL("/admin/reports", req.nextUrl));
+      }
+    }
+
+    if (session.role === "pet_coordinator") {
+      const allowed =
+        path === "/admin/programs/community-pets" ||
+        path.startsWith("/admin/programs/community-pets/");
+      if (!allowed) {
+        return NextResponse.redirect(new URL("/admin/programs/community-pets", req.nextUrl));
       }
     }
   }

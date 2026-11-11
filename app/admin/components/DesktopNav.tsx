@@ -27,6 +27,8 @@ export function DesktopNav({ role }: { role?: string }) {
     );
   } else if (role === "reports_viewer") {
     visibleLinks = navLinks.filter((link) => link.href === "/admin/reports");
+  } else if (role === "pet_coordinator") {
+    visibleLinks = navLinks.filter((link) => link.href === "/admin/programs/community-pets");
   }
 
   return (

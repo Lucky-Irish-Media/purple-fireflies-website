@@ -67,6 +67,8 @@ export function MobileSidebar({ role }: { role?: string }) {
                 ? navLinks.filter((l) => "href" in l && (l.href === "/admin/events" || l.href === "/admin/news" || l.href === "/admin/newsletters"))
                 : role === "reports_viewer"
                 ? navLinks.filter((l) => "href" in l && l.href === "/admin/reports")
+                : role === "pet_coordinator"
+                ? navLinks.filter((l) => "href" in l && l.href === "/admin/programs/community-pets")
                 : navLinks
               ).map((link) => {
                 if ("type" in link && link.type === "heading") {
