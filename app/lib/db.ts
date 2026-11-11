@@ -2236,6 +2236,7 @@ export async function createPetApplication(data: {
   sex?: string | null;
   story: string;
   needs?: string | null;
+  availability?: string | null;
   status?: PetApplicationStatus;
   waiverSignedAt?: string | null;
   waiverSignerName?: string | null;
@@ -2246,8 +2247,8 @@ export async function createPetApplication(data: {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO pet_applications (applicant_name, applicant_email, applicant_phone, applicant_address, pet_name, species, breed, age_text, sex, story, needs, status, waiver_signed_at, waiver_signer_name, waiver_version, waiver_ip, waiver_user_agent)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO pet_applications (applicant_name, applicant_email, applicant_phone, applicant_address, pet_name, species, breed, age_text, sex, story, needs, availability, status, waiver_signed_at, waiver_signer_name, waiver_version, waiver_ip, waiver_user_agent)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
     .bind(
@@ -2262,6 +2263,7 @@ export async function createPetApplication(data: {
       data.sex || null,
       data.story,
       data.needs || null,
+      data.availability || null,
       data.status || "submitted",
       data.waiverSignedAt || null,
       data.waiverSignerName || null,

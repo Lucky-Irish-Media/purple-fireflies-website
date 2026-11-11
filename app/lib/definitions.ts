@@ -626,6 +626,7 @@ export interface PetApplication {
   sex: string | null;
   story: string;
   needs: string | null;
+  availability: string | null;
   status: PetApplicationStatus;
   internal_notes: string | null;
   waiver_signed_at: string | null;

@@ -218,6 +218,35 @@ export function SponsorAPetSignupForm() {
 
         <fieldset className="space-y-4">
           <legend className="text-lg font-semibold text-foreground">
+            Availability
+          </legend>
+          <p className="text-sm text-text-secondary">
+            When are you generally available for a photo visit or follow-up?
+            Check all that apply.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { day: "Friday", key: "friday" },
+              { day: "Saturday", key: "saturday" },
+              { day: "Sunday", key: "sunday" },
+            ].map(({ day, key }) => (
+              <div key={key} className="space-y-2 rounded-lg border border-primary/10 p-3">
+                <div className="font-medium text-foreground">{day}</div>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input type="checkbox" name="availability" value={`${key}_afternoon`} />
+                  Afternoon
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input type="checkbox" name="availability" value={`${key}_evening`} />
+                  Evening
+                </label>
+              </div>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-4">
+          <legend className="text-lg font-semibold text-foreground">
             Owner consent waiver
           </legend>
           <p className="text-sm text-text-secondary">

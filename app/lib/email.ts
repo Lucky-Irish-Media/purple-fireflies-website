@@ -396,6 +396,7 @@ export async function sendPetApplicationAdminEmail(params: {
   sex?: string | null;
   story: string;
   needs?: string | null;
+  availability?: string | null;
 }): Promise<void> {
   const adminEmail = (await readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
   const lines = [
@@ -408,6 +409,7 @@ export async function sendPetApplicationAdminEmail(params: {
     params.ageText ? `Age: ${params.ageText}` : null,
     params.sex ? `Sex: ${params.sex}` : null,
     params.needs ? `Needs: ${params.needs}` : null,
+    params.availability ? `Availability: ${params.availability}` : null,
     "",
     "Story:",
     params.story,

@@ -65,6 +65,9 @@ export async function submitPetApplication(
 
     const data = validatedFields.data;
 
+    const availability = formData.getAll("availability").map((v) => String(v));
+    const availabilityJson = availability.length ? JSON.stringify(availability) : null;
+
     const signature = data.signature?.trim();
     if (!signature) {
       return { errors: { signature: ["Signature is required."] } };
@@ -92,6 +95,7 @@ export async function submitPetApplication(
       sex: data.sex,
       story: data.story,
       needs: data.needs,
+      availability: availabilityJson,
       status: "submitted",
       waiverSignedAt: new Date().toISOString(),
       waiverSignerName: signature,
@@ -113,6 +117,7 @@ export async function submitPetApplication(
         sex: data.sex,
         story: data.story,
         needs: data.needs,
+        availability: availabilityJson,
       });
     } catch (e) {
       console.error("pet application admin email error:", e);

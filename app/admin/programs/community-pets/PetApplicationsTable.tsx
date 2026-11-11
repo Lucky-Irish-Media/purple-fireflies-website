@@ -183,6 +183,30 @@ export function PetApplicationsTable({ initialData }: { initialData: PetApplicat
       },
     }),
     columnHelper.display({
+      id: "availability",
+      header: "Availability",
+      enableColumnFilter: false,
+      cell: (info) => {
+        const a = info.row.original;
+        let slots: string[] = [];
+        if (a.availability) {
+          try {
+            slots = JSON.parse(a.availability);
+          } catch {
+            slots = [];
+          }
+        }
+        if (!slots.length) return <span className="text-text-secondary">—</span>;
+        return (
+          <div className="text-xs text-text-secondary space-y-0.5">
+            {slots.map((s) => (
+              <div key={s}>{s.replace(/_/g, " ")}</div>
+            ))}
+          </div>
+        );
+      },
+    }),
+    columnHelper.display({
       id: "waiver",
       header: "Waiver",
       enableColumnFilter: false,
