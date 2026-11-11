@@ -5,15 +5,18 @@ import type {
   AnimalWithPhotos,
   AnimalExpense,
   AnimalSponsorshipWithAnimal,
+  PetApplication,
 } from "@/app/lib/definitions";
 import { AnimalsTable } from "./AnimalsTable";
 import { SponsorsTable } from "./SponsorsTable";
+import { PetApplicationsTable } from "./PetApplicationsTable";
 
-type TabKey = "animals" | "sponsors";
+type TabKey = "animals" | "sponsors" | "applications";
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "animals", label: "Animals" },
   { key: "sponsors", label: "Sponsors" },
+  { key: "applications", label: "Applications" },
 ];
 
 export default function CommunityPetTabs({
@@ -21,11 +24,13 @@ export default function CommunityPetTabs({
   expenses,
   sponsorships,
   givebutterConfigured,
+  applications,
 }: {
   animals: AnimalWithPhotos[];
   expenses: AnimalExpense[];
   sponsorships: AnimalSponsorshipWithAnimal[];
   givebutterConfigured: boolean;
+  applications: PetApplication[];
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("animals");
 
@@ -59,6 +64,12 @@ export default function CommunityPetTabs({
             sponsorships={sponsorships}
             givebutterConfigured={givebutterConfigured}
           />
+        </section>
+      )}
+
+      {activeTab === "applications" && (
+        <section>
+          <PetApplicationsTable initialData={applications} />
         </section>
       )}
     </div>

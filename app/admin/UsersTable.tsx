@@ -75,6 +75,7 @@ function UserFormFields({ state, user }: {
             <option value="meal_coordinator">Meal Coordinator</option>
             <option value="content_editor">Content Editor</option>
             <option value="reports_viewer">Reports Viewer</option>
+            <option value="pet_coordinator">Pet Coordinator</option>
             <option value="admin">Admin</option>
           </select>
           {state?.errors?.role && (
@@ -132,6 +133,11 @@ const ROLE_INFO: { role: string; description: string; permissions: string }[] = 
     role: "reports_viewer",
     description: "Read-only access to meal delivery reports and dashboards.",
     permissions: "All report tabs (read-only). Cannot send emails or modify data.",
+  },
+  {
+    role: "pet_coordinator",
+    description: "Triages Sponsor a Pet applications and manages the pet roster.",
+    permissions: "Community Pets (animals, sponsors, applications). No users or other programs.",
   },
   {
     role: "admin",

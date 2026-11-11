@@ -30,6 +30,8 @@ import type {
   AnimalSponsorship,
   AnimalSponsorshipWithAnimal,
   AnimalInput,
+  PetApplication,
+  PetApplicationStatus,
   SponsorshipStatus,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
@@ -358,7 +360,7 @@ export async function getDriverVolunteersByEmailOrPhone(email: string, phone: st
   return result.results || [];
 }
 
-export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator" | "content_editor" | "reports_viewer";
+export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator" | "content_editor" | "reports_viewer" | "pet_coordinator";
 export type UserStatus = "active" | "pending";
 
 export interface DriverAssignment {
@@ -2216,4 +2218,104 @@ export async function getSubscriberCounts(): Promise<{ pending: number; confirme
     counts.total += row.c;
   }
   return counts;
+}
+
+// ---------------------------------------------------------------------------
+// Pet applications (Sponsor a Pet intake)
+// ---------------------------------------------------------------------------
+
+export async function createPetApplication(data: {
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone: string;
+  applicantAddress?: string | null;
+  petName: string;
+  species: string;
+  breed?: string | null;
+  ageText?: string | null;
+  sex?: string | null;
+  story: string;
+  needs?: string | null;
+  availability?: string | null;
+  status?: PetApplicationStatus;
+  waiverSignedAt?: string | null;
+  waiverSignerName?: string | null;
+  waiverVersion?: string | null;
+  waiverIp?: string | null;
+  waiverUserAgent?: string | null;
+}): Promise<PetApplication> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO pet_applications (applicant_name, applicant_email, applicant_phone, applicant_address, pet_name, species, breed, age_text, sex, story, needs, availability, status, waiver_signed_at, waiver_signer_name, waiver_version, waiver_ip, waiver_user_agent)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING *`
+    )
+    .bind(
+      data.applicantName,
+      data.applicantEmail,
+      data.applicantPhone,
+      data.applicantAddress || null,
+      data.petName,
+      data.species,
+      data.breed || null,
+      data.ageText || null,
+      data.sex || null,
+      data.story,
+      data.needs || null,
+      data.availability || null,
+      data.status || "submitted",
+      data.waiverSignedAt || null,
+      data.waiverSignerName || null,
+      data.waiverVersion || null,
+      data.waiverIp || null,
+      data.waiverUserAgent || null,
+    )
+    .first<PetApplication>();
+  if (!result) throw new Error("Failed to create pet application");
+  return result;
+}
+
+export async function getPetApplications(): Promise<PetApplication[]> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM pet_applications ORDER BY created_at DESC, id DESC")
+    .all<PetApplication>();
+  return result.results || [];
+}
+
+export async function getPetApplicationById(id: number): Promise<PetApplication | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM pet_applications WHERE id = ?")
+    .bind(id)
+    .first<PetApplication>();
+  return result || null;
+}
+
+export async function updatePetApplication(
+  id: number,
+  data: {
+    status?: PetApplicationStatus;
+    internal_notes?: string | null;
+    converted_animal_id?: number | null;
+  },
+): Promise<PetApplication> {
+  const db = await getDB();
+  const existing = await getPetApplicationById(id);
+  if (!existing) throw new Error("Pet application not found");
+  const status = data.status ?? existing.status;
+  const internalNotes = data.internal_notes === undefined ? existing.internal_notes : data.internal_notes;
+  const convertedAnimalId = data.converted_animal_id === undefined ? existing.converted_animal_id : data.converted_animal_id;
+  const result = await db
+    .prepare(
+      `UPDATE pet_applications
+       SET status = ?, internal_notes = ?, converted_animal_id = ?, updated_at = datetime('now')
+       WHERE id = ?
+       RETURNING *`
+    )
+    .bind(status, internalNotes, convertedAnimalId, id)
+    .first<PetApplication>();
+  if (!result) throw new Error("Pet application not found");
+  return result;
 }

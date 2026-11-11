@@ -2,17 +2,19 @@ import {
   getAllAnimals,
   getAllAnimalExpenses,
   getAllSponsorships,
+  getPetApplications,
 } from "@/app/lib/db";
 import { isGivebutterConfigured } from "@/app/lib/givebutter";
 import CommunityPetTabs from "./CommunityPetTabs";
 
 export default async function AdminCommunityPetsPage() {
-  const [animals, expenses, sponsorships, givebutterConfigured] =
+  const [animals, expenses, sponsorships, givebutterConfigured, applications] =
     await Promise.all([
       getAllAnimals(),
       getAllAnimalExpenses(),
       getAllSponsorships(),
       isGivebutterConfigured(),
+      getPetApplications(),
     ]);
 
   return (
@@ -23,6 +25,7 @@ export default async function AdminCommunityPetsPage() {
         expenses={expenses}
         sponsorships={sponsorships}
         givebutterConfigured={givebutterConfigured}
+        applications={applications}
       />
     </div>
   );
