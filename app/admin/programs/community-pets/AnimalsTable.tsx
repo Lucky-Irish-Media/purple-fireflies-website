@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createColumnHelper, filterFns, type Column, type ColumnDef } from "@tanstack/react-table";
 import type {
   AnimalExpense,
@@ -21,6 +21,10 @@ import {
   updateAnimalAction,
   type AnimalActionState,
 } from "@/app/actions/admin-animals";
+import {
+  verifyGivebutterCampaignAction,
+  type GivebutterVerifyState,
+} from "@/app/actions/admin-givebutter";
 import { DataTable } from "../../components/DataTable";
 import { Modal } from "../../components/Modal";
 import { formatCents, formatDate, getAnimalStatusBadge } from "../../lib/utils";
@@ -126,6 +130,27 @@ function AnimalFormFields({
       cadence: need.cadence,
     })),
   );
+  const [campaignCode, setCampaignCode] = useState(animal?.gb_campaign_code ?? "");
+  const [campaignUrl, setCampaignUrl] = useState(animal?.gb_campaign_url ?? "");
+  const [goalUsd, setGoalUsd] = useState(
+    animal ? centsToInput(animal.goal_cents) : "",
+  );
+
+  const [verifyState, verifyAction, verifyPending] = useActionState<
+    GivebutterVerifyState,
+    FormData
+  >(async (prev, formData) => {
+    return await verifyGivebutterCampaignAction(prev, formData);
+  }, undefined as unknown as GivebutterVerifyState);
+
+  useEffect(() => {
+    if (!verifyState?.success) return;
+    if (verifyState.code !== undefined) setCampaignCode(verifyState.code);
+    if (verifyState.url !== undefined) setCampaignUrl(verifyState.url);
+    if (verifyState.goalCents !== undefined) {
+      setGoalUsd(centsToInput(verifyState.goalCents));
+    }
+  }, [verifyState]);
 
   const needsTotalCents = needs.reduce(
     (sum, row) => sum + Math.round((Number(row.cost) || 0) * 100),
@@ -387,7 +412,8 @@ function AnimalFormFields({
             type="number"
             min="0"
             step="0.01"
-            defaultValue={animal ? centsToInput(animal.goal_cents) : ""}
+            value={goalUsd}
+            onChange={(e) => setGoalUsd(e.target.value)}
             className={inputClass}
           />
           {state?.errors?.goal_cents && (
@@ -424,7 +450,8 @@ function AnimalFormFields({
             id="gb_campaign_code"
             name="gb_campaign_code"
             type="text"
-            defaultValue={animal?.gb_campaign_code ?? ""}
+            value={campaignCode}
+            onChange={(e) => setCampaignCode(e.target.value)}
             className={inputClass}
           />
         </div>
@@ -437,12 +464,42 @@ function AnimalFormFields({
             name="gb_campaign_url"
             type="text"
             placeholder="https://givebutter.com/..."
-            defaultValue={animal?.gb_campaign_url ?? ""}
+            value={campaignUrl}
+            onChange={(e) => setCampaignUrl(e.target.value)}
             className={inputClass}
           />
           {state?.errors?.gb_campaign_url && (
             <p className="mt-1 text-sm text-red-500">
               {state.errors.gb_campaign_url[0]}
+            </p>
+          )}
+        </div>
+        <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={verifyPending}
+            onClick={() => {
+              const formData = new FormData();
+              if (animal) formData.set("animal_id", String(animal.id));
+              formData.set("code", campaignCode);
+              verifyAction(formData);
+            }}
+            className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
+          >
+            {verifyPending ? "Verifying..." : "Verify campaign"}
+          </button>
+          {verifyState?.message && (
+            <p
+              className={`text-sm ${
+                verifyState.success ? "text-green-600" : "text-red-500"
+              }`}
+            >
+              {verifyState.message}
+              {!verifyState.success && verifyState.available && verifyState.available.length > 0 && (
+                <span className="block text-xs text-text-secondary mt-1">
+                  Available: {verifyState.available.join(", ")}
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -716,9 +773,11 @@ function PhotosSection({
 export function AnimalsTable({
   initialAnimals,
   initialExpenses,
+  verifiedCampaignCodes,
 }: {
   initialAnimals: AnimalWithPhotos[];
   initialExpenses: AnimalExpense[];
+  verifiedCampaignCodes?: string[];
 }) {
   const [animals, setAnimals] = useState(initialAnimals);
   const [expenses, setExpenses] = useState(initialExpenses);
@@ -813,6 +872,10 @@ export function AnimalsTable({
     return applyState(await deleteAnimalExpenseAction(prev, formData));
   }, undefined);
 
+  const verifiedCampaignSet = new Set(
+    (verifiedCampaignCodes ?? []).map((code) => code.toUpperCase()),
+  );
+
   const spentByAnimal = new Map<number, number>();
   for (const expense of expenses) {
     spentByAnimal.set(
@@ -865,6 +928,32 @@ export function AnimalsTable({
       cell: (info) => getAnimalStatusBadge(info.getValue()),
       filterFn: filterFns.equals,
       meta: { filterComponent: StatusFilter },
+    }),
+    columnHelper.accessor((row) => row.gb_campaign_code, {
+      id: "campaign",
+      header: "Campaign",
+      cell: (info) => {
+        const code = info.getValue();
+        if (!code) {
+          return <span className="text-text-secondary">-</span>;
+        }
+        const resolves = verifiedCampaignSet.has(code.trim().toUpperCase());
+        return (
+          <div className="space-y-1">
+            <div className="text-text-secondary text-xs">{code}</div>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                resolves
+                  ? "bg-green-100 text-green-800"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {resolves ? "Verified" : "Not found"}
+            </span>
+          </div>
+        );
+      },
+      filterFn: filterFns.includesString,
     }),
     columnHelper.accessor((row) => row.gb_raised_cents, {
       id: "raised",

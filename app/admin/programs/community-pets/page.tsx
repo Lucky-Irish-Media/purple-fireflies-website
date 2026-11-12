@@ -4,18 +4,32 @@ import {
   getAllSponsorships,
   getPetApplications,
 } from "@/app/lib/db";
-import { isGivebutterConfigured } from "@/app/lib/givebutter";
+import {
+  fetchCampaigns,
+  isGivebutterConfigured,
+} from "@/app/lib/givebutter";
 import CommunityPetTabs from "./CommunityPetTabs";
 
 export default async function AdminCommunityPetsPage() {
-  const [animals, expenses, sponsorships, givebutterConfigured, applications] =
-    await Promise.all([
-      getAllAnimals(),
-      getAllAnimalExpenses(),
-      getAllSponsorships(),
-      isGivebutterConfigured(),
-      getPetApplications(),
-    ]);
+  const [animals, expenses, sponsorships, applications] = await Promise.all([
+    getAllAnimals(),
+    getAllAnimalExpenses(),
+    getAllSponsorships(),
+    getPetApplications(),
+  ]);
+
+  const givebutterConfigured = await isGivebutterConfigured();
+
+  let verifiedCampaignCodes: string[] = [];
+  if (givebutterConfigured) {
+    try {
+      verifiedCampaignCodes = (await fetchCampaigns()).map((campaign) =>
+        campaign.code.trim().toUpperCase(),
+      );
+    } catch {
+      verifiedCampaignCodes = [];
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -26,6 +40,7 @@ export default async function AdminCommunityPetsPage() {
         sponsorships={sponsorships}
         givebutterConfigured={givebutterConfigured}
         applications={applications}
+        verifiedCampaignCodes={verifiedCampaignCodes}
       />
     </div>
   );

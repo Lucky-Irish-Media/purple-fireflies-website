@@ -32,6 +32,7 @@ import {
   extensionForImageType,
   putMediaObject,
 } from "@/app/lib/media";
+import { toCents as givebutterToCents, verifyCampaignCode } from "@/app/lib/givebutter";
 
 export type AnimalActionState = {
   errors?: Record<string, string[]>;
@@ -161,17 +162,25 @@ function existingToInput(
  * rule: a draft can be saved before either prerequisite exists, but nothing can
  * go public until the owner has signed and a Givebutter campaign exists.
  */
-function publishGateError(data: {
+async function publishGateError(data: {
   is_published: boolean;
   owner_consent_at?: string | null;
   gb_campaign_code?: string | null;
-}): string | null {
+}): Promise<string | null> {
   if (!data.is_published) return null;
   if (!data.owner_consent_at?.trim()) {
     return "Cannot publish: record the owner's signed consent date first.";
   }
   if (!data.gb_campaign_code?.trim()) {
     return "Cannot publish: add the Givebutter campaign code first.";
+  }
+  const verification = await verifyCampaignCode(data.gb_campaign_code);
+  if (
+    verification.configured &&
+    !verification.error &&
+    !verification.campaign
+  ) {
+    return `Cannot publish: Givebutter campaign code "${data.gb_campaign_code}" was not found.`;
   }
   return null;
 }
@@ -207,7 +216,32 @@ export async function createAnimalAction(
       return { success: false, errors: validated.error.flatten().fieldErrors };
     }
 
-    const gate = publishGateError(validated.data);
+    const code = validated.data.gb_campaign_code?.trim();
+    if (code) {
+      const verification = await verifyCampaignCode(code);
+      if (verification.configured && !verification.error) {
+        if (!verification.campaign) {
+          const available = verification.campaigns
+            .map((campaign) => `${campaign.title} (${campaign.code})`)
+            .join(", ");
+          return {
+            success: false,
+            message: `Campaign code "${code}" was not found in Givebutter.${
+              available ? ` Available campaigns: ${available}.` : ""
+            }`,
+          };
+        }
+        validated.data.gb_campaign_code = verification.campaign.code;
+        if (verification.campaign.url) {
+          validated.data.gb_campaign_url = verification.campaign.url;
+        }
+        if (verification.campaign.goal !== null) {
+          validated.data.goal_cents = givebutterToCents(verification.campaign.goal);
+        }
+      }
+    }
+
+    const gate = await publishGateError(validated.data);
     if (gate) {
       return { success: false, message: gate };
     }
@@ -255,7 +289,32 @@ export async function updateAnimalAction(
       return { success: false, errors: validated.error.flatten().fieldErrors };
     }
 
-    const gate = publishGateError(validated.data);
+    const code = validated.data.gb_campaign_code?.trim();
+    if (code) {
+      const verification = await verifyCampaignCode(code);
+      if (verification.configured && !verification.error) {
+        if (!verification.campaign) {
+          const available = verification.campaigns
+            .map((campaign) => `${campaign.title} (${campaign.code})`)
+            .join(", ");
+          return {
+            success: false,
+            message: `Campaign code "${code}" was not found in Givebutter.${
+              available ? ` Available campaigns: ${available}.` : ""
+            }`,
+          };
+        }
+        validated.data.gb_campaign_code = verification.campaign.code;
+        if (verification.campaign.url) {
+          validated.data.gb_campaign_url = verification.campaign.url;
+        }
+        if (verification.campaign.goal !== null) {
+          validated.data.goal_cents = givebutterToCents(verification.campaign.goal);
+        }
+      }
+    }
+
+    const gate = await publishGateError(validated.data);
     if (gate) {
       return { success: false, message: gate };
     }
@@ -299,7 +358,7 @@ export async function setAnimalPublishedAction(
       return { success: false, message: "Pet not found." };
     }
 
-    const gate = publishGateError({
+    const gate = await publishGateError({
       is_published: publish,
       owner_consent_at: animal.owner_consent_at,
       gb_campaign_code: animal.gb_campaign_code,

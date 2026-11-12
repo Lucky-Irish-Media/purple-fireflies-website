@@ -22,6 +22,10 @@ export interface GivebutterCampaign {
   id: string;
   code: string;
   title: string;
+  /** Public URL for the campaign, as Givebutter reports it. */
+  url: string;
+  /** Goal in dollars, as the API reports it. Convert with `toCents()` before storing. */
+  goal: number | null;
   /** Dollars, as the API reports them. Convert with `toCents()` before storing. */
   raised: number;
   /** People who gave, which is what `animals.gb_supporters` holds. */
@@ -135,11 +139,21 @@ function toCampaign(raw: unknown): GivebutterCampaign | null {
       : Number(record.raised ?? 0);
   const donors =
     typeof record.donors === "number" ? record.donors : Number(record.donors ?? 0);
+  const goalRaw = record.goal;
+  const goal =
+    goalRaw === null || goalRaw === undefined
+      ? null
+      : typeof goalRaw === "number"
+        ? goalRaw
+        : Number(goalRaw);
+  const url = typeof record.url === "string" ? record.url.trim() : "";
 
   return {
     id: record.id === undefined || record.id === null ? "" : String(record.id),
     code,
     title: typeof record.title === "string" ? record.title : "",
+    url,
+    goal: goal !== null && Number.isFinite(goal) ? goal : null,
     raised: Number.isFinite(raised) ? raised : 0,
     donors: Number.isFinite(donors) ? Math.trunc(donors) : 0,
   };
@@ -193,6 +207,54 @@ export async function fetchCampaigns(): Promise<GivebutterCampaign[]> {
   }
 
   return campaigns;
+}
+
+export interface CampaignVerificationResult {
+  campaign: GivebutterCampaign | null;
+  campaigns: GivebutterCampaign[];
+  configured: boolean;
+  error?: string;
+}
+
+/**
+ * Resolves a hand-typed campaign code against Givebutter, the same
+ * case-insensitive match `refreshCampaignTotals()` uses. Returns the matching
+ * campaign (with canonical code/url/goal) plus the full list so callers can
+ * show what is available when nothing matches.
+ */
+export async function verifyCampaignCode(
+  code: string,
+): Promise<CampaignVerificationResult> {
+  const apiKey = await getGivebutterApiKey();
+  if (!apiKey) {
+    return { campaign: null, campaigns: [], configured: false };
+  }
+
+  let campaigns: GivebutterCampaign[];
+  try {
+    campaigns = await fetchCampaigns();
+  } catch (error) {
+    return {
+      campaign: null,
+      campaigns: [],
+      configured: true,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  const byCode = new Map<string, GivebutterCampaign>();
+  for (const campaign of campaigns) {
+    byCode.set(campaign.code.trim().toUpperCase(), campaign);
+  }
+
+  const trimmed = code.trim();
+  const campaign = trimmed ? byCode.get(trimmed.toUpperCase()) : undefined;
+
+  return {
+    campaign: campaign ?? null,
+    campaigns,
+    configured: true,
+  };
 }
 
 /**
