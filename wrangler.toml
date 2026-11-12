@@ -39,6 +39,11 @@ NONPROFIT_STATUS = "state_only"
 # to a plain campaign link while it is empty. Public by nature: it appears in the
 # library script URL on the pet page.
 GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
+# Givebutter campaign for the general pet fund (food for all pets, outdoor shelters
+# for colony cats). When set and donations are enabled, the sponsor-a-pet page
+# shows a "Donate to the general pet fund" section.
+COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_CODE = "QXB4GF"
+COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_URL = "https://givebutter.com/pf-sponsor-pets"
 
 # Worker Previews back the feature-branch deployments that Workers Builds
 # creates for every branch except main. They run on the same Worker with
@@ -56,6 +61,10 @@ NONPROFIT_STATUS = "state_only"
 # Same Widgets account ID as production; preview embeds the form so the sponsor
 # path can be exercised before launch.
 GIVEBUTTER_WIDGET_ACCOUNT_ID = "WCsdHvZKyriW1GgL"
+# General pet fund campaign (same as production) so the general-fund block can be
+# exercised on preview.
+COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_CODE = "QXB4GF"
+COMMUNITY_PETS_GENERAL_FUND_CAMPAIGN_URL = "https://givebutter.com/pf-sponsor-pets"
 
 [[previews.d1_databases]]
 binding = "purple_fireflies_db"
