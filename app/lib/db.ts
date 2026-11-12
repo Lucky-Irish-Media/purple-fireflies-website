@@ -1717,6 +1717,28 @@ export async function updateGivebutterTotals(
     .run();
 }
 
+/**
+ * Writes the verified Givebutter campaign fields back onto an animal. Cached
+ * totals are owned by `updateGivebutterTotals()` and are never touched here.
+ * `goalCents` is only overwritten when Givebutter actually reports a goal.
+ */
+export async function updateAnimalGivebutterCampaign(
+  id: number,
+  code: string,
+  url: string | null,
+  goalCents: number | null,
+): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare(
+      `UPDATE animals
+       SET gb_campaign_code = ?, gb_campaign_url = ?, goal_cents = COALESCE(?, goal_cents), updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(code, url || null, goalCents, id)
+    .run();
+}
+
 // ---------------------------------------------------------------------------
 // Givebutter capture
 //

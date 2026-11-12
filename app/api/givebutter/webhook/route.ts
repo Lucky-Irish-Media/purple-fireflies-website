@@ -19,9 +19,11 @@ import {
   toCents,
 } from "@/app/lib/givebutter";
 import {
+  sendEmail,
   sendPlanFailureEmail,
   sendSponsorshipAcknowledgementEmail,
 } from "@/app/lib/email";
+import { readEnvVar } from "@/app/lib/env";
 import type { SponsorshipStatus } from "@/app/lib/definitions";
 
 /**
@@ -171,6 +173,26 @@ async function handleTransactionSucceeded(
       console.warn(
         `[givebutter] transaction ${transactionId} has campaign code "${campaignCode || "(none)"}" which matches no pet`
       );
+      // Surface unmatched deliveries to the admin instead of silently
+      // acknowledging them.
+      try {
+        const adminEmail =
+          (await readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
+        await sendEmail({
+          to: adminEmail,
+          subject: `Givebutter donation unmatched to a pet`,
+          text: `A Givebutter transaction could not be attributed to a pet.
+
+Transaction ID: ${transactionId}
+Campaign code: ${campaignCode || "(none)"}
+
+The donation was acknowledged but not added to any pet's ledger. Check the campaign code on the animal record or in Givebutter.
+
+Purple Fireflies`,
+        });
+      } catch (emailError) {
+        console.error("[givebutter] unmatched-delivery email failed", emailError);
+      }
     }
     return json({ ok: true, unlinked: true });
   }
