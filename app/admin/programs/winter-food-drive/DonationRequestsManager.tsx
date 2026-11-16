@@ -45,7 +45,9 @@ export default function DonationRequestsManager({
           className="grid grid-cols-1 sm:grid-cols-2 gap-3 border border-primary/10 rounded-lg p-4"
         >
           <input name="week_start_date" type="date" required className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
-          <input name="title" placeholder="Title (optional)" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
+          <input name="item_name" placeholder="Item" required className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
+          <input name="requested_qty" type="number" min={1} placeholder="Quantity" required className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
+          <input name="unit" placeholder="Unit (items)" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
           <textarea name="notes" placeholder="Notes" className="sm:col-span-2 rounded border border-primary/10 bg-background px-2 py-1 text-sm" rows={2} />
           <button type="submit" disabled={pending} className="sm:col-span-2 rounded-lg bg-primary text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
             Create Week

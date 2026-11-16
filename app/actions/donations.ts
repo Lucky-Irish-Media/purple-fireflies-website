@@ -165,24 +165,32 @@ export async function submitDonationPledge(
 export async function createDonationWeekAction(formData: FormData): Promise<{ success: boolean; message: string }> {
   try {
     await verifySession();
-    const parsed = DonationWeekSchema.safeParse({
-      week_start_date: formData.get("week_start_date"),
-      title: formData.get("title") || undefined,
-      notes: formData.get("notes") || undefined,
-      status: formData.get("status") || "open",
-      dropoff_location: formData.get("dropoff_location") || undefined,
-      dropoff_hours: formData.get("dropoff_hours") || undefined,
+    const weekStartDate = String(formData.get("week_start_date") || "").trim();
+    if (!weekStartDate) return { success: false, message: "Week start date is required." };
+
+    const week = await createDonationWeek({
+      week_start_date: weekStartDate,
+      title: null,
+      notes: null,
+      status: "open",
+      dropoff_location: null,
+      dropoff_hours: null,
     });
-    if (!parsed.success) return { success: false, message: "Invalid week data." };
-    const d = parsed.data;
-    await createDonationWeek({
-      week_start_date: d.week_start_date,
-      title: d.title ?? null,
-      notes: d.notes ?? null,
-      status: d.status,
-      dropoff_location: d.dropoff_location ?? null,
-      dropoff_hours: d.dropoff_hours ?? null,
-    });
+
+    const itemName = String(formData.get("item_name") || "").trim();
+    const requestedQty = Number(formData.get("requested_qty"));
+    const unit = String(formData.get("unit") || "items").trim() || "items";
+    const notes = formData.get("notes") ? String(formData.get("notes")) : null;
+    if (itemName && requestedQty >= 1) {
+      await createDonationRequest({
+        week_id: week.id,
+        item_name: itemName,
+        requested_qty: requestedQty,
+        unit,
+        notes,
+      });
+    }
+
     revalidatePath("/admin/programs/winter-food-drive");
     revalidatePath("/programs/winter-food-drive");
     return { success: true, message: "Week created." };
