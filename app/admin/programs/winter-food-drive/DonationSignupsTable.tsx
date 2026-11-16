@@ -24,6 +24,7 @@ export default function DonationSignupsTable({ initialData }: { initialData: Don
         <thead>
           <tr className="text-left text-text-secondary border-b border-primary/10">
             <th className="py-2 pr-4">Donor</th>
+            <th className="py-2 pr-4">Item</th>
             <th className="py-2 pr-4">Email</th>
             <th className="py-2 pr-4">Phone</th>
             <th className="py-2 pr-4">Qty</th>
@@ -36,6 +37,7 @@ export default function DonationSignupsTable({ initialData }: { initialData: Don
           {initialData.map((s) => (
             <tr key={s.id} className="border-b border-primary/5">
               <td className="py-2 pr-4 text-foreground font-medium">{s.participant_name}</td>
+              <td className="py-2 pr-4 text-text-secondary">{s.item_name} ({s.unit})</td>
               <td className="py-2 pr-4 text-text-secondary">{s.participant_email}</td>
               <td className="py-2 pr-4 text-text-secondary">{formatPhone(s.participant_phone)}</td>
               <td className="py-2 pr-4 text-text-secondary">
@@ -73,7 +75,7 @@ export default function DonationSignupsTable({ initialData }: { initialData: Don
           ))}
           {initialData.length === 0 && (
             <tr>
-              <td colSpan={7} className="py-4 text-center text-text-secondary">No signups yet.</td>
+              <td colSpan={8} className="py-4 text-center text-text-secondary">No signups yet.</td>
             </tr>
           )}
         </tbody>

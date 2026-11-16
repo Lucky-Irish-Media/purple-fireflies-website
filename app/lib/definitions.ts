@@ -714,6 +714,8 @@ export interface DonationSignupWithParticipant extends DonationSignup {
   participant_name: string;
   participant_email: string;
   participant_phone: string;
+  item_name: string;
+  unit: string;
 }
 
 export interface DonationRequestWithTotals extends DonationRequest {

@@ -2443,9 +2443,11 @@ export async function getAllDonationSignups(): Promise<DonationSignupWithPartici
   const db = await getDB();
   const { results } = await db
     .prepare(
-      `SELECT ds.*, p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+      `SELECT ds.*, p.name as participant_name, p.email as participant_email, p.phone as participant_phone,
+              dr.item_name as item_name, dr.unit as unit
        FROM donation_signups ds
        JOIN participants p ON p.id = ds.participant_id
+       JOIN donation_requests dr ON dr.id = ds.request_id
        ORDER BY ds.created_at DESC`
     )
     .all<DonationSignupWithParticipant>();
