@@ -46,8 +46,6 @@ export default function DonationRequestsManager({
         >
           <input name="week_start_date" type="date" required className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
           <input name="title" placeholder="Title (optional)" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
-          <input name="dropoff_location" placeholder="Drop-off location" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
-          <input name="dropoff_hours" placeholder="Drop-off hours" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
           <textarea name="notes" placeholder="Notes" className="sm:col-span-2 rounded border border-primary/10 bg-background px-2 py-1 text-sm" rows={2} />
           <button type="submit" disabled={pending} className="sm:col-span-2 rounded-lg bg-primary text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
             Create Week
@@ -65,7 +63,7 @@ export default function DonationRequestsManager({
                 <div>
                   <p className="font-medium text-foreground">{w.title || w.week_start_date}</p>
                   <p className="text-xs text-text-secondary">
-                    {w.week_start_date} · {w.status} · Drop-off: {w.dropoff_location || "TBD"} ({w.dropoff_hours || "TBD"})
+                    {w.week_start_date} · {w.status}
                   </p>
                   {w.notes && <p className="text-xs text-text-secondary">{w.notes}</p>}
                 </div>
@@ -100,8 +98,6 @@ export default function DonationRequestsManager({
                   <input type="hidden" name="id" value={w.id} />
                   <input name="week_start_date" type="date" defaultValue={w.week_start_date} required className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
                   <input name="title" defaultValue={w.title || ""} placeholder="Title" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
-                  <input name="dropoff_location" defaultValue={w.dropoff_location || ""} placeholder="Drop-off location" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
-                  <input name="dropoff_hours" defaultValue={w.dropoff_hours || ""} placeholder="Drop-off hours" className="rounded border border-primary/10 bg-background px-2 py-1 text-sm" />
                   <select name="status" defaultValue={w.status} className="rounded border border-primary/10 bg-background px-2 py-1 text-sm">
                     <option value="open">open</option>
                     <option value="closed">closed</option>

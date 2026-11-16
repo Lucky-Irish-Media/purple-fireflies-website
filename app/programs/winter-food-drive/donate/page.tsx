@@ -30,8 +30,7 @@ export default async function DonatePage() {
       {current.title && <p className="text-lg text-foreground">{current.title}</p>}
       {current.notes && <p className="text-text-secondary">{current.notes}</p>}
       <div className="text-sm text-text-secondary">
-        <p>Drop-off: {current.dropoff_location || "TBD"}</p>
-        <p>Hours: {current.dropoff_hours || "TBD"}</p>
+        <p>Drop-off details will be provided on this page.</p>
       </div>
 
       <div className="space-y-3">
