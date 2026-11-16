@@ -1,31 +1,15 @@
--- Create donation weeks, requests, signups, and participant_programs.
-
-CREATE TABLE IF NOT EXISTS donation_weeks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  week_start_date TEXT NOT NULL,
-  title TEXT,
-  notes TEXT,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
-  dropoff_location TEXT,
-  dropoff_hours TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_donation_weeks_week_start_date ON donation_weeks(week_start_date);
-CREATE INDEX IF NOT EXISTS idx_donation_weeks_status ON donation_weeks(status);
+-- Create donation requests, signups, and participant_programs.
 
 CREATE TABLE IF NOT EXISTS donation_requests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  week_id INTEGER NOT NULL REFERENCES donation_weeks(id) ON DELETE CASCADE,
   item_name TEXT NOT NULL,
   requested_qty INTEGER NOT NULL,
   unit TEXT NOT NULL DEFAULT 'items',
   notes TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  received_qty INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-
-CREATE INDEX IF NOT EXISTS idx_donation_requests_week_id ON donation_requests(week_id);
 
 CREATE TABLE IF NOT EXISTS donation_signups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

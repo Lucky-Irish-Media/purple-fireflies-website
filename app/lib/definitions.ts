@@ -688,26 +688,15 @@ export interface AnimalSponsorshipWithAnimal extends AnimalSponsorship {
  */
 // ---- Donation (Winter Food Drive) ----
 
-export interface DonationWeek {
-  id: number;
-  week_start_date: string;
-  title: string | null;
-  notes: string | null;
-  status: "open" | "closed";
-  dropoff_location: string | null;
-  dropoff_hours: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface DonationRequest {
   id: number;
-  week_id: number;
   item_name: string;
   requested_qty: number;
   unit: string;
   notes: string | null;
+  received_qty: number;
   created_at: string;
+  updated_at: string;
 }
 
 export interface DonationSignup {
@@ -731,15 +720,6 @@ export interface DonationRequestWithTotals extends DonationRequest {
   pledged_qty: number;
   remaining: number;
 }
-
-export const DonationWeekSchema = z.object({
-  week_start_date: z.string().min(1, { message: "Start date is required." }),
-  title: z.string().optional(),
-  notes: z.string().optional(),
-  status: z.enum(["open", "closed"]).default("open"),
-  dropoff_location: z.string().optional(),
-  dropoff_hours: z.string().optional(),
-});
 
 export const DonationRequestSchema = z.object({
   week_id: z.coerce.number().int().positive(),

@@ -632,8 +632,7 @@ Thank you for pledging to support the Winter Food Drive!
 Your pledge:
 ${linesText}
 
-Drop-off location: ${params.dropoffLocation || "TBD"}
-Drop-off hours: ${params.dropoffHours || "TBD"}
+Please see the donation page for drop-off details.
 
 Take care,
 Purple Fireflies`;

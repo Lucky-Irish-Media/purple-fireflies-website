@@ -1,19 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { DonationWeek, DonationRequest, DonationSignupWithParticipant } from "@/app/lib/definitions";
+import type { DonationRequest, DonationSignupWithParticipant } from "@/app/lib/definitions";
 import DonationRequestsManager from "./DonationRequestsManager";
 import DonationSignupsTable from "./DonationSignupsTable";
 
 type TabKey = "requests" | "signups";
 
 export default function WinterFoodDriveTabs({
-  weeks,
-  weekRequests,
+  requests,
   signups,
 }: {
-  weeks: DonationWeek[];
-  weekRequests: Record<number, DonationRequest[]>;
+  requests: DonationRequest[];
   signups: DonationSignupWithParticipant[];
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("requests");
@@ -27,7 +25,7 @@ export default function WinterFoodDriveTabs({
             activeTab === "requests" ? "bg-primary text-white" : "bg-card border border-primary/10 text-text-secondary hover:bg-primary/5 hover:text-foreground"
           }`}
         >
-          Donation Requests
+          Donation Items
         </button>
         <button
           onClick={() => setActiveTab("signups")}
@@ -40,7 +38,7 @@ export default function WinterFoodDriveTabs({
       </div>
 
       {activeTab === "requests" && (
-        <DonationRequestsManager weeks={weeks} weekRequests={weekRequests} />
+        <DonationRequestsManager requests={requests} />
       )}
       {activeTab === "signups" && (
         <DonationSignupsTable initialData={signups} />

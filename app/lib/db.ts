@@ -33,7 +33,6 @@ import type {
   PetApplication,
   PetApplicationStatus,
   SponsorshipStatus,
-  DonationWeek,
   DonationRequest,
   DonationSignup,
   DonationSignupWithParticipant,
@@ -2346,86 +2345,15 @@ export async function updatePetApplication(
   return result;
 }
 
+
 // ---- Donations (Winter Food Drive) ----
 
-export async function getDonationWeeks(): Promise<DonationWeek[]> {
+export async function getDonationRequests(): Promise<DonationRequest[]> {
   const db = await getDB();
   const { results } = await db
-    .prepare("SELECT * FROM donation_weeks ORDER BY week_start_date DESC")
-    .all<DonationWeek>();
+    .prepare("SELECT * FROM donation_requests ORDER BY id ASC")
+    .all<DonationRequest>();
   return results || [];
-}
-
-export async function getDonationWeek(id: number): Promise<DonationWeek | null> {
-  const db = await getDB();
-  const result = await db
-    .prepare("SELECT * FROM donation_weeks WHERE id = ?")
-    .bind(id)
-    .first<DonationWeek>();
-  return result || null;
-}
-
-export async function createDonationWeek(data: {
-  week_start_date: string;
-  title?: string | null;
-  notes?: string | null;
-  status?: "open" | "closed";
-  dropoff_location?: string | null;
-  dropoff_hours?: string | null;
-}): Promise<DonationWeek> {
-  const db = await getDB();
-  const result = await db
-    .prepare(
-      `INSERT INTO donation_weeks (week_start_date, title, notes, status, dropoff_location, dropoff_hours, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-       RETURNING *`
-    )
-    .bind(
-      data.week_start_date,
-      data.title ?? null,
-      data.notes ?? null,
-      data.status ?? "open",
-      data.dropoff_location ?? null,
-      data.dropoff_hours ?? null
-    )
-    .first<DonationWeek>();
-  if (!result) throw new Error("Failed to create donation week");
-  return result;
-}
-
-export async function updateDonationWeek(
-  id: number,
-  data: {
-    week_start_date?: string;
-    title?: string | null;
-    notes?: string | null;
-    status?: "open" | "closed";
-    dropoff_location?: string | null;
-    dropoff_hours?: string | null;
-  }
-): Promise<DonationWeek> {
-  const db = await getDB();
-  const sets: string[] = [];
-  const values: unknown[] = [];
-  if (data.week_start_date !== undefined) { sets.push("week_start_date = ?"); values.push(data.week_start_date); }
-  if (data.title !== undefined) { sets.push("title = ?"); values.push(data.title); }
-  if (data.notes !== undefined) { sets.push("notes = ?"); values.push(data.notes); }
-  if (data.status !== undefined) { sets.push("status = ?"); values.push(data.status); }
-  if (data.dropoff_location !== undefined) { sets.push("dropoff_location = ?"); values.push(data.dropoff_location); }
-  if (data.dropoff_hours !== undefined) { sets.push("dropoff_hours = ?"); values.push(data.dropoff_hours); }
-  sets.push("updated_at = datetime('now')");
-  values.push(id);
-  const result = await db
-    .prepare(`UPDATE donation_weeks SET ${sets.join(", ")} WHERE id = ? RETURNING *`)
-    .bind(...values)
-    .first<DonationWeek>();
-  if (!result) throw new Error("Donation week not found");
-  return result;
-}
-
-export async function deleteDonationWeek(id: number): Promise<void> {
-  const db = await getDB();
-  await db.prepare("DELETE FROM donation_weeks WHERE id = ?").bind(id).run();
 }
 
 export async function getDonationRequest(id: number): Promise<DonationRequest | null> {
@@ -2437,17 +2365,7 @@ export async function getDonationRequest(id: number): Promise<DonationRequest | 
   return result || null;
 }
 
-export async function getDonationRequests(weekId: number): Promise<DonationRequest[]> {
-  const db = await getDB();
-  const { results } = await db
-    .prepare("SELECT * FROM donation_requests WHERE week_id = ? ORDER BY id ASC")
-    .bind(weekId)
-    .all<DonationRequest>();
-  return results || [];
-}
-
 export async function createDonationRequest(data: {
-  week_id: number;
   item_name: string;
   requested_qty: number;
   unit?: string | null;
@@ -2456,11 +2374,11 @@ export async function createDonationRequest(data: {
   const db = await getDB();
   const result = await db
     .prepare(
-      `INSERT INTO donation_requests (week_id, item_name, requested_qty, unit, notes)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO donation_requests (item_name, requested_qty, unit, notes, updated_at)
+       VALUES (?, ?, ?, ?, datetime('now'))
        RETURNING *`
     )
-    .bind(data.week_id, data.item_name, data.requested_qty, data.unit ?? "items", data.notes ?? null)
+    .bind(data.item_name, data.requested_qty, data.unit ?? "items", data.notes ?? null)
     .first<DonationRequest>();
   if (!result) throw new Error("Failed to create donation request");
   return result;
@@ -2468,7 +2386,7 @@ export async function createDonationRequest(data: {
 
 export async function updateDonationRequest(
   id: number,
-  data: { item_name?: string; requested_qty?: number; unit?: string | null; notes?: string | null }
+  data: { item_name?: string; requested_qty?: number; unit?: string | null; notes?: string | null; received_qty?: number }
 ): Promise<DonationRequest> {
   const db = await getDB();
   const sets: string[] = [];
@@ -2477,6 +2395,8 @@ export async function updateDonationRequest(
   if (data.requested_qty !== undefined) { sets.push("requested_qty = ?"); values.push(data.requested_qty); }
   if (data.unit !== undefined) { sets.push("unit = ?"); values.push(data.unit); }
   if (data.notes !== undefined) { sets.push("notes = ?"); values.push(data.notes); }
+  if (data.received_qty !== undefined) { sets.push("received_qty = ?"); values.push(data.received_qty); }
+  sets.push("updated_at = datetime('now')");
   values.push(id);
   const result = await db
     .prepare(`UPDATE donation_requests SET ${sets.join(", ")} WHERE id = ? RETURNING *`)
@@ -2500,23 +2420,6 @@ export async function getPledgedTotalByRequest(requestId: number): Promise<numbe
   return result?.total ?? 0;
 }
 
-export async function getPledgedTotalsByWeek(weekId: number): Promise<Record<number, number>> {
-  const db = await getDB();
-  const { results } = await db
-    .prepare(
-      `SELECT ds.request_id, COALESCE(SUM(ds.quantity_pledged), 0) as total
-       FROM donation_signups ds
-       JOIN donation_requests dr ON dr.id = ds.request_id
-       WHERE dr.week_id = ? AND ds.status = 'active'
-       GROUP BY ds.request_id`
-    )
-    .bind(weekId)
-    .all<{ request_id: number; total: number }>();
-  const map: Record<number, number> = {};
-  for (const r of results || []) map[r.request_id] = r.total;
-  return map;
-}
-
 export async function createDonationSignup(data: {
   request_id: number;
   participant_id: number;
@@ -2534,22 +2437,6 @@ export async function createDonationSignup(data: {
     .first<DonationSignup>();
   if (!result) throw new Error("Failed to create donation signup");
   return result;
-}
-
-export async function getDonationSignupsByWeek(weekId: number): Promise<DonationSignupWithParticipant[]> {
-  const db = await getDB();
-  const { results } = await db
-    .prepare(
-      `SELECT ds.*, p.name as participant_name, p.email as participant_email, p.phone as participant_phone
-       FROM donation_signups ds
-       JOIN donation_requests dr ON dr.id = ds.request_id
-       JOIN participants p ON p.id = ds.participant_id
-       WHERE dr.week_id = ?
-       ORDER BY ds.created_at DESC`
-    )
-    .bind(weekId)
-    .all<DonationSignupWithParticipant>();
-  return results || [];
 }
 
 export async function getAllDonationSignups(): Promise<DonationSignupWithParticipant[]> {
@@ -2588,14 +2475,6 @@ export async function updateDonationSignup(
 export async function cancelDonationSignup(id: number): Promise<void> {
   const db = await getDB();
   await db.prepare("UPDATE donation_signups SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?").bind(id).run();
-}
-
-export async function getOpenDonationWeek(): Promise<DonationWeek | null> {
-  const db = await getDB();
-  const result = await db
-    .prepare("SELECT * FROM donation_weeks WHERE status = 'open' ORDER BY week_start_date DESC LIMIT 1")
-    .first<DonationWeek>();
-  return result || null;
 }
 
 export async function upsertParticipantProgram(participantId: number, program: string): Promise<void> {
