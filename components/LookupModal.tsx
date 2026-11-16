@@ -65,7 +65,7 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
           </button>
         </div>
 
-        {!mealSignups && !driverSignups ? (
+        {!mealSignups && !driverSignups && !donationSignups ? (
           <form onSubmit={handleLookup} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="lookup-email" className="block text-sm font-medium text-foreground">
