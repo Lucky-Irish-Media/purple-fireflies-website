@@ -722,7 +722,6 @@ export interface DonationRequestWithTotals extends DonationRequest {
 }
 
 export const DonationRequestSchema = z.object({
-  week_id: z.coerce.number().int().positive(),
   item_name: z.string().min(1, { message: "Item name is required." }).trim(),
   requested_qty: z.coerce.number().int().min(1, { message: "Quantity must be at least 1." }),
   unit: z.string().optional(),

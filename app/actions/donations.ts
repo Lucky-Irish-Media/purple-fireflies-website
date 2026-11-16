@@ -158,7 +158,9 @@ export async function createDonationRequestAction(formData: FormData): Promise<{
       unit: formData.get("unit") || undefined,
       notes: formData.get("notes") || undefined,
     });
-    if (!parsed.success) return { success: false, message: "Invalid request data." };
+    if (!parsed.success) {
+      return { success: false, message: "Invalid request data." };
+    }
     const d = parsed.data;
     await createDonationRequest({
       item_name: d.item_name,
