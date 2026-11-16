@@ -27,7 +27,10 @@ export default async function DonatePage() {
         When Athens restaurants and establishments slow down in winter, less surplus food is available to rescue and share with our community. Together, we can help fill the gap.
       </p>
       <p className="text-text-secondary">
-        Help us collect the items needed for the Winter Food Drive. Drop-off details will be provided on this page.
+        Help us collect the items needed for the Winter Food Drive.
+      </p>
+      <p className="text-text-secondary">
+        Drop-off: Wednesdays, 1:00 PM to 3:00 PM at AceNet. Dropbox locations: Kindred and Seamans.
       </p>
 
       <div className="space-y-3">
