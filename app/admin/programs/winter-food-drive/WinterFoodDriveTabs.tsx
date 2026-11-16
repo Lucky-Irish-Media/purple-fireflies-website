@@ -38,7 +38,7 @@ export default function WinterFoodDriveTabs({
       </div>
 
       {activeTab === "requests" && (
-        <DonationRequestsManager requests={requests} />
+        <DonationRequestsManager requests={requests} signups={signups} />
       )}
       {activeTab === "signups" && (
         <DonationSignupsTable initialData={signups} />

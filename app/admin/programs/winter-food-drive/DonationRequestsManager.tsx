@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { DonationRequest } from "@/app/lib/definitions";
+import type { DonationRequest, DonationSignupWithParticipant } from "@/app/lib/definitions";
 import {
   createDonationRequestAction,
   updateDonationRequestAction,
@@ -10,10 +10,11 @@ import {
   updateDonationReceivedAction,
 } from "@/app/actions/donations";
 
-export default function DonationRequestsManager({ requests }: { requests: DonationRequest[] }) {
+export default function DonationRequestsManager({ requests, signups }: { requests: DonationRequest[]; signups: DonationSignupWithParticipant[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [status, setStatus] = useState<{ message: string; success: boolean } | null>(null);
 
   function run(fd: FormData, action: (f: FormData) => Promise<{ success: boolean; message: string }>) {
@@ -56,6 +57,12 @@ export default function DonationRequestsManager({ requests }: { requests: Donati
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedItemId(r.id)}
+                    className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium"
+                  >
+                    View signups
+                  </button>
                   <button
                     onClick={() => setEditingId(editingId === r.id ? null : r.id)}
                     className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium"
@@ -110,6 +117,42 @@ export default function DonationRequestsManager({ requests }: { requests: Donati
           )}
         </div>
       </section>
+
+      {selectedItemId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedItemId(null)}>
+          <div className="bg-card rounded-lg p-6 w-full max-w-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-foreground">
+                Signups — {requests.find((r) => r.id === selectedItemId)?.item_name}
+              </h3>
+              <button onClick={() => setSelectedItemId(null)} className="text-text-secondary hover:text-foreground">✕</button>
+            </div>
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-text-secondary border-b border-primary/10">
+                  <th className="py-2 pr-4">Donor</th>
+                  <th className="py-2 pr-4">Qty</th>
+                  <th className="py-2 pr-4">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {signups.filter((s) => s.request_id === selectedItemId).map((s) => (
+                  <tr key={s.id} className="border-b border-primary/5">
+                    <td className="py-2 pr-4 text-foreground font-medium">{s.participant_name}</td>
+                    <td className="py-2 pr-4 text-text-secondary">{s.quantity_pledged}</td>
+                    <td className="py-2 pr-4 text-text-secondary">{s.status}</td>
+                  </tr>
+                ))}
+                {signups.filter((s) => s.request_id === selectedItemId).length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="py-4 text-center text-text-secondary">No signups for this item.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

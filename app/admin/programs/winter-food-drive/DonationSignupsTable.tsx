@@ -9,6 +9,7 @@ import { updateDonationSignupAction, cancelDonationSignupAction } from "@/app/ac
 export default function DonationSignupsTable({ initialData }: { initialData: DonationSignupWithParticipant[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   function run(fd: FormData, action: (f: FormData) => Promise<{ success: boolean; message: string }>) {
@@ -18,68 +19,121 @@ export default function DonationSignupsTable({ initialData }: { initialData: Don
     });
   }
 
+  // Group signups by participant
+  const byPerson = new Map<string, DonationSignupWithParticipant[]>();
+  for (const s of initialData) {
+    const key = String(s.participant_id);
+    if (!byPerson.has(key)) byPerson.set(key, []);
+    byPerson.get(key)!.push(s);
+  }
+  const people = Array.from(byPerson.entries()).map(([key, lines]) => ({
+    key,
+    name: lines[0].participant_name,
+    email: lines[0].participant_email,
+    phone: lines[0].participant_phone,
+    lines,
+  }));
+
+  const selectedLines = selectedPerson ? byPerson.get(selectedPerson) || [] : [];
+
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
-        <thead>
-          <tr className="text-left text-text-secondary border-b border-primary/10">
-            <th className="py-2 pr-4">Donor</th>
-            <th className="py-2 pr-4">Item</th>
-            <th className="py-2 pr-4">Email</th>
-            <th className="py-2 pr-4">Phone</th>
-            <th className="py-2 pr-4">Qty</th>
-            <th className="py-2 pr-4">Status</th>
-            <th className="py-2 pr-4">Created</th>
-            <th className="py-2 pr-4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {initialData.map((s) => (
-            <tr key={s.id} className="border-b border-primary/5">
-              <td className="py-2 pr-4 text-foreground font-medium">{s.participant_name}</td>
-              <td className="py-2 pr-4 text-text-secondary">{s.item_name} ({s.unit})</td>
-              <td className="py-2 pr-4 text-text-secondary">{s.participant_email}</td>
-              <td className="py-2 pr-4 text-text-secondary">{formatPhone(s.participant_phone)}</td>
-              <td className="py-2 pr-4 text-text-secondary">
-                {editingId === s.id ? (
-                  <form action={(fd) => run(fd, updateDonationSignupAction)} className="flex gap-2">
-                    <input type="hidden" name="id" value={s.id} />
-                    <input name="quantity_pledged" type="number" min={1} defaultValue={s.quantity_pledged} className="w-16 rounded border border-primary/10 bg-background px-1 py-0.5 text-sm" />
-                    <button type="submit" disabled={pending} className="text-xs text-primary">Save</button>
-                  </form>
-                ) : (
-                  s.quantity_pledged
-                )}
-              </td>
-              <td className="py-2 pr-4 text-text-secondary">{s.status}</td>
-              <td className="py-2 pr-4 text-text-secondary">{formatDateTime(s.created_at)}</td>
-              <td className="py-2 pr-4">
-                <div className="flex gap-2">
+    <div className="space-y-4">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-text-secondary border-b border-primary/10">
+              <th className="py-2 pr-4">Donor</th>
+              <th className="py-2 pr-4">Email</th>
+              <th className="py-2 pr-4">Phone</th>
+              <th className="py-2 pr-4">Items pledged</th>
+              <th className="py-2 pr-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {people.map((p) => (
+              <tr key={p.key} className="border-b border-primary/5">
+                <td className="py-2 pr-4 text-foreground font-medium">{p.name}</td>
+                <td className="py-2 pr-4 text-text-secondary">{p.email}</td>
+                <td className="py-2 pr-4 text-text-secondary">{formatPhone(p.phone)}</td>
+                <td className="py-2 pr-4 text-text-secondary">{p.lines.length}</td>
+                <td className="py-2 pr-4">
                   <button
-                    onClick={() => setEditingId(editingId === s.id ? null : s.id)}
+                    onClick={() => setSelectedPerson(p.key)}
                     className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium"
                   >
-                    Edit
+                    View pledges
                   </button>
-                  {s.status === "active" && (
-                    <form action={(fd) => run(fd, cancelDonationSignupAction)}>
-                      <input type="hidden" name="id" value={s.id} />
-                      <button type="submit" disabled={pending} className="rounded-lg border border-red-200 text-red-600 px-3 py-1.5 text-xs font-medium">
-                        Cancel
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
-          {initialData.length === 0 && (
-            <tr>
-              <td colSpan={8} className="py-4 text-center text-text-secondary">No signups yet.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                </td>
+              </tr>
+            ))}
+            {people.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-4 text-center text-text-secondary">No signups yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedPerson && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedPerson(null)}>
+          <div className="bg-card rounded-lg p-6 w-full max-w-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-foreground">Pledges — {selectedLines[0]?.participant_name}</h3>
+              <button onClick={() => setSelectedPerson(null)} className="text-text-secondary hover:text-foreground">✕</button>
+            </div>
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-text-secondary border-b border-primary/10">
+                  <th className="py-2 pr-4">Item</th>
+                  <th className="py-2 pr-4">Qty</th>
+                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Created</th>
+                  <th className="py-2 pr-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedLines.map((s) => (
+                  <tr key={s.id} className="border-b border-primary/5">
+                    <td className="py-2 pr-4 text-foreground font-medium">{s.item_name} ({s.unit})</td>
+                    <td className="py-2 pr-4 text-text-secondary">
+                      {editingId === s.id ? (
+                        <form action={(fd) => run(fd, updateDonationSignupAction)} className="flex gap-2">
+                          <input type="hidden" name="id" value={s.id} />
+                          <input name="quantity_pledged" type="number" min={1} defaultValue={s.quantity_pledged} className="w-16 rounded border border-primary/10 bg-background px-1 py-0.5 text-sm" />
+                          <button type="submit" disabled={pending} className="text-xs text-primary">Save</button>
+                        </form>
+                      ) : (
+                        s.quantity_pledged
+                      )}
+                    </td>
+                    <td className="py-2 pr-4 text-text-secondary">{s.status}</td>
+                    <td className="py-2 pr-4 text-text-secondary">{formatDateTime(s.created_at)}</td>
+                    <td className="py-2 pr-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingId(editingId === s.id ? null : s.id)}
+                          className="rounded-lg border border-primary/10 px-3 py-1.5 text-xs font-medium"
+                        >
+                          Edit
+                        </button>
+                        {s.status === "active" && (
+                          <form action={(fd) => run(fd, cancelDonationSignupAction)}>
+                            <input type="hidden" name="id" value={s.id} />
+                            <button type="submit" disabled={pending} className="rounded-lg border border-red-200 text-red-600 px-3 py-1.5 text-xs font-medium">
+                              Cancel
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
