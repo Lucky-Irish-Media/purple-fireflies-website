@@ -53,7 +53,7 @@ export default function DonationRequestsManager({ requests, signups }: { request
                 <div>
                   <p className="font-medium text-foreground">{r.item_name}</p>
                   <p className="text-xs text-text-secondary">
-                    Needed: {r.requested_qty} {r.unit} · Picked up: {r.received_qty} · Notes: {r.notes || "—"}
+                    Needed: {r.requested_qty} {r.unit} · Pledged: {signups.filter((s) => s.request_id === r.id && s.status === "active").reduce((a, s) => a + s.quantity_pledged, 0)} · Picked up: {r.received_qty} · Remaining: {r.requested_qty - signups.filter((s) => s.request_id === r.id && s.status === "active").reduce((a, s) => a + s.quantity_pledged, 0) - r.received_qty} · Notes: {r.notes || "—"}
                   </p>
                 </div>
                 <div className="flex gap-2">
