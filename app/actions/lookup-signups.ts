@@ -1,6 +1,6 @@
 "use server";
 
-import { getMealSignupsByEmail, getDriverVolunteersByEmail } from "@/app/lib/db";
+import { getMealSignupsByEmail, getDriverVolunteersByEmail, getDonationSignupsByEmail } from "@/app/lib/db";
 
 export async function getMyMealSignups(email: string) {
   try {
@@ -18,6 +18,16 @@ export async function getMyDriverVolunteerSignups(email: string) {
     return { signups, error: null };
   } catch (e) {
     console.error("lookup driver volunteer signups error:", e);
+    return { signups: [], error: "Failed to look up signups. Please try again." };
+  }
+}
+
+export async function getMyDonationSignups(email: string) {
+  try {
+    const signups = await getDonationSignupsByEmail(email);
+    return { signups, error: null };
+  } catch (e) {
+    console.error("lookup donation signups error:", e);
     return { signups: [], error: "Failed to look up signups. Please try again." };
   }
 }
