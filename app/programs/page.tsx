@@ -29,6 +29,13 @@ const programs = [
     href: "/programs/sponsor-a-pet",
     cta: "Learn more",
   },
+  {
+    icon: "🥫",
+    title: "Winter Food Drive",
+    desc: "Partnering with Love Light Movement to collect pantry items for the season. View the donation list and pledge items to help stock the pantry.",
+    href: "/programs/winter-food-drive",
+    cta: "Learn more",
+  },
 ];
 
 export default function ProgramsPage() {

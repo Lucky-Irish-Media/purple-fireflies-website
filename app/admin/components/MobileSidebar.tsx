@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/admin/programs/meal-delivery", label: "Meal Delivery", section: true },
   { href: "/admin/programs/legal-observers", label: "Legal Observers", section: true },
   { href: "/admin/programs/community-pets", label: "Community Pets", section: true },
+  { href: "/admin/programs/winter-food-drive", label: "Winter Food Drive", section: true },
   { type: "heading", label: "Community" },
   { href: "/admin/events", label: "Events", section: true },
   { href: "/admin/news", label: "News", section: true },
@@ -69,6 +70,8 @@ export function MobileSidebar({ role }: { role?: string }) {
                 ? navLinks.filter((l) => "href" in l && l.href === "/admin/reports")
                 : role === "pet_coordinator"
                 ? navLinks.filter((l) => "href" in l && l.href === "/admin/programs/community-pets")
+                : role === "winter_meals_coordinator"
+                ? navLinks.filter((l) => "href" in l && l.href === "/admin/programs/winter-food-drive")
                 : navLinks
               ).map((link) => {
                 if ("type" in link && link.type === "heading") {

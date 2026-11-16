@@ -33,6 +33,9 @@ import type {
   PetApplication,
   PetApplicationStatus,
   SponsorshipStatus,
+  DonationRequest,
+  DonationSignup,
+  DonationSignupWithParticipant,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -360,7 +363,7 @@ export async function getDriverVolunteersByEmailOrPhone(email: string, phone: st
   return result.results || [];
 }
 
-export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator" | "content_editor" | "reports_viewer" | "pet_coordinator";
+export type UserRole = "admin" | "member" | "volunteer" | "meal_coordinator" | "content_editor" | "reports_viewer" | "pet_coordinator" | "winter_meals_coordinator";
 export type UserStatus = "active" | "pending";
 
 export interface DriverAssignment {
@@ -2340,4 +2343,163 @@ export async function updatePetApplication(
     .first<PetApplication>();
   if (!result) throw new Error("Pet application not found");
   return result;
+}
+
+
+// ---- Donations (Winter Food Drive) ----
+
+export async function getDonationRequests(): Promise<DonationRequest[]> {
+  const db = await getDB();
+  const { results } = await db
+    .prepare("SELECT * FROM donation_requests ORDER BY id ASC")
+    .all<DonationRequest>();
+  return results || [];
+}
+
+export async function getDonationRequest(id: number): Promise<DonationRequest | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM donation_requests WHERE id = ?")
+    .bind(id)
+    .first<DonationRequest>();
+  return result || null;
+}
+
+export async function createDonationRequest(data: {
+  item_name: string;
+  requested_qty: number;
+  unit?: string | null;
+  notes?: string | null;
+}): Promise<DonationRequest> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO donation_requests (item_name, requested_qty, unit, notes, updated_at)
+       VALUES (?, ?, ?, ?, datetime('now'))
+       RETURNING *`
+    )
+    .bind(data.item_name, data.requested_qty, data.unit ?? "items", data.notes ?? null)
+    .first<DonationRequest>();
+  if (!result) throw new Error("Failed to create donation request");
+  return result;
+}
+
+export async function updateDonationRequest(
+  id: number,
+  data: { item_name?: string; requested_qty?: number; unit?: string | null; notes?: string | null; received_qty?: number }
+): Promise<DonationRequest> {
+  const db = await getDB();
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  if (data.item_name !== undefined) { sets.push("item_name = ?"); values.push(data.item_name); }
+  if (data.requested_qty !== undefined) { sets.push("requested_qty = ?"); values.push(data.requested_qty); }
+  if (data.unit !== undefined) { sets.push("unit = ?"); values.push(data.unit); }
+  if (data.notes !== undefined) { sets.push("notes = ?"); values.push(data.notes); }
+  if (data.received_qty !== undefined) { sets.push("received_qty = ?"); values.push(data.received_qty); }
+  sets.push("updated_at = datetime('now')");
+  values.push(id);
+  const result = await db
+    .prepare(`UPDATE donation_requests SET ${sets.join(", ")} WHERE id = ? RETURNING *`)
+    .bind(...values)
+    .first<DonationRequest>();
+  if (!result) throw new Error("Donation request not found");
+  return result;
+}
+
+export async function deleteDonationRequest(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM donation_requests WHERE id = ?").bind(id).run();
+}
+
+export async function getPledgedTotalByRequest(requestId: number): Promise<number> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT COALESCE(SUM(quantity_pledged), 0) as total FROM donation_signups WHERE request_id = ? AND status = 'active'")
+    .bind(requestId)
+    .first<{ total: number }>();
+  return result?.total ?? 0;
+}
+
+export async function createDonationSignup(data: {
+  request_id: number;
+  participant_id: number;
+  quantity_pledged: number;
+  notes?: string | null;
+}): Promise<DonationSignup> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO donation_signups (request_id, participant_id, quantity_pledged, notes, updated_at)
+       VALUES (?, ?, ?, ?, datetime('now'))
+       RETURNING *`
+    )
+    .bind(data.request_id, data.participant_id, data.quantity_pledged, data.notes ?? null)
+    .first<DonationSignup>();
+  if (!result) throw new Error("Failed to create donation signup");
+  return result;
+}
+
+export async function getDonationSignupsByEmail(email: string): Promise<DonationSignupWithParticipant[]> {
+  const db = await getDB();
+  const { results } = await db
+    .prepare(
+      `SELECT ds.*, p.name as participant_name, p.email as participant_email, p.phone as participant_phone,
+              dr.item_name as item_name, dr.unit as unit
+       FROM donation_signups ds
+       JOIN participants p ON p.id = ds.participant_id
+       JOIN donation_requests dr ON dr.id = ds.request_id
+       WHERE LOWER(p.email) = LOWER(?)
+       ORDER BY ds.created_at DESC`
+    )
+    .bind(email)
+    .all<DonationSignupWithParticipant>();
+  return results || [];
+}
+
+export async function getAllDonationSignups(): Promise<DonationSignupWithParticipant[]> {
+  const db = await getDB();
+  const { results } = await db
+    .prepare(
+      `SELECT ds.*, p.name as participant_name, p.email as participant_email, p.phone as participant_phone,
+              dr.item_name as item_name, dr.unit as unit
+       FROM donation_signups ds
+       JOIN participants p ON p.id = ds.participant_id
+       JOIN donation_requests dr ON dr.id = ds.request_id
+       ORDER BY ds.created_at DESC`
+    )
+    .all<DonationSignupWithParticipant>();
+  return results || [];
+}
+
+export async function updateDonationSignup(
+  id: number,
+  data: { quantity_pledged?: number; status?: "active" | "cancelled"; notes?: string | null }
+): Promise<DonationSignup> {
+  const db = await getDB();
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  if (data.quantity_pledged !== undefined) { sets.push("quantity_pledged = ?"); values.push(data.quantity_pledged); }
+  if (data.status !== undefined) { sets.push("status = ?"); values.push(data.status); }
+  if (data.notes !== undefined) { sets.push("notes = ?"); values.push(data.notes); }
+  sets.push("updated_at = datetime('now')");
+  values.push(id);
+  const result = await db
+    .prepare(`UPDATE donation_signups SET ${sets.join(", ")} WHERE id = ? RETURNING *`)
+    .bind(...values)
+    .first<DonationSignup>();
+  if (!result) throw new Error("Donation signup not found");
+  return result;
+}
+
+export async function cancelDonationSignup(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("UPDATE donation_signups SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?").bind(id).run();
+}
+
+export async function upsertParticipantProgram(participantId: number, program: string): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("INSERT OR IGNORE INTO participant_programs (participant_id, program) VALUES (?, ?)")
+    .bind(participantId, program)
+    .run();
 }

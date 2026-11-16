@@ -12,7 +12,7 @@ export default async function AdminLayout({
 }) {
   const session = await verifySession();
 
-  const allowedRoles = ["admin", "meal_coordinator", "content_editor", "reports_viewer", "pet_coordinator"];
+  const allowedRoles = ["admin", "meal_coordinator", "content_editor", "reports_viewer", "pet_coordinator", "winter_meals_coordinator"];
   if (!allowedRoles.includes(session.role)) {
     redirect("/volunteer");
   }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { getMyMealSignups, getMyDriverVolunteerSignups } from "@/app/actions/lookup-signups";
+import { getMyMealSignups, getMyDriverVolunteerSignups, getMyDonationSignups } from "@/app/actions/lookup-signups";
 import type { MealSignup, DriverVolunteer } from "@/app/lib/definitions";
 
 interface LookupModalProps {
-  type: "meal" | "driver";
+  type: "meal" | "driver" | "donation";
   onClose: () => void;
 }
 
@@ -14,6 +14,7 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
   const [loading, setLoading] = useState(false);
   const [mealSignups, setMealSignups] = useState<MealSignup[] | null>(null);
   const [driverSignups, setDriverSignups] = useState<DriverVolunteer[] | null>(null);
+  const [donationSignups, setDonationSignups] = useState<any[] | null>(null);
   const [error, setError] = useState("");
 
   async function handleLookup(e: React.FormEvent) {
@@ -28,19 +29,29 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
       } else {
         setMealSignups(result.signups);
       }
-    } else {
+    } else if (type === "driver") {
       const result = await getMyDriverVolunteerSignups(email);
       if (result.error) {
         setError(result.error);
       } else {
         setDriverSignups(result.signups);
       }
+    } else {
+      const result = await getMyDonationSignups(email);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setDonationSignups(result.signups);
+      }
     }
 
     setLoading(false);
   }
 
-  const title = type === "meal" ? "Your Meal Delivery Signups" : "Your Driver Volunteer Signups";
+  const title =
+    type === "meal" ? "Your Meal Delivery Signups" :
+    type === "driver" ? "Your Driver Volunteer Signups" :
+    "Your Donation Pledges";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -54,7 +65,7 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
           </button>
         </div>
 
-        {!mealSignups && !driverSignups ? (
+        {!mealSignups && !driverSignups && !donationSignups ? (
           <form onSubmit={handleLookup} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="lookup-email" className="block text-sm font-medium text-foreground">
@@ -87,6 +98,9 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
             {type === "driver" && driverSignups && driverSignups.length === 0 && (
               <p className="text-text-secondary">No upcoming volunteer signups found for this email.</p>
             )}
+            {type === "donation" && donationSignups && donationSignups.length === 0 && (
+              <p className="text-text-secondary">No donation pledges found for this email.</p>
+            )}
             {type === "meal" &&
               mealSignups?.map((signup) => (
                 <div key={signup.id} className="rounded-lg border border-primary/10 p-3">
@@ -117,10 +131,20 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
                   <p className="text-sm text-text-secondary">Regions: {signup.regions}</p>
                 </div>
               ))}
+            {type === "donation" &&
+              donationSignups?.map((signup) => (
+                <div key={signup.id} className="rounded-lg border border-primary/10 p-3">
+                  <p className="font-medium text-foreground">{signup.item_name}</p>
+                  <p className="text-sm text-text-secondary">
+                    {signup.quantity_pledged} {signup.unit} · {signup.status} · {new Date(signup.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
             <button
               onClick={() => {
                 setMealSignups(null);
                 setDriverSignups(null);
+                setDonationSignups(null);
                 setEmail("");
               }}
               className="w-full rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5"

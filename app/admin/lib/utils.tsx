@@ -177,6 +177,10 @@ export function getRoleBadge(role: string) {
           ? "bg-indigo-100 text-indigo-800"
           : role === "reports_viewer"
           ? "bg-teal-100 text-teal-800"
+          : role === "pet_coordinator"
+          ? "bg-pink-100 text-pink-800"
+          : role === "winter_meals_coordinator"
+          ? "bg-cyan-100 text-cyan-800"
           : "bg-blue-100 text-blue-800"
       }`}
     >
