@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/admin/programs/meal-delivery", label: "Meal Delivery" },
   { href: "/admin/programs/legal-observers", label: "Legal Observers" },
   { href: "/admin/programs/community-pets", label: "Community Pets" },
+  { href: "/admin/programs/winter-food-drive", label: "Winter Food Drive" },
   { href: "/admin/events", label: "Events" },
   { href: "/admin/news", label: "News" },
   { href: "/admin/newsletters", label: "Newsletters" },
@@ -29,6 +30,8 @@ export function DesktopNav({ role }: { role?: string }) {
     visibleLinks = navLinks.filter((link) => link.href === "/admin/reports");
   } else if (role === "pet_coordinator") {
     visibleLinks = navLinks.filter((link) => link.href === "/admin/programs/community-pets");
+  } else if (role === "winter_meals_coordinator") {
+    visibleLinks = navLinks.filter((link) => link.href === "/admin/programs/winter-food-drive");
   }
 
   return (

@@ -76,6 +76,7 @@ function UserFormFields({ state, user }: {
             <option value="content_editor">Content Editor</option>
             <option value="reports_viewer">Reports Viewer</option>
             <option value="pet_coordinator">Pet Coordinator</option>
+            <option value="winter_meals_coordinator">Winter Meals Coordinator</option>
             <option value="admin">Admin</option>
           </select>
           {state?.errors?.role && (
@@ -138,6 +139,11 @@ const ROLE_INFO: { role: string; description: string; permissions: string }[] = 
     role: "pet_coordinator",
     description: "Triages Sponsor a Pet applications and manages the pet roster.",
     permissions: "Community Pets (animals, sponsors, applications). No users or other programs.",
+  },
+  {
+    role: "winter_meals_coordinator",
+    description: "Manages the Winter Food Drive donation weeks, requests, and pledge ledger.",
+    permissions: "Winter Food Drive (donation weeks, requests, signups). No users or other programs.",
   },
   {
     role: "admin",

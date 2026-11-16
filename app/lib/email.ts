@@ -614,3 +614,50 @@ export async function sendNewsletterIssuesBatch(
 
   return { sentCount, errors, failedEmails };
 }
+
+export async function sendDonationPledgeConfirmation(params: {
+  to: string;
+  name: string;
+  weekTitle: string | null;
+  dropoffLocation: string | null;
+  dropoffHours: string | null;
+  lines: { item_name: string; quantity: number; unit: string }[];
+}): Promise<void> {
+  const linesText = params.lines.map((l) => `- ${l.quantity} ${l.unit} of ${l.item_name}`).join("\n");
+  const subject = `Thank you for your donation pledge — ${params.weekTitle || "Winter Food Drive"}`;
+  const text = `Hi ${params.name},
+
+Thank you for pledging to support the Winter Food Drive!
+
+Your pledge:
+${linesText}
+
+Drop-off location: ${params.dropoffLocation || "TBD"}
+Drop-off hours: ${params.dropoffHours || "TBD"}
+
+Take care,
+Purple Fireflies`;
+  await sendEmail({ to: params.to, subject, text });
+}
+
+export async function sendDonationCoordinatorNotification(params: {
+  donorName: string;
+  donorEmail: string;
+  donorPhone: string;
+  weekTitle: string | null;
+  lines: { item_name: string; quantity: number; unit: string }[];
+}): Promise<void> {
+  const adminEmail = (await (await import("@/app/lib/env")).readEnvVar("ADMIN_EMAIL"))?.trim() || "info@purplefireflies.org";
+  const linesText = params.lines.map((l) => `- ${l.quantity} ${l.unit} of ${l.item_name}`).join("\n");
+  const subject = `New donation pledge — ${params.donorName}`;
+  const text = `New donation pledge received.
+
+Donor: ${params.donorName}
+Email: ${params.donorEmail}
+Phone: ${params.donorPhone}
+Week: ${params.weekTitle || "Winter Food Drive"}
+
+Pledge:
+${linesText}`;
+  await sendEmail({ to: adminEmail, subject, text });
+}

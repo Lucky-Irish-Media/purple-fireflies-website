@@ -686,6 +686,87 @@ export interface AnimalSponsorshipWithAnimal extends AnimalSponsorship {
  * Writable animal fields. Cached Givebutter totals and timestamps are owned by
  * `updateGivebutterTotals()`, not by the admin form.
  */
+// ---- Donation (Winter Food Drive) ----
+
+export interface DonationWeek {
+  id: number;
+  week_start_date: string;
+  title: string | null;
+  notes: string | null;
+  status: "open" | "closed";
+  dropoff_location: string | null;
+  dropoff_hours: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DonationRequest {
+  id: number;
+  week_id: number;
+  item_name: string;
+  requested_qty: number;
+  unit: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface DonationSignup {
+  id: number;
+  request_id: number;
+  participant_id: number;
+  quantity_pledged: number;
+  status: "active" | "cancelled";
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DonationSignupWithParticipant extends DonationSignup {
+  participant_name: string;
+  participant_email: string;
+  participant_phone: string;
+}
+
+export interface DonationRequestWithTotals extends DonationRequest {
+  pledged_qty: number;
+  remaining: number;
+}
+
+export const DonationWeekSchema = z.object({
+  week_start_date: z.string().min(1, { message: "Start date is required." }),
+  title: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.enum(["open", "closed"]).default("open"),
+  dropoff_location: z.string().optional(),
+  dropoff_hours: z.string().optional(),
+});
+
+export const DonationRequestSchema = z.object({
+  week_id: z.coerce.number().int().positive(),
+  item_name: z.string().min(1, { message: "Item name is required." }).trim(),
+  requested_qty: z.coerce.number().int().min(1, { message: "Quantity must be at least 1." }),
+  unit: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const DonationPledgeLineSchema = z.object({
+  request_id: z.coerce.number().int().positive(),
+  quantity: z.coerce.number().int().min(1, { message: "Quantity must be at least 1." }),
+});
+
+export const DonationPledgeSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  contactMethod: z.enum(["call", "text", "email"]).default("email"),
+  notes: z.string().optional(),
+  lines: z.array(DonationPledgeLineSchema).min(1, { message: "Pledge at least one item." }),
+});
+
+export type DonationPledgeFormState =
+  | { errors?: { name?: string[]; email?: string[]; phone?: string[]; contactMethod?: string[]; notes?: string[]; lines?: string[] }; message?: string; success?: boolean }
+  | undefined;
+
 export interface AnimalInput {
   slug: string;
   name: string;
