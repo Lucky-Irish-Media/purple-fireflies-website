@@ -87,6 +87,13 @@ export default function Navbar() {
                     >
                       Sponsor a Pet
                     </Link>
+                    <Link
+                      href="/programs/winter-food-drive"
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                      onClick={() => setIsProgramsOpen(false)}
+                    >
+                      Winter Food Drive
+                    </Link>
                   </div>
                 </div>
               )}
@@ -180,6 +187,13 @@ export default function Navbar() {
               onClick={() => setIsMobileOpen(false)}
             >
               Programs - Sponsor a Pet
+            </Link>
+            <Link
+              href="/programs/winter-food-drive"
+              className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Programs - Winter Food Drive
             </Link>
             <Link
               href="/news"
