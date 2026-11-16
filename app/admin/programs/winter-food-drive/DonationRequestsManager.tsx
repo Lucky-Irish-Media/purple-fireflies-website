@@ -14,12 +14,12 @@ export default function DonationRequestsManager({ requests }: { requests: Donati
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ message: string; success: boolean } | null>(null);
 
   function run(fd: FormData, action: (f: FormData) => Promise<{ success: boolean; message: string }>) {
     startTransition(async () => {
       const res = await action(fd);
-      setMessage(res.message);
+      setStatus(res);
       router.refresh();
     });
   }
@@ -28,7 +28,7 @@ export default function DonationRequestsManager({ requests }: { requests: Donati
     <div className="space-y-6">
       <section className="space-y-3">
         <h2 className="text-xl font-bold text-foreground">Add donation item</h2>
-        {message && <p className="text-sm text-red-500">{message}</p>}
+        {status && <p className={`text-sm ${status.success ? "text-green-600" : "text-red-500"}`}>{status.message}</p>}
         <form
           action={(fd) => run(fd, createDonationRequestAction)}
           className="grid grid-cols-1 sm:grid-cols-4 gap-3 border border-primary/10 rounded-lg p-4"
