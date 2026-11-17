@@ -14,6 +14,24 @@ if (usePreview) {
 }
 initOpenNextCloudflareForDev(usePreview ? { configPath: "wrangler.preview.toml" } : undefined);
 
+// In dev-preview mode, OpenNext only sets the global Cloudflare context in the
+// edge (AsyncLocalStorage) process. Server actions run in the node.js process
+// where the context is missing, so they fall back to a local/empty miniflare.
+// Pre-populate the global context here (runs in both processes) so server
+// actions resolve to the same remote preview bindings as page renders.
+if (usePreview) {
+  (async () => {
+    try {
+      const { getPlatformProxy } = await import("wrangler");
+      const ctx = await getPlatformProxy({ configPath: "wrangler.preview.toml", persist: false });
+      const sym = Symbol.for("__cloudflare-context__");
+      (globalThis as any)[sym] = { env: ctx.env, cf: ctx.cf, ctx: ctx.ctx };
+    } catch (e) {
+      console.error("dev-preview context init failed:", e);
+    }
+  })();
+}
+
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://widgets.givebutter.com",
