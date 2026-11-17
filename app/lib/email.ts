@@ -673,8 +673,9 @@ export async function sendVolunteerMealConfirmation(params: {
 }): Promise<void> {
   const formatted = new Date(params.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   const roleLabel = params.role.charAt(0).toUpperCase() + params.role.slice(1);
+  const dropoffDetails = (await readEnvVar("WINTER_MEALS_DROPOFF_DETAILS"))?.trim() || "Please see the volunteer page for arrival details.";
   const subject = `Winter Food Drive Kitchen Volunteer — ${formatted}`;
-  let text = `Hi ${params.name},
+  const text = `Hi ${params.name},
 
 Thank you for signing up to volunteer in the kitchen for the Winter Food Drive!
 
@@ -683,13 +684,10 @@ Date: ${formatted}
 Role: ${roleLabel}
 ${params.isGroup ? `Group: ${params.groupName || ""}\nEstimated headcount: ${params.headcount}\n` : `Headcount: ${params.headcount}\n`}
 
-Drop-off / arrival details: Wednesdays 1:00 PM - 3:00 PM at AceNet (kitchen volunteers arrive at assigned time).
+Drop-off / arrival details: ${dropoffDetails}
 
 ${params.tempPassword ? `A volunteer account has been created for you. Your temporary password is: ${params.tempPassword}\nLog in at /volunteer to view or cancel your signup.\n\n` : `You can view or cancel your signup at /volunteer.\n\n`}Take care,
 Purple Fireflies`;
-  const coordinatorEmail = (await readEnvVar("WINTER_MEALS_COORDINATOR_EMAIL"))?.trim()
-    || (await readEnvVar("ADMIN_EMAIL"))?.trim()
-    || "info@purplefireflies.org";
   await sendEmail({ to: params.to, subject, text });
 }
 

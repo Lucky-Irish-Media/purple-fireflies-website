@@ -2415,6 +2415,8 @@ export async function deleteDonationRequest(id: number): Promise<void> {
   await db.prepare("DELETE FROM donation_requests WHERE id = ?").bind(id).run();
 }
 
+// pledged total counts active pledge signups; received_qty (walk-in/extras) is
+// tracked separately on donation_requests. Remaining = requested - pledged - received.
 export async function getPledgedTotalByRequest(requestId: number): Promise<number> {
   const db = await getDB();
   const result = await db
@@ -2424,23 +2426,78 @@ export async function getPledgedTotalByRequest(requestId: number): Promise<numbe
   return result?.total ?? 0;
 }
 
+// received_qty is treated as walk-in/extras (items received outside of pledges),
+// so remaining = requested_qty - pledged - received_qty. If received_qty were
+// instead cumulative received, the formula would be requested_qty - received_qty.
 export async function createDonationSignup(data: {
   request_id: number;
   participant_id: number;
   quantity_pledged: number;
   notes?: string | null;
-}): Promise<DonationSignup> {
+}): Promise<DonationSignup | null> {
   const db = await getDB();
+  // Transactional capacity enforcement: only insert if the new pledge fits the
+  // remaining capacity (requested - already pledged - walk-in received).
   const result = await db
     .prepare(
       `INSERT INTO donation_signups (request_id, participant_id, quantity_pledged, notes, updated_at)
-       VALUES (?, ?, ?, ?, datetime('now'))
+       SELECT ?, ?, ?, ?, datetime('now')
+       WHERE (SELECT COALESCE(SUM(quantity_pledged), 0) FROM donation_signups WHERE request_id = ? AND status = 'active') + ? <=
+             (SELECT requested_qty - received_qty FROM donation_requests WHERE id = ?)
        RETURNING *`
     )
-    .bind(data.request_id, data.participant_id, data.quantity_pledged, data.notes ?? null)
+    .bind(
+      data.request_id,
+      data.participant_id,
+      data.quantity_pledged,
+      data.notes ?? null,
+      data.request_id,
+      data.quantity_pledged,
+      data.request_id,
+    )
     .first<DonationSignup>();
-  if (!result) throw new Error("Failed to create donation signup");
-  return result;
+  return result || null;
+}
+
+export async function createDonationSignupsTransactional(
+  lines: { request_id: number; participant_id: number; quantity_pledged: number; notes?: string | null }[],
+): Promise<DonationSignup[]> {
+  const db = await getDB();
+  const stmts = lines.map((l) =>
+    db
+      .prepare(
+        `INSERT INTO donation_signups (request_id, participant_id, quantity_pledged, notes, updated_at)
+         SELECT ?, ?, ?, ?, datetime('now')
+         WHERE (SELECT COALESCE(SUM(quantity_pledged), 0) FROM donation_signups WHERE request_id = ? AND status = 'active') + ? <=
+               (SELECT requested_qty - received_qty FROM donation_requests WHERE id = ?)
+         RETURNING *`,
+      )
+      .bind(
+        l.request_id,
+        l.participant_id,
+        l.quantity_pledged,
+        l.notes ?? null,
+        l.request_id,
+        l.quantity_pledged,
+        l.request_id,
+      ),
+  );
+  const batchResults = await db.batch(stmts);
+  const signups: (DonationSignup | null)[] = batchResults.map(
+    (r) => (r.results?.[0] as DonationSignup | undefined) || null,
+  );
+  if (signups.some((s) => !s)) {
+    const ids = signups.filter(Boolean).map((s) => s!.id);
+    if (ids.length) {
+      await db.batch(
+        ids.map((id) =>
+          db.prepare("UPDATE donation_signups SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?").bind(id),
+        ),
+      );
+    }
+    throw new Error("CAPACITY_EXCEEDED");
+  }
+  return signups as DonationSignup[];
 }
 
 export async function getDonationSignupsByEmail(email: string): Promise<DonationSignupWithParticipant[]> {
@@ -2510,7 +2567,15 @@ export async function upsertParticipantProgram(participantId: number, program: s
 
 // ---- Volunteer Days / Kitchen Volunteers (Winter Food Drive) ----
 
+export async function closePastVolunteerDays(): Promise<void> {
+  const db = await getDB();
+  await db
+    .prepare("UPDATE volunteer_days SET status = 'closed', updated_at = datetime('now') WHERE date < date('now') AND status = 'open'")
+    .run();
+}
+
 export async function getVolunteerDays(): Promise<VolunteerDay[]> {
+  await closePastVolunteerDays();
   const db = await getDB();
   const res = await db
     .prepare("SELECT * FROM volunteer_days ORDER BY date ASC")
@@ -2519,6 +2584,7 @@ export async function getVolunteerDays(): Promise<VolunteerDay[]> {
 }
 
 export async function getOpenVolunteerDays(): Promise<VolunteerDay[]> {
+  await closePastVolunteerDays();
   const db = await getDB();
   const res = await db
     .prepare("SELECT * FROM volunteer_days WHERE status = 'open' ORDER BY date ASC")
@@ -2628,12 +2694,17 @@ export async function createVolunteerSignup(data: {
   group_name?: string | null;
   headcount: number;
   notes?: string | null;
-}): Promise<VolunteerSignup> {
+}): Promise<VolunteerSignup | null> {
   const db = await getDB();
+  // Transactional capacity enforcement: only insert if the day is open and the
+  // new headcount fits the remaining slots (5 per role per day).
   const result = await db
     .prepare(
       `INSERT INTO volunteer_signups (day_id, participant_id, role, is_group, group_name, headcount, notes, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now')) RETURNING *`
+       SELECT ?, ?, ?, ?, ?, ?, ?, datetime('now')
+       WHERE (SELECT status FROM volunteer_days WHERE id = ?) = 'open'
+         AND (SELECT COALESCE(SUM(headcount), 0) FROM volunteer_signups WHERE day_id = ? AND role = ? AND status = 'active') + ? <= 5
+       RETURNING *`
     )
     .bind(
       data.day_id,
@@ -2642,11 +2713,14 @@ export async function createVolunteerSignup(data: {
       data.is_group ? 1 : 0,
       data.group_name ?? null,
       data.headcount,
-      data.notes ?? null
+      data.notes ?? null,
+      data.day_id,
+      data.day_id,
+      data.role,
+      data.headcount,
     )
     .first<VolunteerSignup>();
-  if (!result) throw new Error("Failed to create volunteer signup");
-  return result;
+  return result || null;
 }
 
 export async function getAllVolunteerSignups(): Promise<VolunteerSignupWithParticipant[]> {

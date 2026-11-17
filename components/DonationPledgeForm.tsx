@@ -25,7 +25,7 @@ export default function DonationPledgeForm({
   }
 
   if (state?.success) {
-    return <p className="text-green-600 font-medium">Thank you! Your pledge has been submitted. Check your email for confirmation.</p>;
+    return <div className="rounded-lg bg-green-50 p-4 text-green-600" role="status">Thank you! Your pledge has been submitted. Check your email for confirmation.</div>;
   }
 
   const lines = requests.filter((r) => (quantities[r.id] || 0) > 0);
@@ -40,7 +40,7 @@ export default function DonationPledgeForm({
 
       <form action={action} className="space-y-6" noValidate>
         {state?.message && !state?.success && (
-          <p className="text-sm text-red-500" role="alert">{state.message}</p>
+          <div className="rounded-lg bg-red-50 p-4 text-red-600" role="alert">{state.message}</div>
         )}
 
         <div className="space-y-2">
@@ -56,9 +56,10 @@ export default function DonationPledgeForm({
               state?.errors?.name ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
             }`}
             aria-invalid={state?.errors?.name ? "true" : "false"}
+            aria-describedby="name-error"
           />
           {state?.errors?.name && (
-            <p className="text-sm text-red-500" role="alert">{state.errors.name[0]}</p>
+            <p id="name-error" className="text-sm text-red-500" role="alert">{state.errors.name[0]}</p>
           )}
         </div>
 
@@ -75,9 +76,10 @@ export default function DonationPledgeForm({
               state?.errors?.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
             }`}
             aria-invalid={state?.errors?.email ? "true" : "false"}
+            aria-describedby="email-error"
           />
           {state?.errors?.email && (
-            <p className="text-sm text-red-500" role="alert">{state.errors.email[0]}</p>
+            <p id="email-error" className="text-sm text-red-500" role="alert">{state.errors.email[0]}</p>
           )}
         </div>
 
@@ -95,9 +97,10 @@ export default function DonationPledgeForm({
               state?.errors?.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input focus:border-primary focus:ring-primary"
             }`}
             aria-invalid={state?.errors?.phone ? "true" : "false"}
+            aria-describedby="phone-error"
           />
           {state?.errors?.phone && (
-            <p className="text-sm text-red-500" role="alert">{state.errors.phone[0]}</p>
+            <p id="phone-error" className="text-sm text-red-500" role="alert">{state.errors.phone[0]}</p>
           )}
         </div>
 
@@ -149,6 +152,7 @@ export default function DonationPledgeForm({
                 max={r.remaining >= 0 ? r.remaining : undefined}
                 value={quantities[r.id] || 0}
                 onChange={(e) => setQty(r.id, e.target.value)}
+                aria-describedby={`quantity-${r.id}-error`}
                 className="w-20 rounded-lg border border-input bg-background px-2 py-1 text-sm"
               />
             </div>
@@ -165,7 +169,7 @@ export default function DonationPledgeForm({
         <button
           type="submit"
           disabled={pending || lines.length === 0}
-          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="w-full rounded-lg bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           {pending ? "Submitting..." : "Submit Pledge"}
         </button>
