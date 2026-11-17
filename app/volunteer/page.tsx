@@ -1,14 +1,15 @@
 import { verifySession } from "@/app/lib/dal";
-import { getParticipantByEmail, getVolunteerDashboard } from "@/app/lib/db";
+import { getParticipantByEmail, getVolunteerDashboard, getVolunteerSignupsByEmail } from "@/app/lib/db";
 import { VolunteerTabs } from "@/app/volunteer/VolunteerTabs";
 
 export const dynamic = "force-dynamic";
 
 export default async function VolunteerPage() {
   const session = await verifySession();
-  const [dashboard, participant] = await Promise.all([
+  const [dashboard, participant, kitchenSignups] = await Promise.all([
     getVolunteerDashboard(session.email),
     getParticipantByEmail(session.email),
+    getVolunteerSignupsByEmail(session.email),
   ]);
 
   const firstSignup = dashboard.signups[0];
@@ -23,6 +24,7 @@ export default async function VolunteerPage() {
       participant={participant}
       initialRegions={initialRegions}
       initialOnSignal={initialOnSignal}
+      kitchenSignups={kitchenSignups}
     />
   );
 }

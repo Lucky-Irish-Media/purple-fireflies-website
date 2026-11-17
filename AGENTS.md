@@ -93,6 +93,49 @@ Import shared formatters and badge components from `app/admin/lib/utils.tsx` - d
 - Do not create per-table badge components - use the shared ones from `app/admin/lib/utils.tsx`.
 <!-- END:admin-table-style-rules -->
 
+<!-- BEGIN:public-form-style-rules -->
+# Public Form Style Rules
+
+All public signup/pledge forms (meal delivery, driver volunteer, donation pledge, and any new public form) MUST follow the established form pattern. Mirror `components/MealSignupForm.tsx` and `components/DriverVolunteerForm.tsx`. Do NOT invent a new layout or styling.
+
+## Wrapper & Heading
+
+- Wrapper: `<div className="max-w-2xl mx-auto">`
+- Page/form heading: `<h2 className="mb-6 text-3xl font-bold text-foreground">`
+- Description paragraphs: `mb-8 text-lg text-text-secondary`
+- "Look up my existing signups" button: `<p className="mb-8"><button type="button" onClick={...} className="text-sm font-medium text-primary hover:underline">Look up my existing signups →</button></p>`
+- "Already have an account? Sign in..." link: `<p className="mb-8"><a href="/login" className="text-sm font-medium text-primary hover:underline">Already have an account? Sign in to manage your signups →</a></p>`
+
+## Form & Fields
+
+- Form: `<form action={formAction} className="space-y-6" noValidate>`
+- Field wrapper: `<div className="space-y-2">`
+- Label: `<label htmlFor="..." className="block text-sm font-medium text-foreground">Field <span className="text-red-500">*</span></label>`
+- Input/select/textarea: `w-full rounded-lg border bg-background px-4 py-3 text-foreground placeholder:text-text-secondary` with conditional error styling: `border-red-500 focus:border-red-500 focus:ring-red-500` vs `border-input focus:border-primary focus:ring-primary`
+- Each field sets `aria-invalid` and `aria-describedby` pointing at its error element id (`<field>-error`)
+- Error text: `<p id="<field>-error" className="text-sm text-red-500" role="alert">{state.errors.<field>[0]}</p>`
+- Grouped options use `<fieldset className="space-y-2">` with `<legend className="block text-sm font-medium text-foreground">`
+- Radio/checkbox inputs: `h-4 w-4 text-primary border-input focus:ring-primary`
+
+## Messages & Submit
+
+- Top-level server error: `<div className="rounded-lg bg-red-50 p-4 text-red-600" role="alert">`
+- Success: `<div className="rounded-lg bg-green-50 p-4 text-green-600" role="status">`
+- Submit button: `<button type="submit" disabled={isPending || ...} className="w-full rounded-lg bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">`
+- Button label toggles: `{isPending ? "Submitting..." : "Submit ..."}`
+
+## Lookup Modal
+
+- Include a "Look up my existing signups" button wired to `<LookupModal>` when the program has existing-signup lookup support.
+- If a new public form is added, add a corresponding lookup type to `LookupModal` and a `getMy...` action in `app/actions/lookup-signups.ts`.
+
+## Do NOT
+
+- Do not use small inputs (`px-2 py-1 text-sm`, `rounded border`) on public forms - those are for admin tables only.
+- Do not omit `aria-invalid` / `aria-describedby` / error ids.
+- Do not create a new visual style; reuse the classes above.
+<!-- END:public-form-style-rules -->
+
 <!-- BEGIN:skills -->
 # Local Skills
 

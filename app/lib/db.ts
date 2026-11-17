@@ -36,6 +36,10 @@ import type {
   DonationRequest,
   DonationSignup,
   DonationSignupWithParticipant,
+  VolunteerDay,
+  VolunteerSignup,
+  VolunteerSignupWithParticipant,
+  VolunteerSignupWithDay,
 } from "@/app/lib/definitions";
 import { getDeliveryDay, getMealsCapForDate, type DeliveryDay } from "@/app/lib/delivery-day";
 
@@ -2502,4 +2506,241 @@ export async function upsertParticipantProgram(participantId: number, program: s
     .prepare("INSERT OR IGNORE INTO participant_programs (participant_id, program) VALUES (?, ?)")
     .bind(participantId, program)
     .run();
+}
+
+// ---- Volunteer Days / Kitchen Volunteers (Winter Food Drive) ----
+
+export async function getVolunteerDays(): Promise<VolunteerDay[]> {
+  const db = await getDB();
+  const res = await db
+    .prepare("SELECT * FROM volunteer_days ORDER BY date ASC")
+    .all<VolunteerDay>();
+  return res.results || [];
+}
+
+export async function getOpenVolunteerDays(): Promise<VolunteerDay[]> {
+  const db = await getDB();
+  const res = await db
+    .prepare("SELECT * FROM volunteer_days WHERE status = 'open' ORDER BY date ASC")
+    .all<VolunteerDay>();
+  return res.results || [];
+}
+
+export async function getVolunteerDay(id: number): Promise<VolunteerDay | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM volunteer_days WHERE id = ?")
+    .bind(id)
+    .first<VolunteerDay>();
+  return result || null;
+}
+
+export async function getVolunteerDayByDate(date: string): Promise<VolunteerDay | null> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT * FROM volunteer_days WHERE date = ?")
+    .bind(date)
+    .first<VolunteerDay>();
+  return result || null;
+}
+
+export async function createVolunteerDay(data: {
+  date: string;
+  title?: string | null;
+  notes?: string | null;
+}): Promise<VolunteerDay> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO volunteer_days (date, title, notes, updated_at)
+       VALUES (?, ?, ?, datetime('now')) RETURNING *`
+    )
+    .bind(data.date, data.title ?? null, data.notes ?? null)
+    .first<VolunteerDay>();
+  if (!result) throw new Error("Failed to create volunteer day");
+  return result;
+}
+
+export async function updateVolunteerDay(
+  id: number,
+  data: { title?: string | null; notes?: string | null; status?: "open" | "closed"; date?: string }
+): Promise<VolunteerDay> {
+  const db = await getDB();
+  const sets: string[] = [];
+  const values: (string | number | null)[] = [];
+  if (data.title !== undefined) { sets.push("title = ?"); values.push(data.title); }
+  if (data.notes !== undefined) { sets.push("notes = ?"); values.push(data.notes); }
+  if (data.status !== undefined) { sets.push("status = ?"); values.push(data.status); }
+  if (data.date !== undefined) { sets.push("date = ?"); values.push(data.date); }
+  if (sets.length === 0) {
+    const existing = await getVolunteerDay(id);
+    if (!existing) throw new Error("Volunteer day not found");
+    return existing;
+  }
+  sets.push("updated_at = datetime('now')");
+  values.push(id);
+  const result = await db
+    .prepare(`UPDATE volunteer_days SET ${sets.join(", ")} WHERE id = ? RETURNING *`)
+    .bind(...values)
+    .first<VolunteerDay>();
+  if (!result) throw new Error("Volunteer day not found");
+  return result;
+}
+
+export async function closeVolunteerDay(id: number): Promise<void> {
+  await updateVolunteerDay(id, { status: "closed" });
+}
+
+export async function reopenVolunteerDay(id: number): Promise<void> {
+  await updateVolunteerDay(id, { status: "open" });
+}
+
+export async function deleteVolunteerDay(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("DELETE FROM volunteer_days WHERE id = ?").bind(id).run();
+}
+
+export async function getSlotUsageForDayRole(dayId: number, role: string): Promise<number> {
+  const db = await getDB();
+  const result = await db
+    .prepare("SELECT COALESCE(SUM(headcount), 0) as total FROM volunteer_signups WHERE day_id = ? AND role = ? AND status = 'active'")
+    .bind(dayId, role)
+    .first<{ total: number }>();
+  return result?.total ?? 0;
+}
+
+export async function getSlotUsageForDay(dayId: number): Promise<Record<string, number>> {
+  const db = await getDB();
+  const res = await db
+    .prepare("SELECT role, COALESCE(SUM(headcount), 0) as total FROM volunteer_signups WHERE day_id = ? AND status = 'active' GROUP BY role")
+    .bind(dayId)
+    .all<{ role: string; total: number }>();
+  const out: Record<string, number> = { cooking: 0, cleaning: 0, packing: 0 };
+  for (const r of res.results || []) out[r.role] = r.total;
+  return out;
+}
+
+export async function createVolunteerSignup(data: {
+  day_id: number;
+  participant_id: number;
+  role: string;
+  is_group: boolean;
+  group_name?: string | null;
+  headcount: number;
+  notes?: string | null;
+}): Promise<VolunteerSignup> {
+  const db = await getDB();
+  const result = await db
+    .prepare(
+      `INSERT INTO volunteer_signups (day_id, participant_id, role, is_group, group_name, headcount, notes, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now')) RETURNING *`
+    )
+    .bind(
+      data.day_id,
+      data.participant_id,
+      data.role,
+      data.is_group ? 1 : 0,
+      data.group_name ?? null,
+      data.headcount,
+      data.notes ?? null
+    )
+    .first<VolunteerSignup>();
+  if (!result) throw new Error("Failed to create volunteer signup");
+  return result;
+}
+
+export async function getAllVolunteerSignups(): Promise<VolunteerSignupWithParticipant[]> {
+  const db = await getDB();
+  const res = await db
+    .prepare(
+      `SELECT vs.*, vd.date as day_date,
+              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+       FROM volunteer_signups vs
+       JOIN volunteer_days vd ON vd.id = vs.day_id
+       JOIN participants p ON p.id = vs.participant_id
+       ORDER BY vd.date ASC, vs.role ASC, vs.created_at ASC`
+    )
+    .all<VolunteerSignupWithParticipant>();
+  return res.results || [];
+}
+
+export async function getVolunteerSignupsByDay(dayId: number): Promise<VolunteerSignupWithParticipant[]> {
+  const db = await getDB();
+  const res = await db
+    .prepare(
+      `SELECT vs.*, vd.date as day_date,
+              p.name as participant_name, p.email as participant_email, p.phone as participant_phone
+       FROM volunteer_signups vs
+       JOIN volunteer_days vd ON vd.id = vs.day_id
+       JOIN participants p ON p.id = vs.participant_id
+       WHERE vs.day_id = ?
+       ORDER BY vs.role ASC, vs.created_at ASC`
+    )
+    .bind(dayId)
+    .all<VolunteerSignupWithParticipant>();
+  return res.results || [];
+}
+
+export async function getVolunteerSignupsByEmail(email: string): Promise<VolunteerSignupWithDay[]> {
+  const db = await getDB();
+  const res = await db
+    .prepare(
+      `SELECT vs.*, vd.date as day_date, vd.title as day_title, vd.notes as day_notes, vd.status as day_status
+       FROM volunteer_signups vs
+       JOIN volunteer_days vd ON vd.id = vs.day_id
+       JOIN participants p ON p.id = vs.participant_id
+       WHERE LOWER(p.email) = LOWER(?)
+       ORDER BY vd.date ASC`
+    )
+    .bind(email)
+    .all<VolunteerSignupWithDay>();
+  return res.results || [];
+}
+
+export async function getVolunteerSignupsByParticipant(participantId: number): Promise<VolunteerSignupWithDay[]> {
+  const db = await getDB();
+  const res = await db
+    .prepare(
+      `SELECT vs.*, vd.date as day_date, vd.title as day_title, vd.notes as day_notes, vd.status as day_status
+       FROM volunteer_signups vs
+       JOIN volunteer_days vd ON vd.id = vs.day_id
+       WHERE vs.participant_id = ?
+       ORDER BY vd.date ASC`
+    )
+    .bind(participantId)
+    .all<VolunteerSignupWithDay>();
+  return res.results || [];
+}
+
+export async function updateVolunteerSignup(
+  id: number,
+  data: { role?: string; is_group?: boolean; group_name?: string | null; headcount?: number; status?: "active" | "cancelled"; notes?: string | null }
+): Promise<VolunteerSignup> {
+  const db = await getDB();
+  const sets: string[] = [];
+  const values: (string | number | null)[] = [];
+  if (data.role !== undefined) { sets.push("role = ?"); values.push(data.role); }
+  if (data.is_group !== undefined) { sets.push("is_group = ?"); values.push(data.is_group ? 1 : 0); }
+  if (data.group_name !== undefined) { sets.push("group_name = ?"); values.push(data.group_name); }
+  if (data.headcount !== undefined) { sets.push("headcount = ?"); values.push(data.headcount); }
+  if (data.status !== undefined) { sets.push("status = ?"); values.push(data.status); }
+  if (data.notes !== undefined) { sets.push("notes = ?"); values.push(data.notes); }
+  if (sets.length === 0) {
+    const existing = await db.prepare("SELECT * FROM volunteer_signups WHERE id = ?").bind(id).first<VolunteerSignup>();
+    if (!existing) throw new Error("Volunteer signup not found");
+    return existing;
+  }
+  sets.push("updated_at = datetime('now')");
+  values.push(id);
+  const result = await db
+    .prepare(`UPDATE volunteer_signups SET ${sets.join(", ")} WHERE id = ? RETURNING *`)
+    .bind(...values)
+    .first<VolunteerSignup>();
+  if (!result) throw new Error("Volunteer signup not found");
+  return result;
+}
+
+export async function cancelVolunteerSignup(id: number): Promise<void> {
+  const db = await getDB();
+  await db.prepare("UPDATE volunteer_signups SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?").bind(id).run();
 }
