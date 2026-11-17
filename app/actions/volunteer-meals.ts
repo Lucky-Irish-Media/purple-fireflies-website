@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-
 import bcrypt from "bcryptjs";
 import { VolunteerSignupSchema, type VolunteerSignupFormState } from "@/app/lib/definitions";
 import {
@@ -105,7 +103,7 @@ export async function submitVolunteerSignup(
     }
     await upsertParticipantProgram(participant.id, "kitchen-volunteer");
 
-    const signup = await createVolunteerSignup({
+    const createdSignup = await createVolunteerSignup({
       day_id: day.id,
       participant_id: participant.id,
       role: data.role,
@@ -114,6 +112,9 @@ export async function submitVolunteerSignup(
       headcount: data.headcount,
       notes: data.notes ?? null,
     });
+    if (!createdSignup) {
+      return { message: `Not enough slots remaining for ${data.role}, or the day is closed.` };
+    }
 
     // account creation (auto-approved, active)
     let tempPassword: string | null = null;

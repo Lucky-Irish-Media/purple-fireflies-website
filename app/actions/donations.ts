@@ -4,12 +4,11 @@ import { revalidatePath } from "next/cache";
 import { DonationPledgeSchema, DonationRequestSchema } from "@/app/lib/definitions";
 import {
   getDonationRequest,
-  getDonationRequests,
   getPledgedTotalByRequest,
   createDonationRequest,
   updateDonationRequest,
   deleteDonationRequest,
-  createDonationSignup,
+  createDonationSignupsTransactional,
   updateDonationSignup,
   cancelDonationSignup,
   getParticipantByEmail,
@@ -68,9 +67,11 @@ export async function submitDonationPledge(
       const req = requests[i];
       if (!req) return { message: "One of the requested items was not found." };
       const pledged = await getPledgedTotalByRequest(req.id);
+      // received_qty is walk-in/extras; remaining = requested - pledged - received.
       const remaining = req.requested_qty - pledged - (req.received_qty ?? 0);
-      if (remaining >= 0 && data.lines[i].quantity > remaining) {
-        return { message: `Quantity for ${req.item_name} exceeds remaining (${remaining}).` };
+      const effectiveRemaining = Math.max(0, remaining);
+      if (data.lines[i].quantity > effectiveRemaining) {
+        return { message: `Quantity for ${req.item_name} exceeds remaining (${effectiveRemaining}).` };
       }
     }
 
@@ -101,14 +102,23 @@ export async function submitDonationPledge(
     await upsertParticipantProgram(participant.id, "donor");
 
     const pledgeLines: { item_name: string; quantity: number; unit: string }[] = [];
+    try {
+      await createDonationSignupsTransactional(
+        data.lines.map((l, i) => ({
+          request_id: requests[i]!.id,
+          participant_id: participant.id,
+          quantity_pledged: l.quantity,
+          notes: data.notes ?? null,
+        })),
+      );
+    } catch (e) {
+      if (e instanceof Error && e.message === "CAPACITY_EXCEEDED") {
+        return { message: "One or more items no longer have enough remaining quantity. Please refresh and try again." };
+      }
+      throw e;
+    }
     for (let i = 0; i < data.lines.length; i++) {
       const req = requests[i]!;
-      await createDonationSignup({
-        request_id: req.id,
-        participant_id: participant.id,
-        quantity_pledged: data.lines[i].quantity,
-        notes: data.notes ?? null,
-      });
       pledgeLines.push({ item_name: req.item_name, quantity: data.lines[i].quantity, unit: req.unit });
     }
 

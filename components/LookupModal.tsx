@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getMyMealSignups, getMyDriverVolunteerSignups, getMyDonationSignups, getMyVolunteerMealSignups } from "@/app/actions/lookup-signups";
-import type { MealSignup, DriverVolunteer, VolunteerSignupWithDay } from "@/app/lib/definitions";
+import type { MealSignup, DriverVolunteer, VolunteerSignupWithDay, DonationSignupWithParticipant } from "@/app/lib/definitions";
 
 interface LookupModalProps {
   type: "meal" | "driver" | "donation" | "volunteer-meal";
@@ -14,7 +14,7 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
   const [loading, setLoading] = useState(false);
   const [mealSignups, setMealSignups] = useState<MealSignup[] | null>(null);
   const [driverSignups, setDriverSignups] = useState<DriverVolunteer[] | null>(null);
-  const [donationSignups, setDonationSignups] = useState<any[] | null>(null);
+  const [donationSignups, setDonationSignups] = useState<DonationSignupWithParticipant[] | null>(null);
   const [volunteerMealSignups, setVolunteerMealSignups] = useState<VolunteerSignupWithDay[] | null>(null);
   const [error, setError] = useState("");
 
@@ -49,7 +49,7 @@ export function LookupModal({ type, onClose }: LookupModalProps) {
       if (result.error) {
         setError(result.error);
       } else {
-        setDonationSignups(result.signups);
+        setDonationSignups(result.signups as DonationSignupWithParticipant[]);
       }
     }
 
