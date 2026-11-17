@@ -660,3 +660,62 @@ Pledge:
 ${linesText}`;
   await sendEmail({ to: adminEmail, subject, text });
 }
+
+export async function sendVolunteerMealConfirmation(params: {
+  to: string;
+  name: string;
+  date: string;
+  role: string;
+  isGroup: boolean;
+  groupName?: string | null;
+  headcount: number;
+  tempPassword?: string | null;
+}): Promise<void> {
+  const formatted = new Date(params.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const roleLabel = params.role.charAt(0).toUpperCase() + params.role.slice(1);
+  const subject = `Winter Food Drive Kitchen Volunteer — ${formatted}`;
+  let text = `Hi ${params.name},
+
+Thank you for signing up to volunteer in the kitchen for the Winter Food Drive!
+
+Your assignment:
+Date: ${formatted}
+Role: ${roleLabel}
+${params.isGroup ? `Group: ${params.groupName || ""}\nEstimated headcount: ${params.headcount}\n` : `Headcount: ${params.headcount}\n`}
+
+Drop-off / arrival details: Wednesdays 1:00 PM - 3:00 PM at AceNet (kitchen volunteers arrive at assigned time).
+
+${params.tempPassword ? `A volunteer account has been created for you. Your temporary password is: ${params.tempPassword}\nLog in at /volunteer to view or cancel your signup.\n\n` : `You can view or cancel your signup at /volunteer.\n\n`}Take care,
+Purple Fireflies`;
+  const coordinatorEmail = (await readEnvVar("WINTER_MEALS_COORDINATOR_EMAIL"))?.trim()
+    || (await readEnvVar("ADMIN_EMAIL"))?.trim()
+    || "info@purplefireflies.org";
+  await sendEmail({ to: params.to, subject, text });
+}
+
+export async function sendVolunteerMealCoordinatorNotification(params: {
+  volunteerName: string;
+  volunteerEmail: string;
+  volunteerPhone: string;
+  date: string;
+  role: string;
+  isGroup: boolean;
+  groupName?: string | null;
+  headcount: number;
+}): Promise<void> {
+  const coordinatorEmail = (await readEnvVar("WINTER_MEALS_COORDINATOR_EMAIL"))?.trim()
+    || (await readEnvVar("ADMIN_EMAIL"))?.trim()
+    || "info@purplefireflies.org";
+  const formatted = new Date(params.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const roleLabel = params.role.charAt(0).toUpperCase() + params.role.slice(1);
+  const subject = `New kitchen volunteer signup — ${params.volunteerName}`;
+  const text = `New kitchen volunteer signup received.
+
+Volunteer: ${params.volunteerName}
+Email: ${params.volunteerEmail}
+Phone: ${params.volunteerPhone}
+Date: ${formatted}
+Role: ${roleLabel}
+${params.isGroup ? `Group: ${params.groupName || ""}\nHeadcount: ${params.headcount}\n` : `Individual (headcount ${params.headcount})\n`}`;
+  await sendEmail({ to: coordinatorEmail, subject, text });
+}

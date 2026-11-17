@@ -748,6 +748,74 @@ export type DonationPledgeFormState =
   | { errors?: { name?: string[]; email?: string[]; phone?: string[]; contactMethod?: string[]; notes?: string[]; lines?: string[] }; message?: string; success?: boolean }
   | undefined;
 
+// ---- Volunteer Days / Kitchen Volunteers (Winter Food Drive) ----
+
+export type VolunteerRole = "cooking" | "cleaning" | "packing";
+
+export const VOLUNTEER_ROLES: VolunteerRole[] = ["cooking", "cleaning", "packing"];
+export const VOLUNTEER_SLOT_CAPACITY = 5;
+
+export interface VolunteerDay {
+  id: number;
+  date: string;
+  title: string | null;
+  notes: string | null;
+  status: "open" | "closed";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VolunteerSignup {
+  id: number;
+  day_id: number;
+  participant_id: number;
+  role: VolunteerRole;
+  is_group: number;
+  group_name: string | null;
+  headcount: number;
+  status: "active" | "cancelled";
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VolunteerSignupWithParticipant extends VolunteerSignup {
+  participant_name: string;
+  participant_email: string;
+  participant_phone: string;
+  day_date: string;
+}
+
+export interface VolunteerSignupWithDay extends VolunteerSignup {
+  day_date: string;
+  day_title: string | null;
+  day_notes: string | null;
+  day_status: string;
+}
+
+export const VolunteerDaySchema = z.object({
+  date: z.string().min(1, { message: "Date is required." }),
+  title: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const VolunteerSignupSchema = z.object({
+  name: z.string().min(1, { message: "Name is required." }).trim(),
+  email: z.string().email({ message: "Please enter a valid email." }).trim(),
+  phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number." }).trim(),
+  contactMethod: z.enum(["call", "text", "email"]).default("email"),
+  dayId: z.coerce.number().int().positive(),
+  role: z.enum(["cooking", "cleaning", "packing"]),
+  isGroup: z.coerce.boolean().default(false),
+  groupName: z.string().optional(),
+  headcount: z.coerce.number().int().min(1).default(1),
+  notes: z.string().optional(),
+});
+
+export type VolunteerSignupFormState =
+  | { errors?: Record<string, string[]>; message?: string; success?: boolean; selectedDate?: string }
+  | undefined;
+
 export interface AnimalInput {
   slug: string;
   name: string;
