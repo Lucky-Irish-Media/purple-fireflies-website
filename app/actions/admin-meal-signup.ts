@@ -356,3 +356,20 @@ export async function updateMealSignupFieldAction(formData: FormData): Promise<{
     return { success: false, message: "Failed to update." };
   }
 }
+
+
+export async function getMealSignupsByDateRangeAction(
+  startDate: string,
+  endDate: string,
+): Promise<MealSignupWithAssignment[]> {
+  try {
+    await verifySession();
+    return await getMealSignupsWithAssignments({
+      fromDate: startDate || undefined,
+      toDate: endDate || undefined,
+    });
+  } catch (e) {
+    console.error("getMealSignupsByDateRange action error:", e);
+    return [];
+  }
+}

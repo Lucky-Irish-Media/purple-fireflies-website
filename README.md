@@ -65,7 +65,7 @@ A community mutual-aid website for programs such as food justice in Athens Count
 - **Community Pet Fund** - Public program page (`/programs/sponsor-a-pet`) explaining the fund: what it is, who qualifies, the three-step flow (a neighbor applies, the board approves a vendor payment, neighbors sponsor), and a transparency block with total raised, total paid to clinics and suppliers, and how many pets have been helped, all computed from D1. The page also offers a general pet fund donation option for visitors who cannot pick just one pet, supporting food for all pets in the program and outdoor shelters for colony cats. Published pets appear in a grid with a cover photo (or an initial-letter tile), tagline or species, and progress toward the goal, and each card links to a profile at `/programs/sponsor-a-pet/<slug>` with a photo gallery and alt text, bio, story, a needs list with real costs and cadence, and `AnimalProgress` (raised of goal, supporter count, raised versus spent, clamped at 100%, with an "any amount helps" state when a pet has no goal). The surplus policy is stated in its own block and the donor-privacy note appears on every pet page. Pet profiles render `generateMetadata` with a per-pet title, description, and OG image. The donation form is embedded on the pet page: `GivebutterWidget` loads Givebutter's widget library once for the org's account and renders `<givebutter-giving-form campaign="<code>">`, so a donor gives any amount, one time or monthly, without leaving the page, and the widget's own goal bar stays off because `AnimalProgress` is the source of progress. If the library is blocked or fails to register its element, the block says so and links to the campaign page instead of leaving an empty box. The donation widget is flag-gated: `COMMUNITY_PETS_DONATIONS_ENABLED` off renders a "sponsorship opens soon" block with a contact link and no donation UI, and the tax line renders from `NONPROFIT_STATUS` instead of hardcoded text. The pages read cached D1 totals, never the Givebutter API
 - **Winter Food Drive Donations** — Weekly donation request lists published by admins (item, target quantity, unit, notes) with public pledge signups that update requested/pledged/remaining quantities in real time; donors pledge multiple items in one cart-style submission with required contact info; participant upsert with `donor` program tag; confirmation email to donor and coordinator notification; admin week/request CRUD with close/reopen and pledge ledger with cancel/adjust; migration `0043` plus `participant_programs` join table; role `winter_meals_coordinator`
 - **Winter Meal Volunteers** — Kitchen volunteer signups for Winter Food Drive: admin creates volunteer days (Sundays/Wednesdays) with 5 slots per role (cooking/cleaning/packing), close/reopen a whole day or a single role; public page lists upcoming days with remaining slots and a signup form for individuals or sponsor groups (group name, contact person, headcount) with server-side capacity enforcement (sum of headcounts <= 5 per role/day); auto-creates volunteer account with temp password email and auto-approves; confirmation email to volunteer and coordinator notification; volunteer portal lists and cancels kitchen volunteer signups; admin tabs for Volunteer Days and Volunteer Signups; migration `0045`
-- **Admin Panel** — JWT-authenticated dashboard with role-based access (full `admin`, `meal_coordinator` limited to meal delivery, `content_editor` limited to events/news, `reports_viewer` read-only reports, `pet_coordinator` limited to Community Pets); CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; driver assignment management; a Delivery Days tab lists upcoming Wed/Thu dates with signup counts and Close/Reopen toggles; a read-only **Delivery Signups** tab shows each driver + delivery date (last 90 days) with the meal recipients already assigned to them, via expandable rows with name, phone, address, meals, and comments; the Waitlist tab uses the same column format as the Meal Signups table (combined requester with address, meal quantities, delivery date + weekday, status, comments, and pinned actions); admins can add waitlist entries directly via a full participant form (name, email, phone, address, delivery date, meals, contact method, comments, internal notes); all three admin tables (meal signups, driver volunteers, waitlist) support a **Duplicate** action that copies an entry to a new delivery date via a modal with date picker; the Driver Volunteers tab groups signups by person (one row per volunteer with name, email, phone, Signal status, a **Status** toggle, a **Liability** checkbox with the waiver signed date shown under the badge for in-app signatures, and a # of days count) and opens a modal listing each day they've signed up for, with per-day Edit, Duplicate, and Add Day actions (sortable columns, newest delivery date first by default); the table defaults to showing only **Active** drivers (filter can be changed to include Inactive via the Status column filter); each volunteer row also has an editable per-volunteer **Bag #** field, and **Driver Liability** (signed/not signed) and **Driver Status** (active/inactive) are stored once on the participant, not per delivery day; every Delivery column (Meal Signups, Delivery Signups, Waitlist) filters by relative preset (Today, This Week, Next Week, future or past) or by one exact date picked from a native date input, with a Clear control to reset
+- **Admin Panel** — JWT-authenticated dashboard with role-based access (full `admin`, `meal_coordinator` limited to meal delivery, `content_editor` limited to events/news, `reports_viewer` read-only reports, `pet_coordinator` limited to Community Pets); CRUD tables for meal signups, driver volunteers, events, news articles, and admin users; the Meal Signups table defaults to the last 90 days and offers an on-demand date-range loader for older records without fetching all history; driver assignment management; a Delivery Days tab lists upcoming Wed/Thu dates with signup counts and Close/Reopen toggles; a read-only **Delivery Signups** tab shows each driver + delivery date (last 90 days) with the meal recipients already assigned to them, via expandable rows with name, phone, address, meals, and comments; the Waitlist tab uses the same column format as the Meal Signups table (combined requester with address, meal quantities, delivery date + weekday, status, comments, and pinned actions); admins can add waitlist entries directly via a full participant form (name, email, phone, address, delivery date, meals, contact method, comments, internal notes); all three admin tables (meal signups, driver volunteers, waitlist) support a **Duplicate** action that copies an entry to a new delivery date via a modal with date picker; the Driver Volunteers tab groups signups by person (one row per volunteer with name, email, phone, Signal status, a **Status** toggle, a **Liability** checkbox with the waiver signed date shown under the badge for in-app signatures, and a # of days count) and opens a modal listing each day they've signed up for, with per-day Edit, Duplicate, and Add Day actions (sortable columns, newest delivery date first by default); the table defaults to showing only **Active** drivers (filter can be changed to include Inactive via the Status column filter); each volunteer row also has an editable per-volunteer **Bag #** field, and **Driver Liability** (signed/not signed) and **Driver Status** (active/inactive) are stored once on the participant, not per delivery day; every Delivery column (Meal Signups, Delivery Signups, Waitlist) filters by relative preset (Today, This Week, Next Week, future or past) or by one exact date picked from a native date input, with a Clear control to reset
 - **Authentication** — Email/password login with bcrypt, JWT sessions, HTTP-only cookies
 
 ## Tech Stack
@@ -144,6 +144,46 @@ Previews run on the same Worker as production, on their own branch URL, with the
 - R2 buckets: `purple-fireflies-media` (production) and `purple-fireflies-media-preview` (preview), both bound as `MEDIA_BUCKET`. The buckets are private; images are only reachable through the Worker at `/newsletter-images/[...key]` and `/api/media/[...key]`.
 - Givebutter webhook: create one subscription in the Givebutter dashboard pointing at `https://<domain>/api/givebutter/webhook` with the events `transaction.succeeded`, `refund.created`, and `plan.failed`. Givebutter sends the subscription's signing secret in a `Signature` header; the same value goes on the Worker as `GIVEBUTTER_WEBHOOK_SECRET`. While the feature is on a branch, point the subscription at the preview URL, then switch the URL at launch. `transaction.succeeded` does not fire for CSV imports, so use **Refresh from Givebutter** after an import.
 - Volunteer account backfill (after deploying the volunteer portal): `node scripts/backfill-volunteer-accounts.mjs --preview` generates SQL + temp passwords for recent volunteers without an account (see script header for usage; defaults to `--days 14 --status active`)
+
+## Testing
+
+End-to-end tests live in `e2e/` and run with [Playwright](https://playwright.dev).
+
+### Setup (one time)
+
+```bash
+npx playwright install chromium
+```
+
+### Local database + seed
+
+Tests run against the local (miniflare) D1 database. Apply migrations and seed an admin user before running:
+
+```bash
+npx wrangler d1 migrations apply purple-fireflies-db --local
+node -e "const b=require('bcryptjs'); console.log(b.hashSync('Admin123!',12));"  # use the hash below
+npx wrangler d1 execute purple-fireflies-db --local --command="INSERT OR REPLACE INTO users (email, name, password_hash, role, status) VALUES ('admin@purplefireflies.org', 'Admin', '<hash>', 'admin', 'active');"
+```
+
+Admin credentials used by the tests: `admin@purplefireflies.org` / `Admin123!`.
+
+### Run
+
+```bash
+npm run test:e2e          # headless
+npm run test:e2e:ui       # interactive UI
+npm run test:e2e:headed   # headed browser
+```
+
+Playwright starts `npm run dev -- -p 3001` automatically (port 3001 is used because 3000 is often occupied). Set `PLAYWRIGHT_BASE_URL` to run against an already-running server or a preview deployment.
+
+### Conventions
+
+- Put specs in `e2e/*.spec.ts`; shared helpers in `e2e/fixtures/`.
+- Reuse `loginAsAdmin` from `e2e/fixtures/auth.ts` for authenticated admin tests.
+- Prefer role/label locators (`getByRole`, `getByLabel`) over CSS selectors.
+- Keep tests independent: each test should set up its own data or rely on the seeded baseline.
+- Do not point tests at production bindings; use local or preview only.
 
 ## Design Choices
 
