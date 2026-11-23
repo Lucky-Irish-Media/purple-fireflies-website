@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useState, useTransition, useActionState, useEffect, useRef } from "react";
+import { useMemo, useState, useTransition, useActionState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { MealSignupWithAssignment } from "@/app/lib/definitions";
 import type { DriverVolunteerWithParticipant } from "@/app/lib/definitions";
 import { assignDriverAction } from "@/app/actions/assignments";
 import { updateMealSignupFieldAction } from "@/app/actions/admin-meal-signup";
-import { createMealSignupAction, updateMealSignupAction, duplicateMealSignupAction, updateMealSignupStatusAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
+import { createMealSignupAction, updateMealSignupAction, duplicateMealSignupAction, updateMealSignupStatusAction, getMealSignupsByDateRangeAction, type AdminMealSignupActionState } from "@/app/actions/admin-meal-signup";
 import { DataTable } from "./components/DataTable";
 import { Modal } from "./components/Modal";
-import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, getDeliveryStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn } from "./lib/utils";
+import { formatDate, formatPhone, formatDateTime, getContactMethodBadge, getDeliveryDayBadge, getDeliveryStatusBadge, DeliveryDateFilter, deliveryDateFilterFn, requesterFilterFn, mealsFilterFn, todayLocal } from "./lib/utils";
 import { getMealsCapForDate } from "@/app/lib/delivery-day";
 import { createColumnHelper, type ColumnDef, filterFns } from "@tanstack/react-table";
 
@@ -130,10 +130,11 @@ function DriverSelectCell({ row, drivers, isPending, onAssign }: {
   );
 }
 
-function InlineEditCell({ row, field, placeholder }: {
+function InlineEditCell({ row, field, placeholder, onReload }: {
   row: { original: MealSignupWithAssignment };
   field: "bag_number";
   placeholder: string;
+  onReload?: () => Promise<void> | void;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -152,7 +153,8 @@ function InlineEditCell({ row, field, placeholder }: {
     formData.set("value", value);
     startTransition(async () => {
       await updateMealSignupFieldAction(formData);
-      router.refresh();
+      if (onReload) await onReload();
+      else router.refresh();
     });
   }
 
@@ -370,6 +372,35 @@ export default function MealSignupsTable({
   const [isPending, startTransition] = useTransition();
   const [signups, setSignups] = useState(initialData);
   const prevInitialData = useRef(initialData);
+
+  const defaultFrom = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 90);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+  const [rangeFrom, setRangeFrom] = useState(defaultFrom);
+  const [rangeTo, setRangeTo] = useState("");
+  const [loadedFrom, setLoadedFrom] = useState(defaultFrom);
+  const [loadedTo, setLoadedTo] = useState("");
+  const [loadingRange, setLoadingRange] = useState(false);
+  const [rangeError, setRangeError] = useState<string | null>(null);
+
+  const loadRange = useCallback(async (from: string, to: string) => {
+    setLoadingRange(true);
+    setRangeError(null);
+    try {
+      const data = await getMealSignupsByDateRangeAction(from, to);
+      setSignups(data);
+      setLoadedFrom(from || defaultFrom);
+      setLoadedTo(to);
+    } catch (e) {
+      setRangeError("Failed to load range. Please try again.");
+    } finally {
+      setLoadingRange(false);
+    }
+  }, [defaultFrom]);
+
+  const reloadLoadedRange = useCallback(() => loadRange(loadedFrom, loadedTo), [loadRange, loadedFrom, loadedTo]);
   useEffect(() => {
     if (prevInitialData.current !== initialData) {
       setSignups(initialData);
@@ -407,7 +438,7 @@ export default function MealSignupsTable({
       return prev;
     }
     if (result?.signups) {
-      setSignups(result.signups);
+      await reloadLoadedRange();
       setModalOpen(false);
     }
     return result;
@@ -419,7 +450,7 @@ export default function MealSignupsTable({
   >(async (prev, formData) => {
     const result = await updateMealSignupAction(prev, formData);
     if (result?.signups) {
-      setSignups(result.signups);
+      await reloadLoadedRange();
       setModalOpen(false);
     }
     return result;
@@ -443,7 +474,7 @@ export default function MealSignupsTable({
       return prev;
     }
     if (result?.signups) {
-      setSignups(result.signups);
+      await reloadLoadedRange();
       setDuplicateModalOpen(false);
       setDuplicatingSignup(null);
     }
@@ -456,7 +487,7 @@ export default function MealSignupsTable({
   >(async (prev, formData) => {
     const result = await updateMealSignupStatusAction(prev, formData);
     if (result?.signups) {
-      setSignups(result.signups);
+      await reloadLoadedRange();
     }
     return result;
   }, undefined);
@@ -467,7 +498,6 @@ export default function MealSignupsTable({
     formData.set("status", status);
     startTransition(async () => {
       await statusAction(formData);
-      router.refresh();
     });
   }
 
@@ -505,7 +535,7 @@ export default function MealSignupsTable({
           })
         );
       }
-      router.refresh();
+      await reloadLoadedRange();
     });
   }
 
@@ -620,6 +650,7 @@ export default function MealSignupsTable({
           row={info.row}
           field="bag_number"
           placeholder="Bag #"
+          onReload={reloadLoadedRange}
         />
       ),
     }),
@@ -697,7 +728,7 @@ export default function MealSignupsTable({
         );
       },
     }),
-  ] as const, [drivers, isPending, handleAssignment, duplicateAction, statusPending, handleStatusChange]);
+  ] as const, [drivers, isPending, handleAssignment, duplicateAction, statusPending, handleStatusChange, reloadLoadedRange]);
 
   const typedColumns = columns as unknown as ColumnDef<MealSignupWithAssignment, unknown>[];
 
@@ -800,6 +831,58 @@ export default function MealSignupsTable({
           </div>
         </div>
       </Modal>
+
+      <div className="rounded-lg border border-primary/10 bg-card p-3 space-y-2">
+        <p className="text-xs text-text-secondary">
+          Default view shows the last 90 days. Load a specific date range to find older records without fetching all history.
+        </p>
+        <div className="flex flex-col sm:flex-row items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="range-from" className="text-xs font-medium text-text-secondary">From</label>
+            <input
+              id="range-from"
+              type="date"
+              value={rangeFrom}
+              onChange={(e) => setRangeFrom(e.target.value)}
+              className="rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="range-to" className="text-xs font-medium text-text-secondary">To (optional)</label>
+            <input
+              id="range-to"
+              type="date"
+              value={rangeTo}
+              onChange={(e) => setRangeTo(e.target.value)}
+              className="rounded border border-primary/10 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => loadRange(rangeFrom, rangeTo)}
+            disabled={loadingRange}
+            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingRange ? "Loading..." : "Load range"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setRangeFrom(defaultFrom);
+              setRangeTo("");
+              loadRange(defaultFrom, "");
+            }}
+            disabled={loadingRange}
+            className="rounded-lg border border-primary/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Reset to recent
+          </button>
+        </div>
+        {rangeError && <p className="text-sm text-red-500" role="alert">{rangeError}</p>}
+        {loadingRange === false && signups.length === 0 && (
+          <p className="text-xs text-text-secondary">No records in the selected range.</p>
+        )}
+      </div>
 
       <DataTable
         data={signups}

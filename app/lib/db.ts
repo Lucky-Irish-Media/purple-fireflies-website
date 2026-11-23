@@ -570,8 +570,24 @@ export async function updateUserPassword(id: number, passwordHash: string): Prom
     .run();
 }
 
-export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAssignment[]> {
+export async function getMealSignupsWithAssignments(options?: {
+  fromDate?: string;
+  toDate?: string;
+}): Promise<MealSignupWithAssignment[]> {
   const db = await getDB();
+  const conditions: string[] = [];
+  const params: any[] = [];
+  if (options?.fromDate) {
+    conditions.push("ms.delivery_date >= ?");
+    params.push(options.fromDate);
+  } else {
+    conditions.push("ms.delivery_date >= date('now', '-90 days')");
+  }
+  if (options?.toDate) {
+    conditions.push("ms.delivery_date <= ?");
+    params.push(options.toDate);
+  }
+  const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const result = await db
     .prepare(
       `SELECT ${MEAL_SIGNUP_SELECT}, ${PARTICIPANT_SELECT},
@@ -582,10 +598,11 @@ export async function getMealSignupsWithAssignments(): Promise<MealSignupWithAss
        LEFT JOIN delivery_assignments da ON ms.id = da.meal_signup_id
        LEFT JOIN driver_volunteers dv ON da.driver_volunteer_id = dv.id
        LEFT JOIN participants dp ON dv.participant_id = dp.id
-       WHERE ms.delivery_date >= date('now', '-90 days')
+       ${whereClause}
        ORDER BY ms.delivery_date ASC, ms.created_at DESC
        LIMIT 500`
     )
+    .bind(...params)
     .all<MealSignupWithAssignment>();
   return result.results || [];
 }
