@@ -99,7 +99,7 @@ export async function updateVolunteerProfile(
       zipCode: participant.zip_code,
       contactMethod: participant.contact_method,
       internalNotes: participant.internal_notes || undefined,
-    });
+    }, { actor: session.email, source: "volunteer_profile_update" });
 
     await updateVolunteerSignupContact(
       participant.id,

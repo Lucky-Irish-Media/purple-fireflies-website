@@ -86,7 +86,7 @@ export async function submitDonationPledge(
         state: participant.state || "OH",
         zipCode: participant.zip_code || "",
         contactMethod: data.contactMethod,
-      });
+      }, { actor: data.email, source: "donation_pledge_public" });
     } else {
       participant = await createParticipant({
         name: data.name,

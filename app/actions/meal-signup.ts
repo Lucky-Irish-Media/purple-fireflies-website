@@ -110,7 +110,7 @@ export async function submitMealSignup(
         state: data.state,
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
-      });
+      }, { actor: data.email, source: "meal_signup_public" });
     } else {
       participant = await createParticipant({
         name: data.name,

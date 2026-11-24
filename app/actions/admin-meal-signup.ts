@@ -73,7 +73,7 @@ export async function updateMealSignupAction(
   formData: FormData,
 ): Promise<AdminMealSignupActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const validated = AdminMealSignupUpdateSchema.safeParse({
       id: formData.get("id"),
@@ -113,7 +113,7 @@ export async function updateMealSignupAction(
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
         internalNotes: data.internalNotes,
-      });
+      }, { actor: session.email, source: "admin_meal_signup_update" });
     } else {
       participant = await createParticipant({
         name: data.name,
@@ -162,7 +162,7 @@ export async function createMealSignupAction(
   formData: FormData,
 ): Promise<AdminMealSignupActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const validated = AdminMealSignupSchema.safeParse({
       name: formData.get("name"),
@@ -206,7 +206,7 @@ export async function createMealSignupAction(
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
         internalNotes: data.internalNotes?.trim() ? data.internalNotes : undefined,
-      });
+      }, { actor: session.email, source: "admin_meal_signup_create" });
     } else {
       participant = await createParticipant({
         name: data.name,

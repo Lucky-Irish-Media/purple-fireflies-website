@@ -40,7 +40,7 @@ export async function updateDriverVolunteerAction(
   formData: FormData,
 ): Promise<AdminDriverVolunteerActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const regions = formData.getAll("regions") as string[];
 
@@ -71,7 +71,7 @@ export async function updateDriverVolunteerAction(
         state: "OH",
         zipCode: "",
         contactMethod: "call",
-      });
+      }, { actor: session.email, source: "admin_driver_volunteer_update" });
     } else {
       participant = await createParticipant({
         name: data.name,
@@ -108,7 +108,7 @@ export async function createDriverVolunteerAction(
   formData: FormData,
 ): Promise<AdminDriverVolunteerActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const regions = formData.getAll("regions") as string[];
 
@@ -138,7 +138,7 @@ export async function createDriverVolunteerAction(
         state: "OH",
         zipCode: "",
         contactMethod: "call",
-      });
+      }, { actor: session.email, source: "admin_driver_volunteer_create" });
     } else {
       participant = await createParticipant({
         name: data.name,
@@ -175,7 +175,7 @@ export async function duplicateDriverVolunteerAction(
   formData: FormData,
 ): Promise<AdminDriverVolunteerActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const id = Number(formData.get("id"));
     const deliveryDate = formData.get("deliveryDate") as string;
@@ -213,7 +213,7 @@ export async function duplicateDriverVolunteerAction(
 
 export async function updateDriverBagAction(formData: FormData): Promise<{ success: boolean; message: string }> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const participantId = Number(formData.get("participantId"));
     const bagNumber = formData.get("bagNumber") as string | null;
@@ -234,7 +234,7 @@ export async function updateDriverBagAction(formData: FormData): Promise<{ succe
 
 export async function updateDriverStatusAction(formData: FormData): Promise<{ success: boolean; message: string }> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const participantId = Number(formData.get("participantId"));
     if (!participantId) {

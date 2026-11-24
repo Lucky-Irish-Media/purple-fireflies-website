@@ -181,7 +181,7 @@ export async function createWaitlistEntryAction(
   formData: FormData,
 ): Promise<AdminWaitlistActionState> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const validated = CreateWaitlistEntrySchema.safeParse({
       name: formData.get("name"),
@@ -219,7 +219,7 @@ export async function createWaitlistEntryAction(
         zipCode: data.zipCode,
         contactMethod: data.contactMethod,
         internalNotes: data.internalNotes?.trim() ? data.internalNotes : undefined,
-      });
+      }, { actor: session.email, source: "admin_waitlist_create" });
     } else {
       participant = await createParticipant({
         name: data.name,

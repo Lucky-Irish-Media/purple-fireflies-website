@@ -3,6 +3,7 @@ import "server-only";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type {
   Participant,
+  ParticipantChangeLog,
   MealSignup,
   DriverVolunteer,
   DeliveryAssignment,
@@ -110,8 +111,9 @@ export async function updateParticipant(id: number, data: {
   zipCode: string;
   contactMethod: "call" | "text" | "email";
   internalNotes?: string;
-}): Promise<Participant> {
+}, audit?: { actor?: string | null; source?: string | null }): Promise<Participant> {
   const db = await getDB();
+  const old = await getParticipantById(id);
   const sets: string[] = [
     "name = ?",
     "email = ?",
@@ -151,7 +153,68 @@ export async function updateParticipant(id: number, data: {
   if (!result) {
     throw new Error("Failed to update participant");
   }
+
+  if (old && audit) {
+    const actor = audit.actor || null;
+    const source = audit.source || null;
+    const comparisons: { field: string; oldVal: string | null; newVal: string | null }[] = [
+      { field: "name", oldVal: old.name, newVal: data.name },
+      { field: "email", oldVal: old.email, newVal: data.email },
+      { field: "phone", oldVal: old.phone, newVal: data.phone },
+      { field: "address1", oldVal: old.address1, newVal: data.address1 },
+      { field: "address2", oldVal: old.address2, newVal: data.address2 || null },
+      { field: "city", oldVal: old.city, newVal: data.city },
+      { field: "state", oldVal: old.state, newVal: data.state },
+      { field: "zip_code", oldVal: old.zip_code, newVal: data.zipCode },
+      { field: "contact_method", oldVal: old.contact_method, newVal: data.contactMethod },
+    ];
+    if (data.internalNotes !== undefined) {
+      comparisons.push({ field: "internal_notes", oldVal: old.internal_notes, newVal: data.internalNotes || null });
+    }
+    for (const c of comparisons) {
+      if (c.oldVal !== c.newVal) {
+        await db
+          .prepare(
+            `INSERT INTO participant_change_log (participant_id, actor, source, field_name, old_value, new_value)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          )
+          .bind(id, actor, source, c.field, c.oldVal, c.newVal)
+          .run();
+      }
+    }
+  }
+
   return result;
+}
+
+export async function getParticipantChangeLogs(options?: {
+  participantId?: number;
+  limit?: number;
+}): Promise<ParticipantChangeLog[]> {
+  const db = await getDB();
+  const conditions: string[] = [];
+  const params: any[] = [];
+  if (options?.participantId) {
+    conditions.push("pcl.participant_id = ?");
+    params.push(options.participantId);
+  }
+  // Only participants who have at least one meal signup (meal delivery requestors)
+  conditions.push("EXISTS (SELECT 1 FROM meal_signups ms WHERE ms.participant_id = pcl.participant_id)");
+  const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const limit = options?.limit ?? 500;
+  const result = await db
+    .prepare(
+      `SELECT pcl.id, pcl.participant_id, pcl.changed_at, pcl.actor, pcl.source, pcl.field_name, pcl.old_value, pcl.new_value,
+              p.name as participant_name, p.email as participant_email
+       FROM participant_change_log pcl
+       JOIN participants p ON pcl.participant_id = p.id
+       ${whereClause}
+       ORDER BY pcl.changed_at DESC, pcl.id DESC
+       LIMIT ?`
+    )
+    .bind(...params, limit)
+    .all<ParticipantChangeLog>();
+  return result.results || [];
 }
 
 export async function updateDriverBag(participantId: number, bagNumber: string | null): Promise<void> {

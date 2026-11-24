@@ -145,6 +145,19 @@ export interface Participant {
   updated_at: string;
 }
 
+export interface ParticipantChangeLog {
+  id: number;
+  participant_id: number;
+  changed_at: string;
+  actor: string | null;
+  source: string | null;
+  field_name: string;
+  old_value: string | null;
+  new_value: string | null;
+  participant_name?: string;
+  participant_email?: string;
+}
+
 export interface MealSignup {
   id: number;
   participant_id: number;
