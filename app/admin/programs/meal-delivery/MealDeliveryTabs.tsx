@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { MealSignupWithAssignment, DriverVolunteerWithParticipant, WaitlistEntryWithParticipant, DeliverySignupOverview } from "@/app/lib/definitions";
+import type { MealSignupWithAssignment, DriverVolunteerWithParticipant, WaitlistEntryWithParticipant, DeliverySignupOverview, ParticipantChangeLog } from "@/app/lib/definitions";
 import MealSignupsTable from "../../MealSignupsTable";
 import DriverVolunteersTable from "../../DriverVolunteersTable";
 import { WaitlistTable } from "../../WaitlistTable";
 import DeliverySignupsTable from "../../DeliverySignupsTable";
 import { DeliveryDaysTable, type DeliveryDayOverview } from "./DeliveryDaysTable";
+import ChangeHistoryTable from "./ChangeHistoryTable";
 
-type TabKey = "signups" | "volunteers" | "delivery-signups" | "waitlist" | "delivery-days";
+type TabKey = "signups" | "volunteers" | "delivery-signups" | "waitlist" | "delivery-days" | "change-history";
 
 interface Tab {
   key: TabKey;
@@ -21,6 +22,7 @@ const tabs: Tab[] = [
   { key: "delivery-signups", label: "Delivery Signups" },
   { key: "waitlist", label: "Waitlist" },
   { key: "delivery-days", label: "Delivery Days" },
+  { key: "change-history", label: "Info Changes" },
 ];
 
 interface Props {
@@ -29,9 +31,10 @@ interface Props {
   deliverySignups: DeliverySignupOverview[];
   waitlistEntries: WaitlistEntryWithParticipant[];
   deliveryDays: DeliveryDayOverview[];
+  changeLogs: ParticipantChangeLog[];
 }
 
-export default function MealDeliveryTabs({ mealSignups, driverVolunteers, deliverySignups, waitlistEntries, deliveryDays }: Props) {
+export default function MealDeliveryTabs({ mealSignups, driverVolunteers, deliverySignups, waitlistEntries, deliveryDays, changeLogs }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("signups");
 
   return (
@@ -79,6 +82,12 @@ export default function MealDeliveryTabs({ mealSignups, driverVolunteers, delive
       {activeTab === "delivery-days" && (
         <section>
           <DeliveryDaysTable initialData={deliveryDays} />
+        </section>
+      )}
+
+      {activeTab === "change-history" && (
+        <section>
+          <ChangeHistoryTable initialData={changeLogs} />
         </section>
       )}
     </div>

@@ -88,7 +88,7 @@ export async function submitVolunteerSignup(
         state: participant.state || "OH",
         zipCode: participant.zip_code || "",
         contactMethod: data.contactMethod,
-      });
+      }, { actor: data.email, source: "volunteer_meals_public" });
     } else {
       participant = await createParticipant({
         name: data.name,

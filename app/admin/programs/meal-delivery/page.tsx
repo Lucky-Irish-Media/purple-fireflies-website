@@ -1,5 +1,5 @@
 import MealDeliveryTabs from "./MealDeliveryTabs";
-import { getMealSignupsWithAssignments, getDriverVolunteers, getDeliverySignups, getWaitlistEntries, getMealSignupCountsByDate, getClosedDeliveryDates } from "@/app/lib/db";
+import { getMealSignupsWithAssignments, getDriverVolunteers, getDeliverySignups, getWaitlistEntries, getMealSignupCountsByDate, getClosedDeliveryDates, getParticipantChangeLogs } from "@/app/lib/db";
 import { getDeliveryDay } from "@/app/lib/delivery-day";
 import type { DeliveryDayOverview } from "./DeliveryDaysTable";
 
@@ -20,13 +20,14 @@ function getUpcomingDeliveryDays(weeksAhead = 4): Omit<DeliveryDayOverview, "cou
 }
 
 export default async function AdminMealDeliveryPage() {
-  const [mealSignups, driverVolunteers, deliverySignups, waitlistEntries, dateCounts, closedDates] = await Promise.all([
+  const [mealSignups, driverVolunteers, deliverySignups, waitlistEntries, dateCounts, closedDates, changeLogs] = await Promise.all([
     getMealSignupsWithAssignments(),
     getDriverVolunteers(),
     getDeliverySignups(),
     getWaitlistEntries(),
     getMealSignupCountsByDate(),
     getClosedDeliveryDates(),
+    getParticipantChangeLogs(),
   ]);
 
   const deliveryDays: DeliveryDayOverview[] = getUpcomingDeliveryDays().map((d) => ({
@@ -46,6 +47,7 @@ export default async function AdminMealDeliveryPage() {
         deliverySignups={deliverySignups}
         waitlistEntries={waitlistEntries}
         deliveryDays={deliveryDays}
+        changeLogs={changeLogs}
       />
     </div>
   );
